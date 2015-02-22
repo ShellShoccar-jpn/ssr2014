@@ -1,0 +1,94 @@
+\section{名前付きパイプからリダイレクトする時のワナ}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	次のコードを実行したものの、やっぱりcatは取り消そうと思って\verb|killall cat|を実行したら失敗した。
+	おかしいなと思ってpsコマンドでcatのプロセスを探しても見つからなかった。どこへ行ってしまったのか？
+	\begin{screen}
+		\verb|$ mkfifo "HOGEPIPE"| \return \\
+		\verb|$ { cat < "HOGEPIPE" >/dev/null; } &| \return
+	\end{screen}
+\end{grshfboxit}
+
+\subsection*{回答}
+catを起動する子シェルの段階で処理が止まっており、catコマンドはまだ起動していない。もしその子シェルをkillしたいのであれば次のようにして、jobsコマンドでジョブIDを調べ、そのジョブ番号をkillする。
+
+\begin{screen}
+	\verb|$ mkfifo "HOGEPIPE"| \return \\
+	\verb|$ { cat < "HOGEPIPE" >/dev/null; } &| \return \\
+	\verb|$ jobs| \return \\
+	\verb|[1] + Running                 cat <HOGEPIPE >/dev/null| \\
+	\verb|$ kill %1| \return \\
+	\verb|$ | \return \\
+	\verb|[1]   Terminated              cat <HOGEPIPE >/dev/null| \\
+	\verb|$ |
+\end{screen}
+
+あるいは、jobsコマンドに\verb|-l|オプションを付けて子シェルのプロセスIDを調べ、そのプロセスIDをkillしてもよい。
+
+\begin{screen}
+	\verb|$ mkfifo "HOGEPIPE"| \return \\
+	\verb|$ { cat < "HOGEPIPE" >/dev/null; } &| \return \\
+	\verb|$ jobs -l| \return \\
+	\verb|[1] + 13742 Running           cat <HOGEPIPE >/dev/null| \\
+	\verb|$ kill 13742| \return \\
+	\verb|$ | \return \\
+	\verb|[1]   Terminated              cat <HOGEPIPE >/dev/null| \\
+	\verb|$ |
+\end{screen}
+
+\subsection*{解説}
+
+なぜcatコマンドはまだ起動していなかったのか。これは、シェルの仕組みを知れば理解できるだろう。
+
+シェルは、コマンドを実行する際、いきなりコマンドのプロセスを起動はしない。まず自分の分身である「子シェル」を生成する。そして、execシステムコールによって、それを目的のコマンドに変身させるという手順を取るのだ。
+
+なぜそのようにしているかといえば、コマンドを呼ぶ前にシェル側で準備作業が必要だからだ。その一つがリダイレクションである。コマンドの前後に記された``\verb|<|''、``\verb|>|''、``\verb|>>|''などといった記号で読み込みまたは書き込みモードでのファイルオープンが指定されたらその作業はシェルが受け持つことになっている。シェルはリダイレクション記号で指定されたファイルを標準入出力に接続し、それができてからコマンドに変身しようとする\footnote{もしcatコマンドの後に別コマンドが``\verb!|!''や``\verb|&&|''や``\verb|;|''等でさらに書かれていた場合は、返信せずに更に孫シェルを起動してそれらを順番に実行しようとする。}。ちなみにリダイレクションが指定されなかった場合は、特にファイルに接続することはないが、標準入出力および標準エラー出力をオープンするという作業はデフォルトで行っている。
+
+さて今回の場合、オープン対象は``HOGEPIPE''という名前付きファイルであるがこれは\ref{recipe:mkfifo}（mkfifoコマンドの活用）で説明したとおり、データが書き込まれないうちにオープンしようとしたり読み込もうとすると、データが来るまで延々と待たされることになってしまう。それを子シェルがやっているものだから、catに変身することができず、catプロセスが未だに存在しないというわけだ。
+
+\subsubsection*{実際にデータを流してみると}
+
+では、パイプにデータを流し始めてみたらどうなるか見てみよう。``\verb|{ cat < "HOGEPIPE" >/dev/null; } &|''まで実行したら、今度はkillせずにyesコマンドあたりを使ってデータを流し込み続けてみてもらいたい。
+
+\begin{screen}
+	\verb|$ mkfifo "HOGEPIPE"| \return \\
+	\verb|$ { cat < "HOGEPIPE" >/dev/null; } &| \return \\
+	\verb|$ yes > "HOGEPIPE" &| \return \\
+	\verb|$ |
+\end{screen}
+
+そして、psコマンドで関連プロセスを確認してみる。
+
+\begin{screen}
+	\verb!$ ps -Ao pid,ppid,comm | egrep $$'|'cat | egrep -v grep'|'ps! \return \\
+	\verb|$ 13510 12883 sh| \\
+	\verb|$ 13839 13510 cat| \\
+	\verb|$ 13840 13510 yes| \\
+	\verb|$ kill 13840| \return \\
+	\verb|$ |
+\end{screen}
+
+左から自プロセスID、親プロセスID、自プロセスのコマンド名を表示しているが、今度はcatコマンドが存在していることがわかる。尚、\textbf{yesコマンドからデータを流し続けていると無駄な負荷がかかるので。確認したら速やかにyesコマンドをkillすること。}
+
+\subsubsection*{リダイレクションでない場合はcatの起動まで進む}
+
+先程はリダイレクションを用いたために、子シェルでつかえていた。では、catコマンドの引数として名前付きパイプを指定したらどうなるだろうか。
+
+\begin{screen}
+	\verb|$ mkfifo "HOGEPIPE"| \return \\
+	\verb|$ { cat "HOGEPIPE" >/dev/null; } &| \return \\
+	\verb|$ killall cat| \return \\
+	\verb|$ | \return \\
+	\verb|[1]   Terminated              cat <HOGEPIPE >/dev/null| \\
+	\verb|$ |
+\end{screen}
+
+今度はkillallが成功した。名前付きパイプ``HOGEPIPE''を開くのがcatコマンド自身の仕事になったからだ。先程の説明を踏まえれば理解は容易だろう。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:mkfifo}（mkfifoコマンドの活用）

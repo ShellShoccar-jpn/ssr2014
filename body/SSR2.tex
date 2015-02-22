@@ -1,0 +1,296 @@
+% ===== 書式・各種設定 ===============================================
+
+\documentclass[b5paper,9pt,fleqn,tombow,openany]{jsbook}
+
+\setlength{\hoffset}{-1.30cm}
+\setlength\textwidth{\fullwidth}
+\setlength{\evensidemargin}{-7.2mm}
+\setlength{\paperheight}{255.2mm}
+\setlength{\voffset}{0mm}
+\setlength{\topmargin}{-15mm}
+\setlength{\textheight}{219mm}
+
+\usepackage[dvips]{graphicx}           % 図を貼れるようにする
+
+\usepackage{pifont}                    % 奥村マクロ
+\usepackage{okumacro}                  % など
+\usepackage{multicol}                  % 段組み用
+
+%\usepackage{morisawa}                  % モリサワ基本5書体を使う
+
+\makeatletter                          % \captionの":"をとる手続き
+\long\def\@makecaption#1#2{%
+\vskip\abovecaptionskip%
+%\sbox\@tempboxa{#1: #2}% <--- original
+\sbox\@tempboxa{#1 #2}
+\ifdim \wd\@tempboxa >\hsize%
+%#1: #2\par <--- original
+#1 #2\par
+\else
+\global \@minipagefalse
+\hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+\fi
+\vskip\belowcaptionskip}
+\makeatother
+
+\setcounter{tocdepth}{2}
+
+\usepackage{float}
+
+\makeatletter                          % 文字サイズを相対的に変化させる
+\def\fontSCALE#1#2{%
+  \dimen@\f@size \p@
+  \dimen@ #1\dimen@
+  \edef\f@size{\strip@pt\dimen@}%
+  \dimen@\f@baselineskip
+  \dimen@ #2\dimen@
+  \edef\f@baselineskip{\the\dimen@}%
+  \fontsize\f@size\f@baselineskip
+}%
+\def\relsmall{\fontSCALE{.8}{.8}\selectfont}%
+\def\rellarge{\fontSCALE{1.25}{1.25}\selectfont}%
+\def\showfontsize{\f@size pt}% フォントサイズの属性値を出力する命令
+\makeatother
+
+\renewcommand{\presectionname}{第}
+\renewcommand{\postsectionname}{節}% 章にしても可
+
+% 文字の均等割り
+% \kintou{幅}{文字}
+% 例 \kintou{5zw}{文字四個}
+%\newcommand{\kintou}[2]{%
+%  \leavevmode
+%  \hbox to #1{%
+%    \kanjiskip=0pt plus 1fill minus 1fill
+%    \xkanjiskip=\kanjiskip
+%    #2}}
+
+%\def\thefootnote{*\arabic{footnote}}   % 脚注記号の変更（例 *2）
+
+\usepackage{array}                     % 表で太線が使えるようにする3行
+\def\PBS#1{\let\temp=\\#1\let\\=\temp} % 表のコマ行揃え >p.315
+\def\VLINE{\vrule width 1pt}           %  表の縦太線 \VLINE定義 >p.324
+\def\HLINE{\noalign{\hrule height1pt}} %  表の横太線 \HLINE定義 >p.324
+
+\usepackage{array}                     % 表のコマ行揃え >p.315
+
+\usepackage{packages/overcite}         % 文中の参考文献の番号を小さくする
+\makeatletter
+\def\@cite#1{$\m@th^{\hbox{\@ove@rcfont[#1]}}$}
+\makeatother
+
+\renewcommand{\bibname}{参考文献}      % 関連図書→参考文献
+
+\usepackage{packages/chemist}          % tboxscreen環境を使えるようにする
+
+\usepackage{packages/indent}           % インデント調節用
+
+% 通し番号をトンボの横に振る
+\makeatletter
+%%% 水平移動量の計算
+\setbox\z@\hbox{\hskip5mm\@bannerfont\the\@bannertoken}
+\dimen@\wd\z@ \advance\dimen@5mm
+\edef\@put@totalpage@hshift{\the\dimen@}
+\def\@put@totalpage{%
+   \rlap{%
+      \vbox to\z@{\vss
+         \hbox to\z@{%
+            \dimen@\@saved@oddsidemargin
+            \if@twoside \ifodd\c@page\else
+               \dimen@\@saved@evensidemargin
+            \fi\fi
+            \hskip-\dimen@
+            \hbox to\paperwidth{%%% (*)表示形式を変えるときはこの付近をいじる
+               \hskip\@put@totalpage@hshift
+               \normalfont\ttfamily\#\number\@totalpage
+               \hfil}%
+            \hss}%
+         %%% 垂直移動量の計算
+         \dimen@\headheight
+         \advance\dimen@\topmargin \advance\dimen@ 1in
+         \advance\dimen@ 3mm \advance\dimen@4\p@
+         \vskip\dimen@}}}
+%%% 総ページ数を取得するための細工
+\newcount\@totalpage
+\let\@primitive@shipout\shipout
+\def\shipout{%
+   \global\advance\@totalpage\@ne
+   \@primitive@shipout}
+%%% 左右の余白量の保存
+\dimen@\oddsidemargin \advance\dimen@ 1in
+\edef\@saved@oddsidemargin{\the\dimen@}
+\dimen@\evensidemargin \advance\dimen@ 1in
+\edef\@saved@evensidemargin{\the\dimen@}
+%%% 各ページスタイルの再定義
+\def\ps@plainhead{%
+  \let\@mkboth\@gobbletwo
+  \let\@oddfoot\@empty
+  \let\@evenfoot\@empty
+  \def\@evenhead{\@put@totalpage\hss
+    \hbox to \fullwidth{\textbf{\thepage}\hfil}}%
+  \def\@oddhead{\@put@totalpage%
+    \hbox to \fullwidth{\hfil\textbf{\thepage}}\hss}}
+\def\ps@headings{%
+  \let\@oddfoot\@empty
+  \let\@evenfoot\@empty
+  \def\@evenhead{\@put@totalpage\hss
+    \underline{\hbox to \fullwidth{\autoxspacing
+        \textbf{\thepage}\hfil\leftmark}}}%
+  \def\@oddhead{\@put@totalpage\underline{\hbox to \fullwidth{\autoxspacing
+        {\rightmark}\hfil\textbf{\thepage}}}\hss}%
+  \let\@mkboth\markboth
+  \def\chaptermark##1{\markboth{%
+    \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter
+        \@chapapp\thechapter\@chappos\hskip1zw
+      \fi
+    \fi
+    ##1}{}}%
+  \def\sectionmark##1{\markright{%
+    \ifnum \c@secnumdepth >\z@ \thesection \hskip1zw\fi
+    ##1}}}%
+\def\ps@myheadings{%
+  \let\@oddfoot\@empty\let\@evenfoot\@empty
+  \def\@evenhead{\@put@totalpage\thepage\hfil\leftmark}%
+  \def\@oddhead{{\@put@totalpage\rightmark}\hfil\thepage}%
+  \let\@mkboth\@gobbletwo
+  \let\chaptermark\@gobble
+  \let\sectionmark\@gobble
+}
+\def\ps@empty{%
+  \let\@mkboth\@gobbletwo
+  \def\@oddhead{\@put@totalpage\hfil}%
+  \let\@oddfoot\@empty
+  \def\@evenhead{\@put@totalpage\hfil}%
+  \let\@evenfoot\@empty}
+\pagestyle{headings}
+
+%%% section 番号の前にだけ「レシピ」を付ける
+\renewcommand{\thesection}{レシピ\thechapter.\@arabic\c@section}
+\renewcommand{\thesubsection}{\thechapter.\@arabic\c@section.\@arabic\c@subsection}
+\renewcommand*{\l@section}{\@dottedtocline{1}{1zw}{5.683zw}}
+\makeatother
+
+% ===== ここから本文 =================================================
+
+\begin{document}
+
+%%% まえがき %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\frontmatter
+
+\include{tex/0_introduction/introduction}
+
+%%% 目次
+\tableofcontents
+
+
+%%% 本章 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\mainmatter
+
+\chapter{ちょっとうれしいレシピ}
+
+本章では、知っているとちょっとだけうれしいレシピを紹介する。
+ちなみにすごくうれしいレシピは、後ろの章で紹介するのでお楽しみに。
+
+\input{tex/1_pretty_good_techs/without_no_history} %% ヒストリーを残さずログアウト
+\input{tex/1_pretty_good_techs/sed_LF}             %% sedによる改行文字への置換を、綺麗に書く
+\input{tex/1_pretty_good_techs/fsed}               %% grepに対するfgrepのような素直なsed
+\input{tex/1_pretty_good_techs/mkfifo}             %% mkfifoコマンドの活用
+\input{tex/1_pretty_good_techs/ctail1}             %% テキストデータの最後の行を消す
+\input{tex/1_pretty_good_techs/nonLFterminated}    %% 改行無し終端テキストを扱う
+\input{tex/1_pretty_good_techs/ifconfig}           %% IPアドレスを調べる（IPv6も）
+\input{tex/1_pretty_good_techs/YYYYMMDDhhmmss}     %% YYYYMMDDhhmmssの各単位を簡単に分離する
+\input{tex/1_pretty_good_techs/holidays}           %% 祝日を取得する
+\input{tex/1_pretty_good_techs/blacklist}          %% ブラックリストの100件を1万件の名簿から除去する
+
+
+\chapter{利用者の陰に潜む、様々な落とし穴}
+
+シェルスクリプトやUNIXコマンドは「クセが強い」とよく言われる。
+それも一種の個性であるといえばそれはそれでアリなのだが、
+その個性を知らぬまま使うと思わぬ落とし穴にはまってしまう。
+
+本章では、UNIX入門者・中級者がはまりがちな、各種コマンドや文法の落とし穴を紹介していく。
+
+\input{tex/2_traps/false}                          %% 【緊急】falseコマンドの深刻な不具合
+\input{tex/2_traps/mkfifo_redirection}             %% 名前付きパイプからリダイレクトする時のワナ
+\input{tex/2_traps/zen_characters}                 %% 全角文字に対する正規表現の扱い
+\input{tex/2_traps/sort}                           %% sortコマンドの基本と応用とワナ
+\input{tex/2_traps/sed}                            %% sedのNコマンドの動きが何かおかしい
+\input{tex/2_traps/awk_environ}                    %% 標準入力以外からAWKに正しく文字列を渡す
+\input{tex/2_traps/AWK_array}                      %% AWKの連想配列が読むだけで変わるワナ
+\input{tex/2_traps/while_read}                     %% while readで文字列が正しく渡せない
+\input{tex/2_traps/many_traps}                     %% あなたはいくつ問題点を見つけられるか!?
+
+
+\chapter{POSIX原理主義テクニック}
+
+「一体POSIXの範囲で何ができる？」と言っているそこのアナタ。POSIXを見くびるのはこの章を読んでからにしてもらおうか。
+たくさんのコマンドに支えられているおかげで、POSIXの範囲でも実にいろいろなことができる。そもそも、そんなコマンドの一つであるAWKやsedはチューリングマシンの要件を満たしているのだから、入出力がファイルの世界で閉じている作業であれば何でもできるのである。
+
+というわけで本章では、POSIXの範囲で仕事をこなす様々なテクニックを紹介する。\textbf{機能を求めて他言語に手を出すなど百年早い！}
+
+\input{tex/3_POSIX_techs/Sayonara_PIPESTATUS}      %% PIPESTATUSさようなら
+\input{tex/3_POSIX_techs/Apache_combined_log}      %% Apacheのcombined形式ログを扱いやすくする
+\input{tex/3_POSIX_techs/utconv}                   %% シェルスクリプトで時間計算を一人前にこなす
+\input{tex/3_POSIX_techs/timestamp}                %% findコマンドで秒単位にタイムスタンプ比較をする
+\input{tex/3_POSIX_techs/CSV_parser}               %% CSVファイルを読み込む
+\input{tex/3_POSIX_techs/JSON_parser}              %% JSONファイルを読み込む
+\input{tex/3_POSIX_techs/XML_parser}               %% XMLファイルを読み込む
+\input{tex/3_POSIX_techs/han_zen}                  %% 全角・半角文字の相互変換
+\input{tex/3_POSIX_techs/hira_kata}                %% ひらがな・カタカナの相互変換
+
+
+\chapter{POSIX原理主義テクニック -- Web編}
+
+前章のPOSIX原理主義テクニックは堪能してもらえただろうか。
+筆者の周囲ではJSON、XMLのパースができることに驚いてくれる人が多いが、\textbf{驚くのはまだ早い！}
+Webアプリケーションを作るうえで役立つ数々のレシピはこれから紹介するのだから。
+
+そもそもPOSIXの範囲でWebアプリケーションを作ること自体、驚く以前に、信じられないようだ。
+しかし、本章のレシピを読めば現実味が湧く事だろう。
+
+事実、ショッピングカートの\textbf{「シェルショッカー」}、東京メトロのオープンデータに基づく列車接近情報表示アプリケーション\textbf{「メトロパイパー」}は、これらのレシピを活用して作ったものだ。信じられないなら、これらのキーワードでWeb検索して動作画面やソースコードを見てみるといい。
+
+\input{tex/4_web/URL_decode}                       %% URLデコードする
+\input{tex/4_web/URL_encode}                       %% URLエンコードする
+\input{tex/4_web/GETmethod}                        %% CGI変数の取得（GETメソッド編）
+\input{tex/4_web/POSTmethod}                       %% CGI変数の取得（POSTメソッド編）
+\input{tex/4_web/file_upload}                      %% JWebブラウザーからのファイルアップロード
+\input{tex/4_web/Ajax_without_libraries}           %% Ajaxで画面更新したい
+\input{tex/4_web/sendjpmail}                       %% シェルスクリプトでメール送信
+\input{tex/4_web/mojihame}                         %% HTMLテーブルを簡単綺麗に生成する
+\input{tex/4_web/read_cookie}                      %% シェルスクリプトおばさんの手づくりCookie（読み取り編）
+\input{tex/4_web/make_cookie}                      %% シェルスクリプトおばさんの手づくりCookie（書き込み編）
+\input{tex/4_web/HTTP_session}                     %% シェルスクリプトおばさんの手づくりCookie（書き込み編）
+
+
+\chapter{どの環境でも使えるシェルスクリプトを書く}
+
+\input{tex/5_allenvs/allenvs}                      %% 全部
+
+
+\chapter{レシピを駆使した調理例}
+
+Shell Script ライトクックブック第一弾に引き続き、
+第二弾でも最後にレシピを活用した調理例（サンプルアプリケーション）をご覧に入れよう。
+今回の料理は、多くのサイトで使われるWebアプリケーション（の部品）である。
+
+本章を読み、シェルスクリプトアプリケーションの速度や実力を見直を見直してもらえれば幸いである。
+
+\input{tex/6_cookingexample/zip2addr}              %% 郵便番号から住所欄を満たすアレをシェルスクリプトで
+
+
+
+%%% あとがき %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\backmatter
+
+\include{tex/e_afterword/afterword}
+
+
+
+
+\end{document}

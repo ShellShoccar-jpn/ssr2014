@@ -1,0 +1,89 @@
+\section{CGI変数の取得（GETメソッド編）}
+\label{recipe:GETmethod}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Webブラウザーから送られてくるCGI変数を読み取りたい。\\
+	ただしGETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''の場合）である。
+\end{grshfboxit}
+
+\subsection*{回答}
+CGI変数を読み出すのに便利な2つのコマンド（``cgi-name''及び``namread''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが321516氏によって提供されているので、まずこれらをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/cgi-name|、及び \\ \verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/nameread|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
+
+今、Webブラウザーが次のようなHTMLに基づいてCGI変数を送ってくるものとしよう。
+\paragraph{Webブラウザーが送信する元になるHTML} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	<form action="form.cgi" method="GET">
+	  <dl>
+	    <dt>名前</dt>
+	      <dd><input type="text" name="fullname" value="" /></dd>
+	    <dt>メールアドレス</dt>
+	      <dd><input type="text" name="email" value="" /></dd>
+	  </dl>
+	  <input type="submit" name="post" value="送信" />
+	</form>
+\end{verbatim}
+\end{frameboxit}
+
+GETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''）の場合、CGI変数は環境変数``QUERY\_{}STRING''の中に入っているので、まずcgi-nameを使ってこれを正規化して一時ファイルに格納する。あとはnamereadコマンドを使い、取り出したい変数をシェル変数等に取り出せばよい。
+
+まとめると次のようになる。
+\paragraph{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	Tmp=/tmp/${0##*/}.$$  # 一時ファイルの元となる名称
+	
+	printf '%s' "${QUERY_STRING:-}" |
+	cgi-name                        > $Tmp-cgivars  # 正規化し、一時ファイルに格納
+	
+	fullname=$(nameread fullname $tmp-cgivars)      # CGI変数"fullname"を取り出す
+	email=$(nameread email $tmp-cgivars)            # CGI変数"email"を取り出す
+	
+	（ここで何らかの処理）
+	
+	rm -f $Tmp-*                                    # 用が済んだら一時ファイルを削除
+\end{verbatim}
+\end{frameboxit}
+
+尚、元のデータには漢字や記号が含まれていて、URLエンコードされていてももちろん構わない。それらのデコードはcgi-nameコマンドが済ませてくれているのだ。
+
+\subsection*{解説}
+Webブラウザーから情報を受け取りたい場合によく用いられるのがCGI変数であるが、その送られ方にはいくつかの種類がある。「回答」で述べたように、GETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''）の場合はCGI変数は環境変数``QUERY\_{}STRING''の中に入っている。そしてその中身は、
+\begin{quote}
+	\textit{name1}\verb|=|\textit{var1}\verb|&|\textit{name2}\verb|=|\textit{var2}\verb|&...|
+\end{quote}
+というように``\textit{変数名}\verb|=|\textit{値}''が``\verb|&|''で繋がれた形式になっており、かつ``\textit{値}''はURLエンコードされている。
+
+ここまでわかっていれば自力で読み解くコードを書いてもよい。trコマンドで``\verb|&|''を改行に、``\verb|=|''をスペースに代え、最初のスペースより右側～行末までの文字列を\ref{recipe:URL_decode}（URLデコードする）に記したやり方でデコードするのだ。しかし、それを既に済ませたコマンドがあるので使わせてもらえばよいというわけだ。
+
+「回答」で登場した2つのコマンドであるが、``cgi-name''はとりあえずCGI変数文字列を扱いやすい形式に変換して一時ファイルに格納するためのもので、``nameread''は好きなタイミングでシェル変数等に取り出すためのものである。よって、前者は通常最初に一度だけ使うが、後者は必要な個所でその一時ファイルと共に毎回使うものである。
+
+\subsubsection*{補足}
+
+ここで補足しておきたい事項が3つある。
+
+\paragraph{環境変数をechoではなくprintfで受け取る理由}　\\
+環境変数``'QUERY\_{}STRING'をechoで受けず、なぜわざわざprintfで受けているのか。
+理由は、万が一環境変数に``\verb|-n|''という文字列が来た場合でも誤動作しないようにするためである。
+
+通常は起こりえないのだが、\textbf{外部からやってくる情報なので素直に信用してはいけない}
+というのがWebアプリケーション制作における鉄則だからである。
+
+\paragraph{値としての改行の扱い}　\\
+受け取ったデータの中に改行文字（$<$CR$>$$<$LF$>$等）が含まれていた場合、cgi-nameコマンドは``\verb|\n|''という2文字に変換する。詳細はマニュアルページ\footnote{\verb|https://uec.usp-lab.com/TUKUBAI_MAN/CGI/TUKUBAI_MAN.CGI?POMPA=MAN1_cgi-name|}を参照されたい。
+
+\paragraph{GETメソッドかPOSTメソッドかを判定する}　\\
+到来するCGI変数データがPOSTメソッドでやってくるのかGETメソッドでやってくるのか決まっていない場合もあるだろう。
+そのような時は環境変数REQUEST\_{}METHODの値が``GET''か``POST''かで分岐させればよい。
+その値が``POST''だった場合には次の\ref{recipe:POSTmethod}（CGI変数の取得(POSTメソッド編)）に示す方法で受け取ればよい。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:URL_decode}（URLデコードする） \\
+→\ref{recipe:POSTmethod}（CGI変数の取得(POSTメソッド編)）

@@ -1,0 +1,116 @@
+\section{祝日を取得する}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	平日と土日祝日でログを分けたい。土日は計算で求められても、祝日は、春分の日や秋分の日など計算のしようがないものもある。どうすればいいか？
+\end{grshfboxit}
+
+\subsection*{回答}
+祝日を教えてくれるWebAPIに問い合わせて教えてもらう。
+
+Googleカレンダーを使うのが便利だろうということで、
+Googleカレンダーから祝日を取得するシェルスクリプトの例を示す。
+
+\paragraph{get\_{}holidays.sh} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# このURLは
+	# Googleカレンダーの「カレンダー設定」→「日本の祝日」→「ICAL」から取得可能 (2014/11/29現在)
+	url='https://www.google.com/calendar/ical/ja.japanese%23holiday%40group.v.calendar.google.com/pu
+	blic/basic.ics'
+
+	curl -s "$url"                           |
+	sed -n '/^BEGIN:VEVENT/,/^END:VEVENT/p'  |
+	awk '/^BEGIN:VEVENT/{                    # === iCalendar(RFC 5545)形式から日付と名称だけ抽出 ===
+	       rec++;                            # 
+	     }                                   #
+	     match($0,/^DTSTART.*DATE:/){        # DTSTART行は日付であるから
+	       print rec,1,substr($0,RLENGTH+1); # 「レコード番号 "1" 日付」にする
+	     }                                   #
+	     match($0,/^SUMMARY:/){              # SUMMARY行は名称であるから
+	       s=substr($0,RLENGTH+1);           # 「レコード番号 "2" 名称」にする
+	       gsub(/ /,"_",s);                  #
+	       print rec,2,s;                    #
+	     }'                                  |
+	sort -k1n,1 -k2n,2                       | # レコード番号＞列種別 にソート
+	awk '$2==1{printf("%d ",$3);}            # # 1レコード1行にする
+	     $2==2{print $3;       }             #
+	     '                                   |
+	sort                                     # 日付順にソートして出力
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{実行例}
+
+試しに、平成26年度の祝日一覧を求めてみる。
+
+\paragraph{実行結果} 　
+\begin{screen}
+	\verb|$ get_holidays.sh| \return \\
+	\verb|20130101 元日| \\
+	　　: \\
+	　（途中省略） \\
+	　　: \\
+	\verb|20141123 勤労感謝の日| \\
+	\verb|20141124 勤労感謝の日_振替休日| \\
+	\verb|20141223 天皇誕生日| \\
+	　　: \\
+	　（途中省略） \\
+	　　: \\
+	\verb|20151223 天皇誕生日| \\
+	\verb|$ |
+\end{screen}
+
+Googleカレンダーは、当年とその前後1年の祝日一覧を教えてくれる。
+ご覧のとおり、振替休日が発生する場合は元の日付に加えて振替日も示してくれる。
+日付だけが欲しくて名称が邪魔な場合は最後のsortコマンドの後に、\verb!| awk {print $1}!などを付け足せばよいので簡単だ。
+
+\subsection*{解説}
+
+問題文にもあるが、日本の祝日は、その全てを計算で求めることができない\footnote{天文学データを入れれば「予測」することは可能だが、サーバー管理者にとって現実的な話ではない。}。
+春分の日、秋分の日の二祝日は毎年の天文観測によって二年後の月日を決めるように定められているからだ。
+計算で求められないことが明らかなら、知っている人に聞くしかない。そこでWebAPIを叩くというわけだ。
+
+いくつかのサイトが提供してくれているが、Googleカレンダーを使うのが手軽だろう。
+
+\subsubsection*{iCalendar形式}
+
+祝日情報をどういう形式で教えてくれるかというと、\textbf{iCalendar(RFC 5545)形式}である。
+Googleカレンダー自体は独自のXML形式やHTML形式でも教えてくれるのだが、
+iCalendar形式はシンプルだし、きちんと規格化されているので、情報源を他サイトに切り替える可能性を考慮するなら
+この形式を選択しておくべきである。
+
+iCalendar形式の詳細についてはもちろんRFC 5545のドキュメントを見れば載っているし、
+日本語解説は野村氏が公開している「iCalendar仕様」\footnote{\verb|http://www.asahi-net.or.jp/~ci5m-nmr/iCal/ref.html|}が参考になる。
+ただ、例示したソースコードの説明に必要な項目だけはここに記しておこう。
+
+まず、この形式はHTMLタグと同様にセクションの階層構造になっている。
+ただし、HTMLのようなタグのインデントは許されず、タグ（HTML同様、こう呼ぶことにする）名は必ず行頭に来る。
+
+今回注目すべきセクションは``VEVENT''でありここに祝日情報が入っているため、
+まずこのセクションの始まり（\verb|BEGIN:VEVENT|）と終わり（\verb|END:VEVENT|）でフィルタリングする。
+今回は祝日の日付と名称が欲しいだけなので、それらが収められているタグ（``DTSTART''と``SUMMARY''）行だけになるよう、さらにフィルタリングする。
+あとは、VEVENTセクションの中にあるこれら日付と名称の値を取り出して、1つ1つのVEVENT毎に横に並べれば目的のデータが得られる。
+\subsubsection*{GoogleカレンダーのURL}
+
+ソースコードの中にもメモしているが、祝日一覧を返してくるWebAPIのURLは2014/12/20現在、次のように辿れば見つけることができる。
+Googleの都合によって将来移動する可能性もあるので、参考にしておいてもらいたい。
+
+\begin{quote}
+\begin{description}
+  \item[1)] ログインしてGoogleカレンダーを開く \\ （ただし最終的に得られたURL自体はログインせず利用可能）
+  \item[2)] （歯車マークアイコンの中の）「設定」メニュー
+  \item[3)] 画面上部に「全般」「カレンダー」とある「カレンダー」タブ
+  \item[4)] 「日本の祝日」リンク
+  \item[5)] 「カレンダーのアドレス」行にある"ICAL"アイコン
+\end{description}
+\end{quote}
+
+\subsection*{参照}
+
+\noindent
+→RFC 5545文書\footnote{\verb|https://tools.ietf.org/html/rfc5545|}

@@ -1,0 +1,936 @@
+%%
+%% This is file `chemist.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% chemist.dtx  (with options: `chemist')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright 1996, 2000 by Shinsaku Fujita
+%% 
+%% This file is part of the ChemSci system.
+%% =======================================
+%% 
+%% Released on June 1, 1996
+%% Released on November 3, 2000 (v2.00a)
+%% 
+%% Copyright (C) 1996 by Shinsaku Fujita, all rights reserved.
+%% This style file is created for submitting a manuscript to
+%% scientific journals. This style file is to be contained in the
+%% ``chemist'' directory which is an input directory for TeX.
+%% 
+%% For using this file, see
+%%   Shinsaku Fujita, ``LaTeX for Chemists and Biochemists''
+%%   Tokyo Kagaku Dojin, Tokyo (1993), Chapter 16.
+%% 
+%% Copying of this file is authorized only if either
+%% 
+%%  (1) you make absolutely no changes to your copy, including name and
+%%      directory name
+%%  (2) if you do make changes,
+%%      (a) you name it something other than the names included in the
+%%          ``chemist'' directory and
+%%      (b) you acknowledge the original name.
+%%  This restriction ensures that all standard styles are identical.
+%% 
+%% =======================================
+%% 
+%% This file is a modification of latex.tex (LaTeX2.09) and of latex.ltx
+%% (a LaTeX2e), the reused parts of which is subject to
+%% Copyright 1994 the LaTeX3 project and the individual authors (For further
+%% copyright information see the file legal.txt of the LaTeX2e standard
+%% distribution, and any other copyright indicated in this file.)
+%% 
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%%
+%% `chemist.dtx' ver1.01a (for LaTeX2e) 1996/06/15
+%%  by Shinsaku Fujita
+%%
+\def\j@urnalname{chemist} \def\journalID{chemist}
+\def\versi@ndate{November 3, 2000}
+\def\versi@nno{ver2.00a}
+\def\copyrighth@lder{SF} % Shinsaku Fujita
+\typeout{Package `\j@urnalname' (\versi@nno) <\versi@ndate>\space
+[\copyrighth@lder]}
+\typeout{chemist.sty ver2.00a (for LaTeX2e) 2000/11/03[SF]}
+\@ifundefined{chapter}{\newcounter{compd}}{\newcounter{compd}[chapter]}
+\def\thecompd{\arabic{compd}}
+\def\compd{\leavevmode\refstepcounter{compd}{\large\bf \thecompd}}
+\def\nocompd{\refstepcounter{compd}}
+\def\compdlabel#1{\compd \label{#1}}
+\def\nocompdlabel#1{\nocompd \label{#1}}
+\@ifundefined{bf}{\def\bf{\normalfont\bfseries}}{}
+\def\cref#1{{\bf \ref{#1}}}
+\def\compdfbox#1#2#3{\framebox[#1]{\rule[-0.3mm]{0pt}{#2} #3 }}
+\def\compdmbox#1#2#3{\makebox[#1]{\rule[-0.3mm]{0pt}{#2} #3 }}
+\def\lbcompdpbox#1#2#3{\parbox{#2}{\vskip 2em
+  \parbox{#2}{#3 \par \centering{\compdlabel{#1}}\vskip 2em }}}
+\newcounter{deriv}[compd]
+\def\thederiv {\thecompd\alph{deriv}}
+\def\deriv{\leavevmode\refstepcounter{deriv}{\large\bf \thederiv}}
+\def\noderiv{\refstepcounter{deriv}}
+\def\derivnum{%
+\leavevmode\refstepcounter{deriv}{\large\bf \alph{deriv}}}
+\def\derivlabel#1{\deriv \label{#1}}
+\def\noderivlabel#1{\noderiv \label{#1}}
+\def\derivfbox#1#2#3{\framebox[#1]{\rule[-0.3mm]{0pt}{#2} #3 }}
+\def\derivmbox#1#2#3{\makebox[#1]{\rule[-0.3mm]{0pt}{#2} #3 }}
+\def\lbderivpbox#1#2#3{\parbox{#2}{\vskip 2em
+  \parbox{#2}{#3 \par \centering{\derivlabel{#1}}\vskip 2em }}}
+\def\deriva{\leavevmode\refstepcounter{deriv}{\large\bf \alph{deriv}}}
+\def\noderiva{\refstepcounter{deriv}}
+\def\derivalabel#1{\deriva \label{#1}}
+\def\noderivalabel#1{\noderiva \label{#1}}
+\def\cdonecell#1#2#3{\raisebox{#1}{\parbox{#2}{\centering{#3}}}}
+\def\cdtwocell#1#2#3#4{\raisebox{#1}{
+ \parbox{#2}{\centering{#3} \par \vskip 3pt \centering{#4}  }}}
+\def\leftrightarrowfill{$\m@th \mathord\leftarrow \mkern-6mu
+ \cleaders\hbox{$\mkern-2mu \mathord- \mkern-2mu$}\hfill
+ \mkern-6mu \mathord\rightarrow$}
+\def\Leftarrowfill{$\m@th \mathord\Leftarrow \mkern-6mu
+ \cleaders\hbox{$\mkern-2mu \mathord= \mkern-2mu$}\hfill
+ \mkern-6mu \mathord=$}
+\def\Rightarrowfill{$\m@th \mathord= \mkern-6mu
+ \cleaders\hbox{$\mkern-2mu \mathord= \mkern-2mu$}\hfill
+ \mkern-6mu \mathord\Rightarrow$}
+\def\Leftrightarrowfill{$\m@th \mathord\Leftarrow \mkern-6mu
+ \cleaders\hbox{$\mkern-2mu \mathord= \mkern-2mu$}\hfill
+ \mkern-6mu \mathord\Rightarrow$}
+\def\reactrarrow{\@ifnextchar[{\react@rarrow}{\react@rarrow[0pt]}}
+\def\react@rarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{%
+  \parbox{#3}{\centering
+    \baselineskip=.8\normalbaselineskip #4 \par
+    \vskip-0.2\normalbaselineskip
+    \rightarrowfill \par
+    \vskip-0.1\normalbaselineskip #5}}}
+\def\reactlarrow{\@ifnextchar[{\react@larrow}{\react@larrow[0pt]}}
+\def\react@larrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{%
+    \parbox{#3}{\centering
+    \baselineskip=.8\normalbaselineskip #4 \par
+    \vskip-0.2\normalbaselineskip
+     \leftarrowfill \par
+    \vskip-0.1\normalbaselineskip #5}}}
+\def\reactlrarrow{\@ifnextchar[{\react@lrarrow}{\react@lrarrow[0pt]}}
+\def\react@lrarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{%
+    \parbox{#3}{\centering
+    \baselineskip=.8\normalbaselineskip
+    #4 \par
+    \vskip-0.2\normalbaselineskip
+    \centering{\leftrightarrowfill} \par
+    \vskip-0.1\normalbaselineskip #5}}}
+\def\reacteqarrow{\@ifnextchar[{\react@eqarrow}{\react@eqarrow[0pt]}}
+\def\react@eqarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{%
+    \parbox{#3}{\centering
+    \baselineskip=.8\normalbaselineskip
+    #4 \par
+    \vskip-0.2\normalbaselineskip
+    \rightarrowfill \par \vskip-0.55\normalbaselineskip%
+    \leftarrowfill \par
+    \vskip-0.1\normalbaselineskip #5}}}
+\def\k@nz@n#1{\@tempdima=#1\relax
+\@tempcnta=\@tempdima \@tempcntb=\unitlength
+\divide\@tempcnta by \@tempcntb
+\edef\kanzanchi{\the\@tempcnta}%
+\divide\@tempcnta by2\relax
+\edef\kanzanhalf{\the\@tempcnta}}
+\def\reactdarrow{\@ifnextchar[{\react@darrow}{\react@darrow[0pt]}}
+\def\react@darrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{tabular}{l}#4\end{tabular}%
+{\tabcolsep=0pt
+\begin{tabular}{c}\begin{picture}(0,\kanzanchi)(0,0)
+\put(0,\kanzanchi){\vector(0,-1){\kanzanchi}}
+\end{picture}\end{tabular}}%
+\begin{tabular}{l}#5\end{tabular}}}
+\def\reactuarrow{\@ifnextchar[{\react@uarrow}{\react@uarrow[0pt]}}
+\def\react@uarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{tabular}{l}#4\end{tabular}%
+{\tabcolsep=0pt
+\begin{tabular}{c}\begin{picture}(0,\kanzanchi)(0,0)
+\put(0,0){\vector(0,1){\kanzanchi}}
+\end{picture}\end{tabular}}%
+\begin{tabular}{l}#5\end{tabular}}}
+\def\reactveqarrow{\@ifnextchar[%]
+{\react@veqarrow}{\react@veqarrow[0pt]}}
+\def\react@veqarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{tabular}{l}#4\end{tabular}%
+{\tabcolsep=0pt
+\begin{tabular}{c}\begin{picture}(40,\kanzanchi)(0,0)
+\put(40,0){\vector(0,1){\kanzanchi}}
+\put(0,\kanzanchi){\vector(0,-1){\kanzanchi}}
+\end{picture}\end{tabular}}%
+\begin{tabular}{l}#5\end{tabular}}}
+\def\reactduarrow{\@ifnextchar[{\react@duarrow}{\react@duarrow[0pt]}}
+\def\react@duarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{tabular}{l}#4\end{tabular}%
+{\tabcolsep=0pt
+\begin{tabular}{c}\begin{picture}(0,\kanzanchi)(0,0)
+\put(0,\kanzanhalf){\vector(0,1){\kanzanhalf}}
+\put(0,\kanzanhalf){\vector(0,-1){\kanzanhalf}}
+\end{picture}\end{tabular}}%
+\begin{tabular}{l}#5\end{tabular}}}
+\def\reactsearrow{\@ifnextchar[{\react@searrow}{\react@searrow[0pt]}}
+\def\react@searrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(0,\kanzanchi){\vector(1,-1){\kanzanchi}}
+\put(\kanzanhalf,\kanzanhalf){\hbox to0pt{%
+\begin{tabular}[b]{l}#4\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{\hss
+\begin{tabular}[t]{r}#5\end{tabular}}}
+\end{picture}}}
+\def\reactnwarrow{\@ifnextchar[{\react@nwarrow}{\react@nwarrow[0pt]}}
+\def\react@nwarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(\kanzanchi,0){\vector(-1,1){\kanzanchi}}
+\put(\kanzanhalf,\kanzanhalf){\hbox to0pt{%
+\begin{tabular}[b]{l}#4\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{\hss
+\begin{tabular}[t]{r}#5\end{tabular}}}
+\end{picture}}}
+\def\reactnearrow{\@ifnextchar[{\react@nearrow}{\react@nearrow[0pt]}}
+\def\react@nearrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(0,0){\vector(1,1){\kanzanchi}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{%
+\begin{tabular}[t]{l}#5\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\hbox to0pt{\hss
+\begin{tabular}[b]{r}#4\end{tabular}}}
+\end{picture}}}
+\def\reactswarrow{\@ifnextchar[{\react@swarrow}{\react@swarrow[0pt]}}
+\def\react@swarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(\kanzanchi,\kanzanchi){\vector(-1,-1){\kanzanchi}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{%
+\begin{tabular}[t]{l}#5\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\hbox to0pt{\hss
+\begin{tabular}[b]{r}#4\end{tabular}}}
+\end{picture}}}
+\def\reactdeqarrow{\@ifnextchar[%]
+{\react@deqarrow}{\react@deqarrow[0pt]}}
+\def\react@deqarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(0,\kanzanchi){\put(15,15){\vector(1,-1){\kanzanchi}}}
+\put(\kanzanchi,0){\put(-15,-15){\vector(-1,1){\kanzanchi}}}
+\put(\kanzanhalf,\kanzanhalf){\raise1ex\hbox to0pt{%
+\begin{tabular}[b]{l}#4\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{\hss
+\begin{tabular}[t]{r}#5\end{tabular}}}
+\end{picture}}}
+\def\reactueqarrow{\@ifnextchar[%]
+{\react@ueqarrow}{\react@ueqarrow[0pt]}}
+\def\react@ueqarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(0,0){\put(-15,15){\vector(1,1){\kanzanchi}}}
+\put(\kanzanchi,\kanzanchi){\put(15,-15){\vector(-1,-1){\kanzanchi}}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{%
+\begin{tabular}[t]{l}#5\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\raise1ex\hbox to0pt{\hss
+\begin{tabular}[b]{r}#4\end{tabular}}}
+\end{picture}}}
+\def\reactulrarrow{\@ifnextchar[%]
+{\react@ulrarrow}{\react@ulrarrow[0pt]}}
+\def\react@ulrarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(\kanzanhalf,\kanzanhalf){\vector(1,1){\kanzanhalf}}
+\put(\kanzanhalf,\kanzanhalf){\vector(-1,-1){\kanzanhalf}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{%
+\begin{tabular}[t]{l}#5\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\raise1ex\hbox to0pt{\hss
+\begin{tabular}[b]{r}#4\end{tabular}}}
+\end{picture}}}
+\def\reactdlrarrow{\@ifnextchar[%]
+{\react@dlrarrow}{\react@dlrarrow[0pt]}}
+\def\react@dlrarrow[#1]#2#3#4#5{\hskip#1\raisebox{#2}{\k@nz@n{#3}%
+\def\arraystretch{0.8}%
+\begin{picture}(\kanzanchi,\kanzanchi)(0,0)
+\put(\kanzanhalf,\kanzanhalf){\vector(-1,1){\kanzanhalf}}
+\put(\kanzanhalf,\kanzanhalf){\vector(1,-1){\kanzanhalf}}
+\put(\kanzanhalf,\kanzanhalf){\hbox to0pt{%
+\begin{tabular}[b]{l}#4\end{tabular}\hss}}
+\put(\kanzanhalf,\kanzanhalf){\lower2ex\hbox to0pt{\hss
+\begin{tabular}[t]{r}#5\end{tabular}}}
+\end{picture}}}
+\def\schemelarrow#1#2#3#4{\raisebox{#1}{%
+    \parbox{#2}{\centering
+    \baselineskip=.8\normalbaselineskip #3 \par
+    \vskip-0.2\normalbaselineskip
+    \centering{\Leftarrowfill} \par
+    \vskip-0.1\normalbaselineskip #4}}}
+\def\schemerarrow#1#2#3#4{\raisebox{#1}{%
+    \parbox{#2}{\centering
+    \baselineskip=.8\normalbaselineskip #3 \par
+    \vskip-0.2\normalbaselineskip
+    \centering{\Rightarrowfill} \par
+    \vskip-0.1\normalbaselineskip #4}}}
+\def\schemelrarrow#1#2#3#4{\raisebox{#1}{%
+    \parbox{#2}{\centering
+    \baselineskip=.8\normalbaselineskip #3 \par
+    \vskip-0.2\normalbaselineskip
+    \centering{\Leftrightarrowfill} \par
+    \vskip-0.1\normalbaselineskip #4}}}
+\def\changespace#1{\def\baselinestretch{#1} \@normalsize}
+\def\tbcaption{\def\@captype{table}\caption}
+\def\fgcaption{\def\@captype{figure}\caption}
+\def\smcaption{\def\@captype{scheme}\caption}
+%%%%%%%%%%%1991 November 7%%%chapinitial%%%%%%%%%%%%%
+\def\chap@initial#1%
+{\medbreak\begingroup\clubpenalty=10000
+ \def\par{\endgraf\endgroup\medbreak}
+ \noindent\hangindent28pt\hangafter=-2
+\hbox to0pt{\hskip-\hangindent
+\hbox to28pt{\hss\raise-4pt\hbox{\lower3pt\hbox{\Huge\bf #1}} }
+} \hskip-5pt plus2pt minus2pt}
+\outer\def\chapinitial{\chap@initial}
+\def\yen{\leavevmode\hbox{\setbox0=\hbox{Y}%
+\setbox1=\vbox{\hrule height.05\ht0 width.96\wd0%
+\kern.18\ht0\hrule height.05\ht0 width.96\wd0}%
+\setbox1=\hbox to\wd0{\raise.3\ht0\box1\hss}%
+{\ooalign{\hfil\box1\hfil\crcr\box0}}}}
+\newif\ifverbswitch \verbswitchtrue
+\let\old@verbatim\@verbatim
+\let\old@xverbatim\@xverbatim
+\let\old@sxverbatim\@sxverbatim
+\begingroup
+  \catcode`\|=0  \catcode`\\=13
+  |gdef|verbh@@k{|catcode`|\=13 |let\=|yen}
+|endgroup
+\def\verb{\begingroup \catcode``=13 \@noligs
+ \tt \let\do\@makeother \dospecials
+ \ifverbswitch \verbh@@k \fi \@ifstar{\@sverb}{\@verb}}
+\begingroup
+\catcode`|=0 \catcode`[=1 \catcode`]=2
+\catcode`\{=12 \catcode`\}=12 \catcode`\\=13
+|gdef|@xverbatim#1\end{verbatim}[#1|end[verbatim]]
+|gdef|@sxverbatim#1\end{verbatim*}[#1|end[verbatim*]]
+|endgroup
+\newdimen\verbatimleftmargin \verbatimleftmargin\leftmargini
+\newdimen\verbatimbaselineskip \verbatimbaselineskip11pt
+\def\verbatimsize{\small}
+\def\@verbatim{\trivlist \item[]%
+ \if@minipage \else \vskip\baselineskip%
+ \vskip-\verbatimbaselineskip \vskip\parskip\fi
+ \leftskip\@totalleftmargin
+ \if@minipage \else \advance\leftskip\verbatimleftmargin \fi
+ \rightskip\z@ \parindent\z@ \parfillskip\@flushglue \parskip\z@
+ \@tempswafalse \def\par{\if@tempswa\hbox{}\fi\@tempswatrue\@@par}
+ \obeylines \verbatimsize \baselineskip\verbatimbaselineskip \tt
+ \catcode``=13 \@noligs \let\do\@makeother \dospecials}
+\def\verbatim{\ifverbswitch \@verbatim \else \old@verbatim \fi
+\frenchspacing \@vobeyspaces
+\ifverbswitch \verbh@@k \@xverbatim \else \old@xverbatim \fi}
+\@namedef{verbatim*}{%
+ \ifverbswitch \@verbatim \verbh@@k \@sxverbatim
+ \else \old@verbatim \old@sxverbatim \fi}
+\def\@sverb#1{\def\@tempa ##1#1{##1\endgroup}\@tempa}
+\def\@verb{\obeyspaces \frenchspacing \@sverb}
+\def\@sverbtim{\obeyspaces\@verbatim}
+\let\endverbatim=\endtrivlist
+\@namedef{varbatim*}{\@verbatim\@sxverbatim}
+\expandafter\let\csname endverbatim*\endcsname =\endtrivlist
+\long\def\fb@xit#1#2#3#4{%
+\setbox4=\vbox{\hsize#3\noindent#4}%
+\vbox{\hrule\@height#1\hbox{\vrule\@width#1\kern#2\vbox{%
+\kern#2\box4\kern#2}\kern#1\vrule\@width#1}\hrule\@height#1}}
+\long\def\fboxit#1#2{\fb@xit{\fboxrule}{\fboxsep}{#1}{#2}}
+\long\def\leftshfr@me#1#2#3#4{\leavevmode%
+ \vbox{\hbox{\hsize #3\vbox{%
+ \hbox{\vrule\@width #1%
+ \vbox{\kern-#1\fb@xit{%
+ \fboxrule}{#2}{#3}{#4}\kern-\fboxrule}\kern-#1}%
+ \hrule\@height#1}}}\strut\hskip #1\relax}
+\long\def\leftshframe#1#2{%
+ \leftshfr@me{\fboxsep}{\fboxsep}{#1}{#2}}
+\long\def\leftshfbox#1{\leavevmode\setbox0=\hbox{\fbox{#1}}%
+ \vbox{\hbox{\vbox{\hbox{\vrule\@width\fboxsep\vbox{%
+       \kern-\fboxsep\box0\kern-\fboxrule}\kern-\fboxsep}%
+ \hrule\@height\fboxsep}}}\hskip\fboxsep\relax} %%%%
+\long\def\rightshfr@me#1#2#3#4{\leavevmode%
+ \vbox{\hbox{\kern#1\vbox{\hsize#3\vbox{\kern-#1\hbox{%
+ \kern-#1\fb@xit{\fboxrule}{#2}{#3}{#4}}\hrule\@height#1}}%
+ \vrule\@width#1}}\strut}
+\long\def\rightshframe#1#2{%
+ \rightshfr@me{\fboxsep}{\fboxsep}{#1}{#2}}
+\long\def\rightshfbox#1{\leavevmode%
+ \vbox{\hbox{\kern\fboxsep\vbox{\vbox{\kern-\fboxsep\hbox{%
+ \kern-\fboxsep\fbox{#1}}\hrule\@height\fboxsep}}%
+ \vrule\@width\fboxsep}}}
+\def\ffboxit{\par\vskip1pc\hfil\vbox\bgroup
+    \hrule\hbox\bgroup\vrule\kern3pt\vbox\bgroup\kern3pt}
+\def\endffboxit{\kern3pt\egroup\kern3pt\vrule\egroup\hrule\egroup
+             \hfil\\}
+\def\ffparbox#1#2{\vbox{\hsize=#1 \noindent\strut #2\strut}}
+\long\def\fr@meboxit#1#2#3{\gdef\fr@meline{#1}\gdef\fr@mesp{#2}%
+    \global\setbox4=\hbox\bgroup\minipage{#3}}
+\def\endfr@meboxit{\endminipage\egroup%
+    \hbox{\vbox{\hrule\@height\fr@meline%
+    \hbox{\vrule\@width\fr@meline\kern\fr@mesp%
+    \vbox{\kern\fr@meline\kern\fr@mesp\box4\kern\fr@mesp}%
+    \kern\fr@mesp}\hrule\@height\fr@meline}%
+    \vrule\@width\fr@meline}}
+\def\frameboxit#1{\leavevmode\fr@meboxit{\fboxrule}{\fboxsep}{#1}}
+\let\endframeboxit=\endfr@meboxit
+\def\lshfr@meboxit#1#2#3#4{\gdef\sh@hwidth{#1}\gdef\sh@vwidth{#2}%
+\leavevmode%
+ \vbox\bgroup\hbox\bgroup\hsize #4\vbox\bgroup%
+ \hbox\bgroup\vrule\@width\sh@vwidth%
+ \vbox\bgroup\kern-\sh@hwidth\fr@meboxit{\fboxrule}{#3}{#4}}
+\def\endlshfr@meboxit{\endfr@meboxit%%%%\kern-\fboxrule
+ \egroup\kern-\sh@vwidth\egroup%
+ \hrule\@height\sh@hwidth\egroup\egroup\egroup%
+ \strut\kern\sh@hwidth\relax}
+\def\lshfboxit#1{\leavevmode%
+ \lshfr@meboxit{\fboxsep}{\fboxsep}{\fboxsep}{#1}}
+\let\endlshfboxit=\endlshfr@meboxit
+\def\rshfr@meboxit#1#2#3#4{%
+ \gdef\sh@hwidth{#1}\gdef\sh@vwidth{#2}%
+ \leavevmode%
+ \vbox\bgroup\hbox\bgroup\kern\sh@vwidth%
+ \vbox\bgroup\hsize#4\vbox\bgroup%
+ \kern-\sh@hwidth\hbox\bgroup\kern-\sh@vwidth%
+ \fr@meboxit{\fboxrule}{#3}{#4}}
+\def\endrshfr@meboxit{\endfr@meboxit\egroup%
+ \hrule\@height\sh@hwidth%
+ \egroup\egroup\vrule\@width\sh@vwidth\egroup\egroup\strut}
+\def\rshfboxit#1{\leavevmode%
+ \rshfr@meboxit{\fboxsep}{\fboxsep}{\fboxsep}{#1}}
+\let\endrshfboxit=\endrshfr@meboxit
+\newdimen\hsgr@d \newdimen\vsgr@d
+\newdimen\vwgr@d \newdimen\hwgr@d
+\newdimen\vsepgr@d \newdimen\hsepgr@d
+\newcount\nrep \newcount\nrepmax
+\nrepmax=25
+\def\grshfr@meboxit#1#2#3#4{%
+ \hsgr@d=0pt \advance\hsgr@d by#1 \divide\hsgr@d by\nrepmax%
+ \vsgr@d=0pt \advance\vsgr@d by#2 \divide\vsgr@d by\nrepmax%
+ \leavevmode%
+ \setbox0=\vbox\bgroup\fr@meboxit{\fboxrule}{#3}{#4}}
+\def\brb@xit#1{\vbox{\setbox1=\hbox{#1}%
+       \offinterlineskip%
+  \hbox{\copy1\vsepgr@d=\nrep\vsgr@d%
+       \vwgr@d=\ht1\advance\vwgr@d by-\vsepgr@d%
+       \vrule\@height\vwgr@d\@width\vsgr@d}%
+  \hbox{\hsepgr@d=\nrep\hsgr@d\kern\hsepgr@d%
+       \vbox{\hwgr@d=\wd1\advance\hwgr@d by-\hsepgr@d%
+       \hrule\@height\hsgr@d\@width\hwgr@d}}}}
+\def\lprb@xit{\expandafter\setbox0=\expandafter\brb@xit{\box0}}
+\def\endgrshfr@meboxit{\endfr@meboxit\egroup%
+ \nrep=\@ne\@whilenum\nrep<\nrepmax\do%
+ {\lprb@xit\advance\nrep\@ne}\box0\relax}
+\def\grshfboxit#1{\leavevmode%
+  \grshfr@meboxit{\fboxsep}{\fboxsep}{\fboxsep}{#1}}
+\let\endgrshfboxit=\endgrshfr@meboxit
+\def\glshfr@meboxit#1#2#3#4{%
+ \hsgr@d=0pt \advance\hsgr@d by#1 \divide\hsgr@d by\nrepmax%
+ \vsgr@d=0pt \advance\vsgr@d by#2 \divide\vsgr@d by\nrepmax%
+ \leavevmode%
+ \setbox0=\vbox\bgroup\fr@meboxit{\fboxrule}{#3}{#4}}
+\def\blb@xit#1{%
+  \vbox{\setbox1=\hbox{#1}%
+       \offinterlineskip%
+       \vsepgr@d=\nrep\vsgr@d%
+       \vwgr@d=\ht1\advance\vwgr@d by-\vsepgr@d%
+       \hsepgr@d=\nrep\hsgr@d%
+       \hwgr@d=\wd1\advance\hwgr@d by-\hsepgr@d%
+   \hbox{\vrule\@height\vwgr@d\@width\vsgr@d\copy1}%
+   \hbox{\kern-\vsgr@d%
+         \vrule\@height\hsgr@d\@width\hwgr@d}}}
+\def\lplb@xit{\expandafter\setbox0=\expandafter\blb@xit{\box0}}
+\def\endglshfr@meboxit{\endfr@meboxit\egroup%
+ \nrep=\@ne\@whilenum\nrep<\nrepmax\do%
+ {\lplb@xit\advance\nrep\@ne}\box0\relax}
+\def\glshfboxit#1{\leavevmode%
+ \glshfr@meboxit{\fboxsep}{\fboxsep}{\fboxsep}{#1}}
+\let\endglshfboxit=\endglshfr@meboxit
+\@ifundefined{ybaselineshift}{%
+\newdimen\ybaselineshift \ybaselineshift=\z@}{}
+\@ifundefined{tbaselineshift}{%
+\newdimen\tbaselineshift \tbaselineshift=\z@}{}
+\newdimen\@savetbaselineshift \@savetbaselineshift=\z@
+\def\@oval(#1,#2)[#3]{\begingroup\boxmaxdepth \maxdimen
+  \@ovttrue \@ovbtrue \@ovltrue \@ovrtrue
+  \@tfor\@tempa :=#3\do{\csname @ov\@tempa false\endcsname}\@ovxx
+  #1\unitlength \@ovyy #2\unitlength
+  \@tempdimb \ifdim \@ovyy >\@ovxx \@ovxx\else \@ovyy \fi
+  \advance\@tempdimb -2pt\relax
+  \@getcirc \@tempdimb
+  \@ovro \ht\@tempboxa \@ovri \dp\@tempboxa
+  \@ovdx\@ovxx \advance\@ovdx -\@tempdima \divide\@ovdx \tw@
+  \@ovdy\@ovyy \advance\@ovdy -\@tempdima \divide\@ovdy \tw@
+  \@circlefnt \setbox\@tempboxa
+  \hbox{\if@ovr \@ovvert32\kern -\@tempdima \fi
+  \if@ovl \kern \@ovxx \@ovvert01\kern -\@tempdima \kern -\@ovxx \fi
+  \if@ovt \@ovhorz \kern -\@ovxx \fi
+  \if@ovb \raise \@ovyy \@ovhorz \fi}\advance\@ovdx\@ovro
+  \advance\@ovdy\@ovro \ht\@tempboxa\z@ \dp\@tempboxa\z@
+  \@put{-\@ovdx}{-\@ovdy}{\box\@tempboxa}%
+  \endgroup}
+\def\h@b@x#1#2#3{\hbox to\dimen1%
+ {\@oval(#3,#3)[#1]\hfil\@oval(#3,#3)[#2]}}
+\def\@vrf@#1#2{\vskip#1\leaders\vrule\@width#2\vfil\vskip#1}
+\let\miniscreentoprule=\hrule
+\def\miniscreen{\@ifnextchar[{\@miniscreen}{\@miniscreen[0]}}
+\def\miniscreen{\@ifnextchar[{\@miniscreen}{\@miniscreen[0]}}
+\def\@miniscreen[#1]#2{\dimen1=#2\relax%
+\@savetbaselineshift\tbaselineshift \tbaselineshift\z@
+\@tempcnta=-2 \multiply\@tempcnta by#1\relax%
+\advance\@tempcnta by 20\relax \dimen5=1pt
+\multiply\dimen5\@tempcnta
+\dimen4=-1pt \multiply\dimen4 by#1\relax
+\advance\dimen4 by 10pt
+\dimen3=\dimen4 \advance\dimen3 by -.2pt
+\par\vspace{.3\baselineskip}%
+\dimen2=\dimen1 \advance\dimen2 by .1pt
+\advance\dimen1 -\dimen5\relax%
+\setbox0=\hbox\bgroup\minipage{\dimen1
+\tbaselineshift\@savetbaselineshift}}%
+\def\endminiscreen{\endminipage\egroup%
+\setbox1=\hbox to\dimen2{\hfil\vbox{\offinterlineskip%
+\thinlines\unitlength=1pt
+\miniscreentoprule%\hrule
+\kern\dimen3%
+\h@b@x{tl}{tr}{\@tempcnta}%
+\kern-\dimen4\box0\h@b@x{bl}{br}{\@tempcnta}%
+\kern-.4pt\hrule}\hfil}\dimen0=\ht1\noindent%
+\hbox to\dimen2{\hbox to.4pt{%
+\vbox to\dimen0{\@vrf@{\dimen4}{.4pt}}\hss}%
+\box1\hbox to.2pt{%
+ \hss\vbox to\dimen0{\@vrf@{\dimen4}{.4pt}}}\hss}}%
+\def\screen{\@ifnextchar[{\@screen}{\@miniscreen[0]{\linewidth}}}
+\def\@screen[#1]{\miniscreen[#1]{\linewidth}}
+\let\endscreen=\endminiscreen
+\def\tboxscreentoprule{%
+\hbox to\wd0{\smash{\lower.4ex\hbox{%
+\fboxsep=2pt \fbox{\small \tboxtitle}}}\hrulefill}}
+\def\tboxtitle{\bf Memorandum}
+\def\tboxminiscreen{\@ifnextchar[{\vskip8pt
+ \let\miniscreentoprule=\tboxscreentoprule%
+ \@miniscreen}{\vskip8pt
+ \let\miniscreentoprule=\tboxscreentoprule%
+ \@miniscreen[0]}}
+\let\endtboxminiscreen=\endminiscreen
+\def\tboxscreen{\@ifnextchar[{\@tboxscreen}%
+{\@tboxscreen[0]}}
+\def\@tboxscreen[#1]{\tboxminiscreen[#1]{\linewidth}}
+\let\endtboxscreen=\endtboxminiscreen
+\def\sboxit#1#2{\vbox{\hrule\hbox%
+{\vrule\vbox{\kern3pt\vbox{\hsize #1 \noindent #2}%
+\kern3pt}\vrule}\hrule}}
+\def\bury{\@ifnextchar [{\@bury}{\@bury[.5\normalbaselineskip]}}
+\def\@bury[#1]#2{\smash{\lower#1\hbox{#2}}}
+\def\finpushw@ll{\wd0=0pt \box0}
+\def\makepushw@ll#1{\setbox0=\hbox{#1}\finpushw@ll}
+\def\mathpushw@ll#1#2{\setbox0=\hbox{$\m@th#1{#2}$}\finpushw@ll}
+\def\pushtowall{\relax \leavevmode
+ \ifmmode\def\next{\mathpalette\mathpushw@ll}
+ \else\let\next\makepushw@ll \fi \next}
+\def\penetrate#1#2{\pushtowall{\hbox{\hskip#1\hbox{#2}}}}
+\def\cyan{\mbox{$\bigcirc$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize C}\hfil\cr\cr$\bigcirc$}\,}}
+\def\magenta{\mbox{$\bigcirc$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize M}\hfil\cr\cr$\bigcirc$}\,}}
+\def\yellow{\mbox{$\bigcirc$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize Y}\hfil\cr\cr$\bigcirc$}\,}}
+\def\cyandv{\mbox{$\bigotimes$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize C}\hfil\cr\cr$\bigcirc$}\,}}
+\def\magentadv{\mbox{$\bigotimes$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize M}\hfil\cr\cr$\bigcirc$}\,}}
+\def\yellowdv{\mbox{$\bigotimes$\kern-.06em{--}\kern-.06em
+ \ooalign{\hfil
+ \raise.05ex\hbox{\scriptsize Y}\hfil\cr\cr$\bigcirc$}\,}}
+\def\agxlatent{%
+ \mbox{\ooalign{%
+ \hfil\raise.07ex\hbox{\footnotesize $\bullet$}\hfil\cr\cr
+ $\triangle$}\,}}
+\def\agxdv{%
+ \mbox{\ooalign{\hfil\raise.07ex\hbox{%
+ \small $\spadesuit$}\hfil\cr\cr
+ $\triangle$}\,}}
+\def\agx{\mbox{$\triangle$}}
+\def\llongrightarrow{%%%--->
+\relbar\joinrel\relbar\joinrel\relbar\joinrel\rightarrow}
+\def\llongleftarrow{%%%<---
+ \leftarrow\joinrel\relbar\joinrel\relbar\joinrel\relbar}
+\def\llongleftrightarrow{%%%<--->
+ \leftarrow\joinrel\relbar\joinrel\relbar\joinrel\rightarrow}
+\def\Equilibarrow{%%%<--- and --->
+ \mathrel{\ooalign{\raise.35ex\hbox{$\llongrightarrow$}\crcr
+ \lower.35ex\hbox{$\llongleftarrow$}}}}
+\def\Llongrightarrow{%%%===>
+ \Relbar\joinrel\Relbar\joinrel\Relbar\joinrel\Rightarrow}
+\def\Llongleftarrow{%%%<===
+ \Leftarrow\joinrel\Relbar\joinrel\Relbar\joinrel\Relbar}
+\def\Llongleftrightarrow{%%<===>
+ \Leftarrow\joinrel\Relbar\joinrel\Relbar\joinrel\Rightarrow}
+
+\def\llongleftharpoondown{%%% /---
+ \leftharpoondown\joinrel\relbar\joinrel\relbar\joinrel\relbar}
+\def\llongrightharpoonup{%%%---/
+ \relbar\joinrel\relbar\joinrel\relbar\joinrel\rightharpoonup}
+\def\equilibarrow{%%% /--- and ---/
+ \mathrel{\ooalign{%
+ \raise.3ex\hbox{$\llongrightharpoonup$}\crcr
+ \lower.3ex\hbox{$\llongleftharpoondown$}}}}
+\def\eqproton{\stackrel{{\rm \displaystyle H}^{+}}{\Equilibarrow}}
+\def\lllongrightarrow{\relbar\joinrel\relbar%
+ \joinrel\relbar\joinrel\relbar\joinrel\rightarrow}
+\def\lllongleftarrow{%%%<-------
+ \leftarrow\joinrel\relbar\joinrel\relbar%
+ \joinrel\relbar\joinrel\relbar}
+\def\lllongleftrightarrow{%%%<------->
+ \leftarrow\joinrel\relbar\joinrel\relbar%
+ \joinrel\relbar\joinrel\rightarrow}
+\def\Equiliblongarrow{%%%<------- and ------->
+ \mathrel{\ooalign{\raise.35ex\hbox{$\lllongrightarrow$}\crcr
+ \lower.35ex\hbox{$\lllongleftarrow$}}}}
+\def\Lllongrightarrow{%%%=======>
+ \Relbar\joinrel\Relbar\joinrel\Relbar\joinrel%
+ \Relbar\joinrel\Rightarrow}
+\def\Lllongleftarrow{%%%<=======
+ \Leftarrow\joinrel\Relbar\joinrel\Relbar\joinrel%
+ \Relbar\joinrel\Relbar}
+\def\Lllongleftrightarrow{%%<=======>
+ \Leftarrow\joinrel\Relbar\joinrel\Relbar\joinrel%
+ \Relbar\joinrel\Rightarrow}
+\def\lllongleftharpoondown{%%% /-------
+ \leftharpoondown\joinrel\relbar\joinrel\relbar%
+ \joinrel\relbar\joinrel\relbar}
+\def\lllongrightharpoonup{%%%-------/
+ \relbar\joinrel\relbar\joinrel\relbar\joinrel%
+ \relbar\joinrel\rightharpoonup}
+\def\equiliblongarrow{%%% /------ and ------/
+ \mathrel{\ooalign{%
+ \raise.3ex\hbox{$\lllongrightharpoonup$}\crcr
+ \lower.3ex\hbox{$\lllongleftharpoondown$}}}}
+\def\deHBr{\stackrel{\displaystyle \rm -HBr}%
+{\stackrel{\displaystyle \lllongrightarrow}{\rm E2}}}
+\def\chemcorr{%
+ \fontdimen16\textfont2=3.5pt
+ \fontdimen17\textfont2=3.5pt
+ %\fontdimen14\textfont2=3.8pt
+}
+\def\leavechemcorr{%
+ \fontdimen16\textfont2=1.49998pt
+ \fontdimen17\textfont2=2.47217pt
+ %\fontdimen14\textfont2=3.62892pt
+}
+\newif\ifnewl@tex \newl@textrue
+\@ifundefined{DeclareMathVersion}%
+ {\global\newl@texfalse}{\global\newl@textrue}%
+\ifnewl@tex\@ifundefined{mv@chem}{\DeclareMathVersion{chem}%
+ \SetSymbolFont{letters}{chem}{OT1}{cmr}{m}{n}}{}\fi
+\ifnewl@tex
+\def\chemform#1{{\mathversion{chem}%
+$\chemcorr #1$\leavechemcorr}}
+\else
+\def\chemform#1{\chemcorr
+$\rm #1$\leavechemcorr}
+\fi
+\ifnewl@tex
+\def\chemmath{\begingroup\mathversion{chem}\[\chemcorr}
+\def\endchemmath{\]\endgroup\leavechemcorr}
+\else
+\def\chemmath{\chemcorr\[\rm}
+\def\endchemmath{\] \leavechemcorr}
+\fi
+\ifnewl@tex
+\def\chemeqn{\begingroup\mathversion{chem}\equation\chemcorr}
+\def\endchemeqn{\endequation\endgroup\leavechemcorr}
+\else
+\def\chemeqn{\chemcorr\equation\rm}
+\def\endchemeqn{\endequation\leavechemcorr}
+\fi
+\ifnewl@tex
+\def\chemeqnarray{\stepcounter{equation}
+ \let\@currentlabel=\theequation
+ \global\@eqnswtrue
+ \global\@eqcnt\z@\tabskip\@centering
+ \let\\=\@eqncr
+ \begingroup\mathversion{chem}
+$$\chemcorr\halign to \displaywidth\bgroup
+  \@eqnsel\hskip\@centering
+  $\rm \displaystyle\tabskip\z@{##}$ &
+  \global\@eqcnt\@ne
+  \hskip \arraycolsep \hfil$\rm{##}$\hfil &
+  \global\@eqcnt\tw@ \hskip \arraycolsep
+  $\rm \displaystyle\tabskip\z@{##}$\hfil
+  \tabskip\@centering &
+  \llap{##}\tabskip\z@\cr}
+\def\endchemeqnarray{\endeqnarray\endgroup
+\leavechemcorr}
+\else
+\def\chemeqnarray{\stepcounter{equation}
+ \let\@currentlabel=\theequation
+ \global\@eqnswtrue
+ \global\@eqcnt\z@\tabskip\@centering
+ \let\\=\@eqncr \chemcorr
+$$\halign to \displaywidth\bgroup
+  \@eqnsel\hskip\@centering
+  $\rm \displaystyle\tabskip\z@{##}$ &
+  \global\@eqcnt\@ne
+  \hskip \arraycolsep \hfil$\rm{##}$\hfil &
+  \global\@eqcnt\tw@ \hskip \arraycolsep
+  $\rm \displaystyle\tabskip\z@{##}$\hfil
+  \tabskip\@centering &
+  \llap{##}\tabskip\z@\cr}
+\def\endchemeqnarray{\endeqnarray
+\leavechemcorr}
+\fi
+\let\@seqncr=\@eqncr
+\ifnewl@tex
+\@namedef{chemeqnarray*}{%
+\def\@eqncr{\nonumber\@seqncr}\chemeqnarray}
+\@namedef{endchemeqnarray*}{\nonumber\endchemeqnarray}
+\else
+\@namedef{chemeqnarray*}{%
+\def\@eqncr{\nonumber\@seqncr\rm}\chemeqnarray}
+\@namedef{endchemeqnarray*}{\nonumber\endchemeqnarray}
+\fi
+\def\chemeqnarraya{\chemeqn@rraya \chemeqnarray}
+\def\chemeqn@rraya{%
+ \c@enumi=\c@equation
+ \advance\c@enumi\@ne
+ \c@equation=\z@
+ \@ifundefined{chapter}%
+{\def\theequation{\theenumi\alph{equation}}}%
+{\def\theequation{%
+\thechapter.\theenumi\alph{equation}}}}
+\def\endchemeqnarraya{\endchemeqnarray
+\global\c@equation=\c@enumi}
+\def\XyMcompd(#1,#2)(#3,#4)#5#6{%
+\begingroup
+\edef\xymrefa{#5}\edef\xymrefb{#6}%
+\edef\kkk{#1}%
+\begin{tabular}{c}
+\ifx\kkk\empty\else
+\begin{picture}(#1,#2)(#3,#4)\fi\ignorespaces}
+\def\endXyMcompd{%
+\ifx\kkk\empty\else\end{picture}\fi
+\\[-\baselineskip]
+\ifx\xymrefa\empty\else{\bf \compd\xymrefb
+\expandafter\label{\xymrefa}}\fi
+\end{tabular}\endgroup}
+\def\XyMtab#1{\center\tabular{#1c}}
+\def\endXyMtab{\endtabular\endcenter}
+\def\derivlist#1{%
+\mbox{}\\
+\begingroup\def\arraystretch{0.7}%
+\begin{tabular}{l}
+\@forsemicol\member:=#1\do{%
+\ifx\member\empty\else%
+\hbox to2em{\hss\derivnum}:\space\member \\
+\fi}\end{tabular}\endgroup}
+\def\XyMderiv{\tabular{c}}
+\def\endXyMderiv{\endtabular}
+\def\endash{\mbox{--{}}}
+\def\Cent{\mbox{\raise.9ex\hbox{%
+ \scriptsize$\circ$}\kern-.12em\hbox{C}}}
+\def\degC{\mbox{\kern-.2em\char'27\kern-.3em C}}
+\def\degF{\mbox{\kern-.2em\char'27\kern-.3em F}}
+
+\def\yubin{$\overline{\top}$}
+\def\Yubin#1{\leavevmode\hbox{\vbox{\hrule\@height.12ex\@width.7em
+\kern.28ex\hrule\@height.12ex\@width.7em
+\hbox{\kern.35em\kern-.06ex
+\vbox{\hrule\@height1ex\@width.12ex}}}\kern.1em{#1}}}
+\def\xlethead#1{%
+ \kern-.6667\baselineskip \line{\hrulefill\phantom{ #1 }\hrulefill}
+ \kern-.6667\baselineskip \line{\hrulefill\phantom{ #1 }\hrulefill}
+ \kern-.6667\baselineskip \line{\hrulefill\hbox{ #1 }\hrulefill}}
+\def\lethead#1#2#3{\def\line{\hbox to\textwidth}
+ \vbox{\line{\hrulefill}
+ \xlethead{#1} \xlethead{#2} \xlethead{#3}
+ \kern-.6667\baselineskip \line{\hrulefill}}}
+\def\horizon{\rule{12pt}{0.1pt}}
+\newcount\TestCount \def\tmpkern{\kern0pt}
+\ifnewl@tex \else
+\def\resetfontsize{%
+ \ifx\@currsize\normalsize%
+  \def\tmpf@ntsize{%
+   \load{\footnotesize}{\sf}%
+   \load{\footnotesize}{\sl}%
+   \load{\footnotesize}{\bf}%
+   \def\tmpkern{\kern0.05em}%
+   \footnotesize}\fi
+ \ifx\@currsize\scriptsize \let\tmpf@ntsize=\tiny\fi
+ \ifx\@currsize\footnotesize \let\tmpf@ntsize=\tiny\fi
+ \ifx\@currsize\small \let\tmpf@ntsize=\scriptsize\fi
+ \ifx\@currsize\large \let\tmpf@ntsize=\small\fi
+ \ifx\@currsize\Large \let\tmpf@ntsize=\@normalsize\fi
+ \ifx\@currsize\LARGE \let\tmpf@ntsize=\large\fi
+ \ifx\@currsize\huge \let\tmpf@ntsize=\Large\fi
+ \ifx\@currsize\Huge \let\tmpf@ntsize=\LARGE\fi}
+\fi
+\ifnewl@tex \else
+\def\Bib{\ifnum \fam=\m@ne \fam=\z@ \fi\TestCount=\fam\leavevmode%
+    \edef\aaa{\fontname\scriptfont\fam}%
+    \edef\bbb{\fontname\textfont\fam}%
+ \resetfontsize%
+ \hbox{$\fam=\TestCount\textstyle B$}%
+ \ifx\aaa\bbb%
+   \hbox{\tmpf@ntsize\bf
+  $\fam=\TestCount\kern-.025em I\kern-.045em B$}%
+ \else%
+   \hbox{$\fam\TestCount\scriptstyle\kern-.025em I\kern-.045em B$}%
+ \fi
+}
+\fi
+\ifnewl@tex
+\DeclareRobustCommand{\BibTeX}{%
+    B\hbox{$\m@th$\csname S@\f@size\endcsname
+    \fontsize\sf@size\z@ \math@fontsfalse\selectfont
+    \kern-.025em I\kern-.045em B}\kern-.08em\TeX}
+\else \def\BibTeX{\Bib\kern-.08em\TeX} \fi
+\ifnewl@tex
+\DeclareRobustCommand{\jBibTeX}{\mbox{%
+  \if b\expandafter\@car\f@series\@nil\boldmath\fi
+  \leavevmode\lower.46ex\hbox{J}\kern-.08em\BibTeX}}
+\else
+\def\jBibTeX{\leavevmode\lower.46ex\hbox{J}%
+ \kern-.08em\Bib\kern-.08em\TeX}
+\fi
+\def\jTeX{\leavevmode\lower.46ex\hbox{J}\kern-.15em\TeX}
+\def\pTeX{p\kern-.15em\TeX}
+\ifnewl@tex \else
+\def\Sub{\leavevmode\ifnum \fam=\m@ne \fam=\z@ \fi%
+    \TestCount=\fam{S}%
+    \edef\aaa{\fontname\scriptfont\fam}%
+    \edef\bbb{\fontname\textfont\fam}%
+    \ifx\aaa\bbb\resetfontsize%
+      \hbox{\tmpf@ntsize\bf%
+      $\fam=\TestCount\kern-.045em{U}\kern-.12em{B}$}%
+    \else%
+      \hbox{$\fam\TestCount%
+       \scriptstyle\kern-.045em{U}\kern-.12em{B}$}%
+    \fi}
+\fi
+\ifnewl@tex
+\DeclareRobustCommand{\SubBib}{S\hbox{$\m@th$%
+   \csname S@\f@size\endcsname\fontsize\sf@size\z@
+   \math@fontsfalse\selectfont%
+   \kern-.045em{U}\kern-.12em{B}}B\hbox{$\m@th$%
+   \csname S@\f@size\endcsname\fontsize\sf@size\z@
+   \math@fontsfalse\selectfont \kern-.025em I\kern-.045em B}}
+\else \def\SubBib{\Sub\kern-.08em\Bib} \fi
+
+\ifnewl@tex \else
+\def\La{\ifnum \fam=\m@ne \fam=\z@ \fi\TestCount=\fam%
+  \edef\aaa{\fontname\scriptfont\fam}%
+  \edef\bbb{\fontname\textfont\fam}\leavevmode{L}%
+  \ifx\aaa\bbb \resetfontsize%
+   \raise.46ex\hbox{{\tmpf@ntsize\bf%
+   $\fam\TestCount\kern-.4em\tmpkern{A}$}}%
+  \else%
+   \raise.42ex\hbox{$\fam\TestCount\scriptstyle\kern-.3em{A}$}%
+  \fi}
+\fi
+\ifnewl@tex \else \def\LaTeX{\La\kern-.15em\TeX}\fi
+\ifnewl@tex
+ \DeclareRobustCommand{\jLaTeX}%
+ {\leavevmode\lower.46ex\hbox{J}\kern-.08em\LaTeX}
+\else
+ \def\jLaTeX{\leavevmode\lower.46ex\hbox{J}\kern-.08em\LaTeX}
+\fi
+\def\PiC{P\kern-.12em\lower.5ex\hbox{I}\kern-.075emC}
+\ifnewl@tex
+\DeclareRobustCommand{\PiCTeX}{\PiC\kern-.11em\TeX}
+\else
+\def\PiCTeX{\PiC\kern-.11em\TeX}
+\fi
+\ifnewl@tex
+\DeclareRobustCommand{\tpic}{T\hbox{$\m@th$%
+   \csname S@\f@size\endcsname\fontsize\sf@size\z@
+   \math@fontsfalse\selectfont
+   \kern-.025em P\kern-.025em I\kern-.025emC}}
+\else
+\def\tpic{\ifnum \fam=\m@ne \fam=\z@ \fi%
+    \TestCount=\fam \leavevmode%
+    \edef\aaa{\fontname\scriptfont\fam}%
+    \edef\bbb{\fontname\textfont\fam}%
+ \resetfontsize\hbox{$\fam=\TestCount\textstyle T$}%
+ \ifx\aaa\bbb\hbox{\tmpf@ntsize\bf$\fam=\TestCount%
+        \kern-.025em P\kern-.025em I\kern-.025emC$}\else%
+ \hbox{$\fam\TestCount\scriptstyle%
+       \kern-.025em P\kern-.025em I\kern-.025emC$}\fi}
+\fi
+\ifnewl@tex \else
+\def\Post{\ifnum \fam=\m@ne \fam=\z@ \fi%
+    \TestCount=\fam\leavevmode%
+    \edef\aaa{\fontname\scriptfont\fam}%
+    \edef\bbb{\fontname\textfont\fam}%
+ \resetfontsize%
+ \hbox{$\fam=\TestCount\textstyle P$}%
+ \ifx\aaa\bbb%
+   \hbox{\tmpf@ntsize\bf%
+   $\fam=\TestCount\kern-.045em O\kern-.015em ST$}%
+ \else%
+   \hbox{$\fam\TestCount%
+   \scriptstyle\kern-.045em O\kern-.015em ST$}%
+ \fi}
+\def\Script{\ifnum \fam=\m@ne \fam=\z@ \fi%
+    \TestCount=\fam\leavevmode%
+    \edef\aaa{\fontname\scriptfont\fam}%
+    \edef\bbb{\fontname\textfont\fam}%
+ \resetfontsize%
+ \hbox{$\fam=\TestCount\textstyle S$}%
+ \ifx\aaa\bbb%
+   \hbox{\tmpf@ntsize\bf$\fam=\TestCount\kern-.035em %
+    C\kern-.015em R\kern-.015em IP\kern-.035em T$}%
+ \else%
+   \hbox{$\fam\TestCount\scriptstyle\kern-.035em %
+   C\kern-.015em R\kern-.015em IP\kern-.035em T$}%
+ \fi}
+\fi
+\ifnewl@tex
+\DeclareRobustCommand{\PostScript}{P\hbox{$\m@th$%
+    \csname S@\f@size\endcsname\fontsize\sf@size\z@
+    \math@fontsfalse\selectfont
+    \kern-.045em O\kern-.015em ST}S\hbox{$\m@th$%
+    \csname S@\f@size\endcsname\fontsize\sf@size\z@
+    \math@fontsfalse\selectfont
+    \kern-.035em C\kern-.015em R\kern-.015em IP\kern-.035em T}}
+\else
+\def\PostScript{\Post\Script}
+\fi
+\def\triplebond{\leavevmode\kern.2pt\raisebox{.2ex}{%
+\hbox{\vbox{\hrule height.03ex width1em\kern.4ex
+\hrule height.03ex width1em\kern.4ex
+\hrule height.03ex width1em}}}\hskip.4pt}
+\def\doublebond{\leavevmode\kern.2pt\raisebox{.3ex}{%
+\hbox{\vbox{\hrule height.03ex width1em\kern.6ex
+\hrule height.03ex width1em}}}\hskip.4pt}
+\let\tbond=\triplebond
+\let\dbond=\doublebond
+\endinput
+%%
+%% End of file `chemist.sty'.

@@ -1,0 +1,539 @@
+\section*{郵便番号から住所欄を満たすアレをシェルスクリプトで}
+\addcontentsline{toc}{section}{郵便番号から住所欄を満たすアレをシェルスクリプトで}
+
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	郵便番号を入れ、ボタンを押すと……、都道府県欄から市区町村名欄、町名欄まで満たされ、
+	あとはせいぜい番地を入力すれば住所欄は入力完了。
+\end{grshfboxit}
+
+これはインターネットで買い物をした経験がある方なら殆どの方が体験したことのある機能ではないだろうか。
+今から作る料理は、この「住所欄補完」アプリケーションである。
+
+\subsection*{アプリケーションの構成}
+
+それではまず、構成\footnote{このサンプルアプリケーションは、サンプル品であるという性質上、一切のアクセス制限を掛けていない。実際にアプリケーションを開発する時は、public\_{}htmlディレクトリー以外に.htaccess等のファイルを置いて中を覗かれないようにすべきであろう。}から見ていこう。次の表をご覧いただきたい。
+
+\paragraph{住所欄補完アプリケーションのファイル構成} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	.
+	+-- data/  ................... 郵便番号辞書ファイル関連ディレクトリー
+	|   |
+	|   |-- mkzipdic_kenall.sh ... 郵便番号辞書を作成するシェルスクリプト(地域名用)
+	|   |-- mkzipdic_jigyosyo.sh . 郵便番号辞書を作成するシェルスクリプト(事業所用)
+	|   |                          ・要 zipコマンド、curlコマンド、及び iconv または nkf コマンド
+	|   |                          ・crontabなどから実行させるとよい
+	|   |
+	|   +-- kenall.txt ........... 辞書ファイル(地域名用、mkzipdic_kenall.shによって生成される)
+	|   +-- jigyosyo.txt ......... 辞書ファイル(事業所用、mkzipdic_jigyosyo.shによって生成される)
+	|
+	|
+	+-- public_html/ ............. Webディレクトリー(httpdでこの中を公開する)
+	|   |
+	|   +-- index.html  .......... 入力フォーム(Webブラウザーでこのファイルを開く)
+	|   +-- zip2addr.js .......... 郵便番号→住所 変換用クライアントサイドプログラム
+	|   +-- zip2addr.ajax.cgi .... 郵便番号→住所 変換用サーバーサイドプログラム
+	|
+	|
+	+-- commands ................. 自作コマンド置き場
+	    |
+	    +-- parsrc.sh ............ CSVパーサー
+\end{verbatim}
+\end{frameboxit}
+
+自作コマンドであるCSVパーサー\footnote{\ref{recipe:CSV_parser}（CSVファイルを読み込む）参照}を置いてあるディレクトリー``commands''以外に、2つのディレクトリー（``data''と``public\_{}html''）がある。
+これは、住所欄補完という機能を実現するにはやるべき作業が2種類あることに理由がある。
+では、それぞれについて説明しよう。
+
+\subsubsection*{dataディレクトリー -- 住所辞書作成}
+
+1つ目の作業は、辞書づくりである。
+
+郵便番号に対応する住所の情報は、日本郵政のサイトで公開されているが、
+クライアント（Webブラウザー）から郵便番号を与えられる度にそれを見にいくのは効率が悪い。
+そこで、その情報を手元にダウンロードしておくのだ。
+
+しかし単にダウンロードするだけではない。圧縮ファイルになっているので回答するのはもちろんだが、Shift\_{}JISエンコードされたCSVファイルとしてやってくるうえに、よみがな等の今回の変換に必要の無いデータもあるためそのままの状態では扱いづらい。そこで、UTF-8へエンコードし、CSVファイルをパースし、郵便番号と住所（都道府県名、市区町村名、町名）という情報だけにした状態で辞書ファイルにしておく。こうすることで、毎回の住所検索が低負荷で高速にこなせるようになる。
+
+この作業を担うのが、dataディレクトリーの中にある``mkzipdic\_{}kenall.sh''、``mkzipdic\_{}jigyosyo.sh''という2つのシェルスクリプトだ。2つあるのは、日本郵政サイトにある辞書データが、一般地域名用と大口事業所名用という2つのファイルに分かれているからである。
+
+\subsubsection*{public\_{}htmlディレクトリー -- 住所補完処理}
+
+前述の作業で作成された辞書ファイルを用い、クライアントから与えられた郵便番号に基づいた住所を住所欄に埋めるのがこのディレクトリーの中にあるプログラムの作業である。
+
+``index.html''は住所欄を提供するHTMLで、``zip2addr.js''は入力された郵便番号のサーバーへの送信・結果の住所欄への入力を担当するJavaScriptだ。そして、受け取った7桁の郵便番号から辞書を引き、得られた住所文字列を返すシェルスクリプトが``zip2addr.ajax.cgi''である。
+
+名前を見ればわかるがこのシェルスクリプトもAjaxとして動作するので、\ref{recipe:Ajax_without_libraries}（Ajaxで画面更新したい）に従って部分HTMLを返してもよいのだが、ここでは敢えてJSON形式で返すことにした。「もちろんJSONで返すこともできる」ということを示すためだ。JSONで返せば、例えばクライアント側で何らかの汎用JavaScriptライブラリーを利用していて、それと繋ぎ込むといったことも可能というわけだ。
+
+\subsection*{ソースコード}
+
+概要が掴めたところで、主要なソースコードを記していくことにする。シェルスクリプトで構成されたWebアプリケーションの中身を、とくと堪能してもらいたい。
+
+尚、これらのソースコードはGitHubでも公開している\footnote{\verb|https://github.com/ShellShoccar-jpn/zip2addr|}。
+
+\subsubsection*{■data/mkzipdic\_{}kenall.sh -- 辞書ファイル作成（一般地域名用）}
+
+このプログラムは、WebサイトからZIPファイルをダウンロードして展開する都合により、POSIX非準拠のcurlコマンドとunzipコマンドを必要とすることを御了承願いたい。
+
+\begin{indentation}{-9mm}{0zw}
+\begin{verbatim}
+#! /bin/sh
+
+#####################################################################
+#
+# MKZIPDIC_KENALL.SH
+# 日本郵便公式の郵便番号住所CSVから、本システム用の辞書を作成（地域名）
+#
+# Usage : mkzipdic.sh -f
+#         -f ... ・サイトにあるCSVファイルのタイプスタンプが、
+#                  今ある辞書ファイルより新しくても更新する
+#
+# [出力]
+# ・戻り値
+#   - 作成成功もしくはサイトのタイムスタンプが古いために作成する必要無
+#     しの場合は0、失敗したら0以外
+# ・成功時には辞書ファイルを更新する。
+#
+######################################################################
+
+
+######################################################################
+# 初期設定
+######################################################################
+
+# --- 変数定義 -------------------------------------------------------
+dir_MINE="$(d=${0%/*}/; [ "_$d" = "_$0/" ] && d='./'; cd "$d"; pwd)" # このshのパス
+readonly file_ZIPDIC="$dir_MINE/ken_all.txt"                         # 郵便番号辞書ファイルのパス
+readonly url_ZIPCSVZIP=http://www.post.japanpost.jp/zipcode/dl/oogaki/zip/ken_all.zip
+                                                                     # 日本郵便 郵便番号-住所
+                                                                     # CSVデータ (Zip形式) URL
+readonly flg_SUEXECMODE=0                                            # サーバーがsuEXECモードで
+                                                                     # 動いているなら1を設定
+# --- ファイルパス ---------------------------------------------------
+PATH='/usr/local/tukubai/bin:/usr/local/bin:/usr/bin:/bin'
+
+# --- 終了関数定義(終了前に一時ファイル削除) -------------------------
+exit_trap() {
+  trap 0 1 2 3 13 14 15
+  [ -n "${tmpf_zipcsvzip:-}" ] && rm -f $tmpf_zipcsvzip
+  [ -n "${tmpf_zipdic:-}"    ] && rm -f $tmpf_zipdic
+  exit ${1:-0}
+}
+trap 'exit_trap' 0 1 2 3 13 14 15
+
+# --- エラー終了関数定義 ---------------------------------------------
+error_exit() {
+  [ -n "$2" ] && echo "${0##*/}: $2" 1>&2
+  exit_trap $1
+}
+
+# --- テンポラリーファイル確保 ---------------------------------------
+tmpf_zipcsvzip=$(mktemp -t "${0##*/}.XXXXXXXX")
+[ $? -eq 0 ] || error_exit 1 'Failed to make temporary file #1'
+tmpf_zipdic=$(mktemp -t "${0##*/}.XXXXXXXX")
+[ $? -eq 0 ] || error_exit 2 'Failed to make temporary file #2'
+
+
+
+######################################################################
+# メイン
+######################################################################
+
+# --- 引数チェック ---------------------------------------------------
+flg_FORCE=0
+[ \( $# -gt 0 \) -a \( "_$1" = '_-f' \) ] && flg_FORCE=1
+
+# --- cURLコマンド存在チェック ---------------------------------------
+which curl >/dev/null
+[ $? -eq 0 ] || error_exit 3 'curl command not found'
+
+# --- サイト上のファイルのタイムスタンプを取得 -----------------------
+timestamp_web=$(curl -sLI $url_ZIPCSVZIP                                     |
+                awk '                                                        #
+                  BEGIN{                                                     #
+                    status = 0;                                              #
+                    d["Jan"]="01";d["Feb"]="02";d["Mar"]="03";d["Apr"]="04"; #
+                    d["May"]="05";d["Jun"]="06";d["Jul"]="07";d["Aug"]="08"; #
+                    d["Sep"]="09";d["Oct"]="10";d["Nov"]="11";d["Dec"]="12"; #
+                  }                                                          #
+                  /^HTTP\// { status = $2; }                                 #
+                  /^Last-Modified/ {                                         #
+                    gsub(/:/, "", $6);                                       #
+                    ts = sprintf("%04d%02d%02d%06d" ,$5,d[$4],$3,$6);        #
+                  }                                                          #
+                  END {                                                      #
+                    if ((status>=200) && (status<300) && (length(ts)==14)) { #
+                      print ts;                                              #
+                    } else {                                                 #
+                      print "NOT_FOUND";                                     #
+                    }                                                        #
+                  }'                                                         )
+[ "$timestamp_web" != 'NOT_FOUND' ] || error_exit 4 'The zipcode CSV file not found on the web'
+echo "_$timestamp_web" | sed '1s/_//' | grep '^[0-9]\{14\}$' >/dev/null
+[ $? -eq 0 ] || timestamp_web=$(TZ=UTC/0 date +%Y%m%d%H%M%S) # 取得できなければ現在日時を入れる
+
+# --- 手元の辞書ファイルのタイムスタンプと比較し、更新必要性確認 -----
+while [ $flg_FORCE -eq 0 ]; do
+  # 手元に辞書ファイルはあるか?
+  [ ! -f "$file_ZIPDIC" ] && break
+  # その辞書ファイル内にタイムスタンプは記載されているか?
+  timestamp_local=$(head -n 1 "$file_ZIPDIC" | awk '{print $NF}')
+  echo "_$timestamp_local" | sed '1s/_//' | grep '^[0-9]\{14\}$' >/dev/null
+  [ $? -eq 0 ] || break
+  # サイト上のファイルは手元のファイルよりも新しいか?
+  [ $timestamp_web -gt $timestamp_local ] && break
+  # そうでなければ何もせず終了(正常)
+  exit 0
+done
+
+# --- 郵便番号CSVデータファイル(Zip形式)ダウンロード -----------------
+curl -s $url_ZIPCSVZIP > $tmpf_zipcsvzip
+[ $? -eq 0 ] || error_exit 5 'Failed to download the zipcode CSV file'
+
+# --- 郵便番号辞書ファイル作成 ---------------------------------------
+unzip -p $tmpf_zipcsvzip                                          |
+# 日本郵便 郵便番号-住所 CSVデータ(Shift_JIS)                     #
+if   which iconv >/dev/null; then                                 #
+  iconv -c -f SHIFT_JIS -t UTF-8                                  #
+elif which nkf   >/dev/null; then                                 #
+  nkf -Sw80                                                       #
+else                                                              #
+  error_exit 6 'No KANJI convertors found (iconv or nkf)'         #
+fi                                                                |
+# 日本郵便 郵便番号-住所 CSVデータ(UTF-8変換済)                   #
+$dir_MINE/../commands/parsrc.sh                                   | # CSVパーサー(自作コマンド)
+# 1:行番号 2:列番号 3:CSVデータセルデータ                         #
+awk '$2~/^3|7|8|9$/'                                              |
+# 1:行番号 2:列番号(3=郵便番号,7=都道府県,8=市区町村,9=町) 3:データ
+awk 'BEGIN{z="#"; p="generated"; c="at"; t="'$timestamp_web'"; }  #
+     $1!=line      {pl();z="";p="";c="";t="";line=$1;          }  #
+     $2==3         {z=$3;                                      }  #
+     $2==7         {p=$3;                                      }  #
+     $2==8         {c=$3;                                      }  #
+     $2==9         {t=$3;                                      }  #
+     END           {pl();                                      }  # #   地域名住所文字列で
+     function pl() {print z,p,c,t;                             }' | #   小括弧以降は
+sed 's/（.*//'                                                    | # ←使えないので除去する
+sed 's/以下に.*//'                                                > $tmpf_zipdic #"以下に"も同様
+# 1:郵便番号 2:都道府県名 3:市区町村名 4:町名
+[ -s $tmpf_zipdic ] || error_exit 7 'Failed to make the zipcode dictionary file'
+mv $tmpf_zipdic "$file_ZIPDIC"
+[ "$flg_SUEXECMODE" -eq 0 ] && chmod go+r "$file_ZIPDIC" # suEXECで動いていない場合は
+                                                         # httpdにも読めるようにする
+
+######################################################################
+# 正常終了
+######################################################################
+
+exit 0
+\end{verbatim}
+\end{indentation}
+
+
+\subsubsection*{■public\_{}html/index.html -- 入力フォーム}
+
+\begin{indentation}{-9mm}{0zw}
+\begin{verbatim}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<style type="text/css">  
+<!-- 
+    dd { margin-bottom: 0.5em; }
+    #addressform { width: 50em; margin: 1em 0; padding: 1em; border: 1px solid; }
+    #inqZipcode1,#inqZipcode2 {font-size: large; font-weight: bold;}
+    .type_desc {font-size: small; font-weight: bold;}
+-->  
+</style>  
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<script type="text/javascript" src="zip2addr.js"></script>
+<title>郵便番号→住所検索Ajax by シェルスクリプト デモ</title>
+</haed>
+
+
+<body>
+<h1>郵便番号→住所検索Ajax by シェルスクリプト デモ</h1>
+
+<form action="#dummy">
+
+<table border="0"  id="addressform">
+  <tr>
+    <td colspan="3">
+      <dl>
+        <dt>郵便番号</dt>
+        <dd><input id="inqZipcode1" type="text" name="inqZipcode1" size="3" maxlength="3" />
+            -
+            <input id="inqZipcode2" type="text" name="inqZipcode2" size="4" maxlength="4" />
+        </dd>
+      </dl>
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <dl>
+        <dt>住所検索<br /></dt>
+        <dd><input id="run" type="button" name="run" value="実行" onclick="zip2addr();" /></dd>
+        <dt>住所(都道府県名)</dt><dd>
+                                   <select id="inqPref" name="inqPref">
+                                     <option>(選択してください)</option>
+                                     <option>北海道</option>
+                                               :
+                                     <option>沖縄県</option>
+                                   </select>
+                                 </dd>
+        <dt>住所(市区町村名)</dt>
+          <dd><input id="inqCity" type="text" size="20" name="inqCity" /></dd>
+        <dt>住所(町名)</dt>
+          <dd><input id="inqTown" type="text" size="20" name="inqTown" /></dd>
+      </dl>
+    </td>
+  </tr>
+</table>
+
+</form>
+
+</body>
+
+</html>
+\end{verbatim}
+\end{indentation}
+
+
+\subsubsection*{■public\_{}html/zip2addr.js -- 住所補完（クライアント側）}
+
+\begin{indentation}{-9mm}{0zw}
+\begin{verbatim}
+// ===== Ajaxのお約束オブジェクト作成 ================================
+// [入力]
+// ・なし
+// [出力]
+// ・成功時: XmlHttpRequestオブジェクト
+// ・失敗時: false
+function createXMLHttpRequest(){
+  if(window.XMLHttpRequest){return new XMLHttpRequest()}
+  if(window.ActiveXObject){
+    try{return new ActiveXObject("Msxml2.XMLHTTP.6.0")}catch(e){}
+    try{return new ActiveXObject("Msxml2.XMLHTTP.3.0")}catch(e){}
+    try{return new ActiveXObject("Microsoft.XMLHTTP")}catch(e){}
+  }
+  return false;
+}
+
+
+// ===== 郵便番号による住所検索ボタン ================================
+// [入力]
+// ・HTMLフォームの、id="inqZipcode1"とid="inqZipcode2"の値
+// [出力]
+// ・指定された郵便番号に対応する住所が見つかった場合
+//   - id="inqPref"な<select>の都道府県を選択
+//   - id="inqCity"な<input>に市区町村名を出力
+//   - id="inqTown"な<input>に町名を出力
+// ・見つからなかった場合は alertメッセージ
+function zip2addr() {
+  var sUrl_to_get;  // 汎用変数
+  var sZipcode;     // フォームから取得した郵便番号文字列の格納用
+  var xhr;          // XML HTTP Requestオブジェクト格納用
+  var sUrl_ajax;    // AjaxのURL定義用
+
+  // --- 1)呼び出すAjax CGIの設定 ------------------------------------
+  sUrl_ajax = 'zip2addr.ajax.cgi';
+
+  // --- 2)郵便番号を取得する ----------------------------------------
+  if (! document.getElementById('inqZipcode1').value.match(/^([0-9]{3})$/)) {
+    alert('郵便番号(前の3桁)が正しくありません');
+    return;
+  }
+  sZipcode = "" + RegExp.$1;
+  if (! document.getElementById('inqZipcode2').value.match(/^([0-9]{4})$/)) {
+    alert('郵便番号(後の4桁)が正しくありません');
+    return;
+  }
+  sZipcode = "" + sZipcode + RegExp.$1;
+
+
+  // --- 3)Ajaxコール ------------------------------------------------
+  xhr = createXMLHttpRequest();
+  if (xhr) {
+    sUrl_to_get  = sUrl_ajax;
+    sUrl_to_get += '?zipcode='+sZipcode;
+    sUrl_to_get += '&dummy='+parseInt((new Date)/1); // ブラウザcache対策
+    xhr.open('GET', sUrl_to_get, true);
+    xhr.onreadystatechange = function(){zip2addr_callback(xhr, sAjax_type)};
+    xhr.send(null);
+  }
+}
+function zip2addr_callback(xhr, sAjax_type) {
+
+  var oAddress;     // サーバーから受け取る住所オブジェクト
+  var e;            // 汎用変数(エレメント用)
+  var sElm_postfix; // 住所入力フォームエレメント名の接尾辞格納用
+
+  // --- 4)住所入力フォームエレメント名の接尾辞を決める --------------
+  switch (sAjax_type) {
+    case 'API_XML'  : sElm_postfix = '_API_XML' ; break;
+    case 'API_JSON' : sElm_postfix = '_API_JSON'; break;
+    default         : sElm_postfix = ''         ; break;
+  }
+
+  // --- 5)アクセス成功で呼び出されたのでないなら即終了 --------------
+  if (xhr.readyState != 4) {return;}
+  if (xhr.status == 0    ) {return;}
+  if      (xhr.status == 400) {
+    alert('郵便番号が正しくありません');
+    return;
+  }
+  else if (xhr.status != 200) {
+    alert('アクセスエラー(' + xhr.status + ')');
+    return;
+  }
+
+  // --- 6)サーバーから返された住所データを格納 ----------------------
+  oAddress =  JSON.parse(xhr.responseText);
+  if (oAddress['zip'] === '') {
+    alert('対応する住所が見つかりませんでした');
+    return;
+  }
+
+  // --- 7)都道府県名を選択する --------------------------------------
+  e = document.getElementById('inqPref'+sElm_postfix)
+  for (var i=0; i<e.options.length; i++) {
+    if (e.options.item(i).value == oAddress['pref']) {
+      e.selectedIndex = i;
+      break;
+    }
+  }
+
+  // --- 8)市区町村名を流し込む --------------------------------------
+  document.getElementById('inqCity'+sElm_postfix).value = oAddress['city'];
+
+  // --- 9)町名を流し込む --------------------------------------------
+  document.getElementById('inqTown'+sElm_postfix).value = oAddress['town'];
+
+  // --- 99)正常終了 -------------------------------------------------
+  return;
+}
+\end{verbatim}
+\end{indentation}
+
+
+\subsubsection*{■public\_{}html/zip2addr.ajax.cgi -- 住所補完（サーバー側）}
+
+\begin{indentation}{-9mm}{0zw}
+\begin{verbatim}
+#! /bin/sh
+
+######################################################################
+#
+# ZIP2ADDR.AJAX.CGI
+# 郵便番号―住所検索
+#
+# [入力]
+# ・[CGI変数]
+#   - zipcode: 7桁の郵便番号(ハイフン無し)
+# [出力]
+# ・成功すればJSON形式で郵便番号、都道府県名、市区町村名、町名
+# ・郵便番号辞書ファイル無し→500エラー
+# ・郵便番号指定が不正      →400エラー
+# ・郵便番号が見つからない  →空文字のJSONを返す
+#
+######################################################################
+
+
+######################################################################
+# 初期設定
+######################################################################
+
+# --- 変数定義 -------------------------------------------------------
+dir_MINE="$(d=${0%/*}/; [ "_$d" = "_$0/" ] && d='./'; cd "$d"; pwd)" # このshのパス
+readonly file_ZIPDIC_KENALL="$dir_MINE/../data/ken_all.txt"          # 辞書(地域名)のパス
+readonly file_ZIPDIC_JIGYOSYO="$dir_MINE/../data/jigyosyo.txt"       # 辞書(事業所名)パス
+
+# --- ファイルパス ---------------------------------------------------
+PATH='/usr/local/bin:/usr/bin:/bin'
+
+# --- エラー終了関数定義 ---------------------------------------------
+error500_exit() {
+  cat <<-__HTTP_HEADER
+  Status: 500 Internal Server Error
+  Content-Type: text/plain
+  500 Internal Server Error
+  ($@)
+__HTTP_HEADER
+  exit 1
+}
+error400_exit() {
+  cat <<-__HTTP_HEADER
+  Status: 400 Bad Request
+  Content-Type: text/plain
+  400 Bad Request
+  ($@)
+__HTTP_HEADER
+  exit 1
+}
+
+
+######################################################################
+# メイン
+######################################################################
+
+# --- 郵便番号データファイルはあるか？ -------------------------------
+[ -f "$file_ZIPDIC_KENALL"   ] || error500_exit 'zipcode dictionary #1 file not found'
+[ -f "$file_ZIPDIC_JIGYOSYO" ] || error500_exit 'zipcode dictionary #2 file not found'
+
+# --- CGI変数(GETメソッド)で指定された郵便番号を取得 -----------------
+zipcode=$(echo "_${QUERY_STRING:-}" | # 環境変数で渡ってきたCGI変数文字列をSTDOUTへ
+          sed '1s/^_//'             | # echoの誤動作防止のために付けた"_"を除去
+          tr '&' '\n'               | # CGI変数文字列(a=1&b=2&...)の&を改行に置換し、1行1変数に
+          grep '^zipcode='          | # 'zipcode'という名前のCGI変数の行だけ取り出す
+          sed 's/^[^=]\{1,\}=//'    | # "CGI変数名="の部分を取り除き、値だけにする
+          grep '^[0-9]\{7\}$'       ) # 郵便番号の書式の正当性確認
+
+# --- 郵便番号はうまく取得できたか？ ---------------------------------
+[ -n "$zipcode" ] || error400_exit 'invalid zipcode'
+
+# --- JSON形式文字列を生成して返す -----------------------------------
+cat "$file_ZIPDIC_KENALL" "$file_ZIPDIC_JIGYOSYO"                  | # 辞書ファイルを開く
+#  1:郵便番号 2～:各種住所データ                                   #
+awk '$1=="'$zipcode'"{hit=1;print;exit} END{if(hit==0){print ""}}' | # 該当行を取出し(1行のみ)
+while read zip pref city town; do # HTTPヘッダーと共に、JSON文字列化した住所データを出力する
+  cat <<-__HTTP_RESPONSE
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: private, no-store, no-cache, must-revalidate
+  Pragma: no-cache
+  {"zip":"$zip","pref":"$pref","city":"$city","town":"$town"}
+__HTTP_RESPONSE
+  break
+done
+
+# --- 正常終了 -------------------------------------------------------
+exit 0
+\end{verbatim}
+\end{indentation}
+
+\subsection*{動作画面}
+
+実際の動作画面を掲載する。
+尚、デモページ\footnote{\verb|http://lab-sakura.richlab.org/ZIP2ADDR/public_html/|}も用意している。
+
+\begin{figure}[htb]
+	\begin{center}
+		\vspace{10mm}
+		\includegraphics*[scale=0.60]{tex/6_cookingexample/figs/zip2addr_screenshot.eps}
+		\vspace{0mm}
+		\caption{住所補完アプリケーションの動作画面}
+		\label{fig:metropiper_hanzomon}
+		\vspace{0mm}
+	\end{center}
+\end{figure}
+
+使い心地（速度）はいかがだろうか。
+ちなみに\textbf{辞書データは地域と事業所を併せ、およそ14万件}である。
+シェルスクリプトで開発したアプリケーションであっても、これだけの速度で動くということを実感し、
+「シェルスクリプトなんてプログラム開発には使えない」という思い込みは捨て去ってもらえれば大変うれしい。

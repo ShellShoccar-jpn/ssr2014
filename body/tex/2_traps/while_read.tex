@@ -1,0 +1,41 @@
+\section{while readで文字列が正しく渡せない}
+\label{recipe:while_read}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	操作ミスで変な名前のファイル名がいっぱいできた時にそれらを削除するワンライナーを書いたが、
+	一部のファイルは``No such file or directory''となって消せずに残ってしまう。なぜか。
+	\begin{verbatim}
+		ls -1a "$dir" | grep -Ev '^\.\.?$' | while read file; do rm "$file"; done
+	\end{verbatim}
+\end{grshfboxit}
+
+\subsection*{回答}
+このワンライナーが、readコマンドの使用上の注意（下記の2つ）を見逃しているからである。
+\begin{itemize}
+  \item \verb|-r|オプションを付けない場合、readコマンドはバックスラッシュ``\verb|\|''をエスケープ文字扱いする。
+  \item readコマンドは行頭、行末にある半角スペースとタブの連続を除去する。
+\end{itemize}
+この仕様を回避するため、ワンライナーは次のように直す必要がある。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	ls -1a "$dir" | grep -Ev '^\.\.?$' | sed 's/^/_/' | sed 's/$/_/' | while read -r file; do file=$
+	{file#_}; file=${file%_}; rm "$file"; done
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{解説}
+
+1行ごとに処理をする時の定番である``while read''構文。標準入力からパイプを使ってwhile readループにテキストデータを渡す処理を書いた場合、その中で書き換えたシェル変数はループの外には反映されないという落とし穴があるのは有名になってきた。しかし、油断するとループ内にデータを正しく渡せないという落とし穴にも気を付けなければならない。
+
+その落とし穴の具体的な内容については「回答」で書いたが、さてその対策として示したワンライナーは何をやっているのだろうか。
+\subsubsection*{\verb|-r|オプションを付ける}
+
+一つ目のこれは単純だ。バックスラッシュ``\verb|\|''がエスケープ文字扱いされぬように、readコマンドに\verb|-r|オプションを追加すればそれでおしまいである。
+
+\subsubsection*{文字の前後にダミー文字を付加、ループ内で除去}
+
+二つ目の対策はワンライナーに4ステップを追加しているのでちょっと複雑かもしれない。
+readコマンドは行頭と行末のスペース類（半角スペースとタブの連続）を取り除くのだから、予めそうでないものを追加しておいてそれを回避しようとしているのだ。そのために、各行の行頭・行末にアンダースコアを追加する2のsedを追加し、ループの中で、それらを除去する変数トリミング（シェル変数の中にある``\verb|#|''と``\verb|%|''）処理を追加してある。

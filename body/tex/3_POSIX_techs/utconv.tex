@@ -1,0 +1,119 @@
+\section{シェルスクリプトで時間計算を一人前にこなす}
+\label{recipe:utconv}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	日常使っている日時（YYYYMMDDhhmmss）とUNIX時間（UTC時間による1970/01/01 00:00:00からの秒数）の
+	相互変換さえできれば、シェルスクリプトでも日付計算や曜日の算出ができるようになるのだが……。
+	できないものか。
+\end{grshfboxit}
+
+\subsection*{回答}
+AWKで頑張って実装する。
+
+\subsubsection*{日常の時間 → UNIX時間}
+
+UNIX時間への変換は、\textbf{フェアフィールドの公式}から導出される変換式にあてはめるだけなので簡単だ。
+\paragraph{日常の時間 → UNIX時間 変換シェルスクリプト} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	echo "ここにYYYYMMDDhhmmss" | # date '+%Y%m%d%H%M%S'などを流し込んでもよい
+	awk '{
+	  # 年月日時分秒を取得
+	  Y = substr($1, 1,4)*1;
+	  M = substr($1, 5,2)*1;
+	  D = substr($1, 7,2)*1;
+	  h = substr($1, 9,2)*1;
+	  m = substr($1,11,2)*1;
+	  s = substr($1,13  )*1;
+
+	  # 計算公式に流し込む
+	  if (M<3) {M+=12; Y--;} # 公式を使うための値調整
+	  print (365*Y+int(Y/4)-int(Y/100)+int(Y/400)+int(306*(M+1)/10)-428+D-719163)*86400+(h*3600)+(m*
+	60)+s;
+	}'
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{UNIX時間 → 日常の時間}
+
+これは少し複雑だ。一発変換できる公式は無いようだ。そこでglibcのgmtime()関数を参考に作ったコードを記す。
+\paragraph{UNIX時間 → 日常の時間 変換シェルスクリプト}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	echo "ここにUNIXtime" |
+	awk '{
+	  # 時分秒と、1970/1/1からの日数を求める
+	  s = $1%60;  t = int($1/60);  m =  t%60;  t = int(t/60);  h = t%24;
+	  days_from_epoch = int( t/24);
+
+	  # 年を求める
+	  max_calced_year = 1970;              # To remember every days on 01/01 from
+	  days_on_Jan1st_from_epoch[1970] = 0; # the Epoch which was calculated once
+	  Y = int(days_from_epoch/365.2425)+1970+1;
+	  if (Y > max_calced_year) {
+	     i = days_on_Jan1st_from_epoch[max_calced_year];
+	     for (j=max_calced_year; j<Y; j++) {
+	       i += (j%4!=0)?365:(j%100!=0)?366:(j%400!=0)?365:366;
+	       days_on_Jan1st_from_epoch[j+1] = i;
+	     }
+	     max_calced_year = Y;
+	  }
+	  for (;;Y--) {
+	    if (days_from_epoch >= days_on_Jan1st_from_epoch[Y]) {
+	      break;
+	    }
+	  }
+
+	  # 月日を求める
+	  split("31 0 31 30 31 30 31 31 30 31 30 31", days_of_month);    # 各月の日数(2月は未定)
+	  days_of_month[2] = (Y%4!=0)?28:(Y%100!=0)?29:(Y%400!=0)?28:29;
+	  D = days_from_epoch - days_on_Jan1st_from_epoch + 1;
+	  for (M=1; ; M++) {
+	    if (D > days_of_month[M]) {
+	      D -= days_of_month[M];
+	    } else {
+	      break;
+	    }
+	  }
+
+	  # 結果出力
+	  printf("%04d%02d%02d%02d%02d%02d\n",Y,M,D,h,m,s);
+	}'
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{解説}
+
+シェルスクリプトが敬遠される理由の一つ。それは時間の計算機能が弱いところだろう。例えば、
+\begin{itemize}
+  \item 今から一週間前の年月日時分秒は？（それより古いファイルを消したい時など）
+  \item Ya年Ma月Da日とYb年Mb月Db日、その差は何日？（ログを整理したい時など）
+  \item この年月日は何曜日？（ファイルを曜日毎に仕分けしたい時など）
+\end{itemize}
+といった計算が簡単にはできない。dateコマンドの拡張機能を使えばできるものもあるが、できるようになることが中途半端なうえに、OS間の互換性がなくなる。
+
+前述のような日時の加減算や2つの日時の差を求めるなどといった時は、一旦UNIX時間に変換して計算し、必要に応じて戻せばよいことはご存知のとおり。曜日を求めるのとて、UNIX時間変換の値を一日の秒数(86400)で割って得られた商を、さらに7で割って余りを見ればよい、ということもお分かりだろう。
+
+だが、そのUNIX時間との相互変換が面倒だった。そこで変換アルゴリズムを調査した上でPOSIXの範囲で実装したものが「回答」で示したコード、というわけである。できないからといって、安易に他言語に頼ろうとする発想は改め、\textbf{「無いものは作れ！」}と言っておきたい。自分で作れば理解も深まるし、自由も利く。
+
+\subsection*{コマンド化したものをGitHubにて提供中}
+
+いちいち本書を読んで書き写すのも面倒であろうし、少し改良したものをGitHub上に公開した。よければ使ってみてもらいたい。
+
+\begin{quote}
+	\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/utconv|
+\end{quote}
+
+しかもこちらはかなりきっちりやっており、\textbf{タイムゾーンを考慮した相互変換}まで対応している。
+
+\subsection*{参照}
+
+ちなみに、この時間計算ができるようになると、findコマンドだけでは不十分だったタイムスタンプ比較も自在にできるようになり、シェルスクリプトでも\textbf{自力でCookieが焼けるようになり}、そしてさらに\textbf{HTTPのセッション管理ができるようになる。}詳しくはそれぞれのレシピを参照してもたいらい。\\
+
+\noindent
+→\ref{recipe:timestamp}（findコマンドで秒単位にタイムスタンプ比較をする）\\
+→\ref{recipe:make_cookie}（シェルスクリプトおばさんの手づくりCookie(書き込み編)） \\
+→\ref{recipe:HTTP_session}（シェルスクリプトによるHTTPセッション管理）

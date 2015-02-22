@@ -1,0 +1,225 @@
+\section{HTMLテーブルを簡単綺麗に生成する}
+\label{recipe:mojihame}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	AWK等で生成したテキスト表の内容をHTMLで表示したい。
+	それこそAWKのprintf()関数等を使ってHTMLコードを生成するループを書けばいいのはわかるが、
+	それだとプログラム本体とHTMLデザインがごっちゃになってしまって、メンテナンス性が悪い。
+	何かいい方法はないか？
+\end{grshfboxit}
+
+\subsection*{回答}
+シェルスクリプト開発者向けコマンドセットOpen usp Tukubaiに収録されている``mojihame''というコマンドを使うとその悩みは綺麗に解消できる。このコマンドを使えば、HTMLの一部分（例えば$<$tr$>$～$<$/tr$>$）をレコードの数だけ繰り返すという指示を、プログラム本体ではなくHTMLテンプレートの中で指定することができるようになるからだ。
+
+利用を検討している人は、mojihameコマンドをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/han|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}し、次のチュートリアルを参考にしてもらいたい。
+
+\subsection*{mojihameコマンドチュートリアル}
+
+筆者が制作した、東京メトロのオープンデータに基づく列車在線情報表示アプリケーション「メトロパイパー」\footnote{\verb|http://metropiper.com/|}を例にしたチュートリアルを記す。
+
+このアプリケーションは、「知りたい駅」と「行きたい方面駅」の2つの駅を指定すると、前者の駅周辺のリアルタイム列車の在線状況を表示するというものである。
+
+\subsubsection*{その1. 単純繰り返し}
+
+メトロパーパーではmojihameコマンドを二つのシェルスクリプトで活用しており、そのうちの1つは「知りたい駅」や「行きたい方面駅」の駅名選択肢の表示だ。これらの選択肢は$<$select$>$タグを使って描画しているが、その中の$<$option$>$タグが各駅に対応していて、$<$option$>$～$<$/option$>$の区間を駅の数だけ繰り返して表示したいわけである。
+
+最初にHTMLテンプレートファイル\footnote{HTML全体を見たいという人は、\verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/HTML/MAIN.HTML|を参照されたい。}を用意する。
+\paragraph*{HTMLテンプレート MAIN.HTML（駅選択肢部分を抜粋）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	        :
+	    <select id="from_snum" name="from_snum" onchange="set_snum_to_tosnum()" >
+	      <!-- FROM_SELECT_BOX -->
+	      <option value="-">―</option>
+	      <!-- FROM_SNUM_LIST
+	      <option value="%1">%1 : %2線-%3駅</option>
+	           FROM_SNUM_LIST -->
+	      <!-- FROM_SELECT_BOX -->
+	    </select>
+	        :
+\end{verbatim}
+\end{frameboxit}
+
+色々HTMLコメントが付いているが、``\verb|FROM_SELECT_BOX|''という区間と、``\verb|FROM_SELECT_BOX|''という区間があるのに注目してもらいたい。``\verb|FROM_SELECT_BOX|''は、テンプレートファイル``MAIN.HTML''から、mojihameによる処理を行うために$<$select$>$タグの内側を抽出するために付けた文字列である。具体的にはsedコマンドで行う（後述）。一方``\verb|FROM_SELECT_BOX|''は、mojihameコマンドに対して繰り返し区間の始まりと終わりを示すためのものである。先程の``\verb|FROM_SELECT_BOX|''で取り出した区間には、デフォルト選択肢``\verb|<option value="-">―</option>|''が含まれているがこれは繰り返し区間には含めさせないために用意してある。
+
+そして注目すべきは、中にある``\verb|%1|''、``\verb|%2|''といったマクロ文字列だ。これらが実際の駅ナンバーや路線名、駅名に置換されていく。
+
+ではその置換対象となる駅データを見てみよう。
+\paragraph*{与える選択肢テキスト（抜粋）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	C01 千代田 代々木上原
+	C02 千代田 代々木公園
+	C03 千代田 明治神宮前〈原宿〉
+	        :
+	        :
+	Z14 半蔵門 押上〈スカイツリー前〉
+\end{verbatim}
+\end{frameboxit}
+左の列から、駅ナンバー、路線名、駅名という構成になっているが、これが先程の``\verb|%1|''、``\verb|%2|''、``\verb|%3|''をそれぞれ置き換えていくことになる。
+
+そして実際に置き換えを実施しているプログラム\footnote{HTML全体を見たいという人は、\\ \verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/CGI/GET_SNUM_HTMLPART.AJAX.CGI|を参照されたい。}がこれだ。
+
+\paragraph*{選択肢生成プログラム GET\_{}SNUM\_{}HTMLPART.AJAX.CGI（抜粋）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	# --- 部分HTMLのテンプレート抽出 -------------------------------------
+	cat "$Homedir/TEMPLATE.HTML/MAIN.HTML"        |
+	sed -n '/FROM_SELECT_BOX/,/FROM_SELECT_BOX/p' |
+	sed 's/―/選んでください/'                    > $Tmp-htmltmpl
+	
+	# --- HTML本体を出力 -------------------------------------------------
+	cat "$Homedir/DATA/SNUM2RWSN_MST.TXT"     |
+	# 1:駅ナンバー(sorted) 2:路線コード 3:路線名 4:路線駅コード
+	# 5:駅名 6:方面コード(方面駅でない場合は"-")
+	grep -i "^$rwletter"                      |
+	awk '{print substr($1,1,1),$0}'           |
+	sort -k1f,1 -k2,2                         |
+	awk '{print $2,$4,$6}'                    |
+	uniq                                      |
+	# 1:駅ナンバー(sorted) 2:路線名 3:駅名    #
+	mojihame -lFROM_SNUM_LIST $Tmp-htmltmpl -
+\end{verbatim}
+\end{frameboxit}
+
+先程述べたように、まずコメント``\verb|FROM_SELECT_BOX|''の区間をテンプレートファイルからsedコマンドで抽出し、一時ファイル``\verb|$Tmp-htmltmpl|''に格納している。そして2番目のcatコマンドからuniqコマンドまでの間に、先程の3列構成のデータを生成し、mojihameコマンドに渡しているのである。mojihameコマンドでは、\verb|-l|オプションが単純繰り返しの際に用いるものであり、そのオプションの直後（スペース無し）に繰り返し区間を示す文字列を指定する。mojihameコマンドの詳しい使い方はmanページ\footnote{\verb|https://uec.usp-lab.com/TUKUBAI_MAN/CGI/TUKUBAI_MAN.CGI?POMPA=MAN1_mojihame|}を参照してもらいたい。
+
+結果としてこのmojihameコマンドは次のようなコードを出力する。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	      <!-- FROM_SELECT_BOX -->
+	      <option value="-">―</option>
+	      <option value="C01">C01 : 千代田線-代々木上原駅</option>
+	      <option value="C02">C02 : 千代田線-代々木公園駅</option>
+	      <option value="C03">C03 : 千代田線-明治神宮前〈原宿〉</option>
+	           :
+	      <option value="Z14">Z14 : 半蔵門線-押上〈スカイツリー前〉</option>
+	      <!-- FROM_SELECT_BOX -->
+\end{verbatim}
+\end{frameboxit}
+
+このプログラムのファイル名に``AJAX''と書かれていることから想像できるように、
+このプログラムはAjaxとして動くようになっている。
+具体的には、クライアント側では上記の部分HTMLを受け取った後、innerHTMLプロパティーを使って$<$select$>$タグエレメントに流し込んでいる。この手法は、\ref{recipe:Ajax_without_libraries}（Ajaxで画面更新したい）で記した方法そのものである。
+
+\subsubsection*{その2. 階層を含む繰り返し}
+
+メトロパイパーにてもう一つmojihameコマンドを利用しているのは、実際の在線情報欄のHTMLを作成する``GET\_{}LOCINFO.AJAX.CGI''というシェルスクリプトである。こちらではもう少し高度な使い方をしている。
+
+まず、mojihameコマンドを使って出来上がった完成画面（図\ref{fig:metropiper_hanzomon}）を見てもらいたい。
+\begin{figure}[htb]
+	\begin{center}
+		%\vspace{1cm}
+		\includegraphics*[scale=0.30]{tex/4_web/figs/metropiper_hanzomon.eps}
+		\vspace{-2mm}
+		\caption{メトロパイパーの在線情報}
+		\label{fig:metropiper_hanzomon}
+		\vspace{-5mm}
+	\end{center}
+\end{figure}
+
+この時押上駅には列車が3本在線しており、押上駅の欄が他の駅や駅間よりも広がっている。この画面を作成するにあたっては、押上駅、駅間（押上―錦糸町）、錦糸町駅、駅間（錦糸町―住吉）、……という繰り返しをしているが、さらに各駅の中では列車が複数いればそこでも複数回の繰り返しをするというようにして階層化された繰り返しを行っているのだ。
+
+具体的には、プログラム内部で、一旦次のようなデータが生成される。
+\paragraph*{生成される在線情報データ（抜粋）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	Z140 odpt.Station:TokyoMetro.Hanzomon.Oshiage 押上〈スカイツリー前〉 odpt.TrainType:TokyoMet…
+	Z140 odpt.Station:TokyoMetro.Hanzomon.Oshiage 押上〈スカイツリー前〉 odpt.TrainType:TokyoMet…
+	Z140 odpt.Station:TokyoMetro.Hanzomon.Oshiage 押上〈スカイツリー前〉 odpt.TrainType:TokyoMet…
+	Z135 - - - - - - - - - 5
+	Z130 odpt.Station:TokyoMetro.Hanzomon.Kinshicho 錦糸町 - - - - - - - 10
+	Z125 - - - - - - - - - 15
+	Z120 odpt.Station:TokyoMetro.Hanzomon.Sumiyoshi 住吉 odpt.TrainType:TokyoMetro.Local 各停 od…
+	Z115 - - - - - - - - - 25
+	  :
+\end{verbatim}
+\end{frameboxit}
+このデータは駅名（駅コード）とそこに在線する列車（列車コード）の並んだ表であるが、同じ駅に複数の列車が在線している場合には、同じ駅のレコードが繰り返される仕様になっている。従って、このデータからは押上に3つの列車がいることがわかる。
+
+そしてこのデータを受けるHTMLテンプレート\footnote{HTML全体を見たいという人は、\\ \verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/TEMPLATE.HTML/LOCTABLE_PART.HTML|を参照されたい。}は次のとおりである。
+\paragraph*{HTMLテンプレート LOCTABLE\_{}PART.HTML（抜粋）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	  :
+	<!-- /LC_HEADER -->
+	<!-- LC_ITERATION-1 (繰り返し区間メイン…駅) -->
+	    <div class="%1 %2 clearfix">
+	  <!-- LC_ITERATION-2 (繰り返し区間サブ…車両) -->
+	      <div class="station_name"><a href="%10" target="_blank">%3 %4</a></div>
+	      <div class="train_info">
+	        <div class="train_assort %5">%6</div>
+	        <div class="train_for">%7 %8</div>
+	      </div>
+	      <div class="approach_time">%9</div>
+	  <!-- /LC_ITERATION-2 -->
+	    </div>
+	<!-- /LC_ITERATION-1 -->
+	<!-- LC_FOOTER -->
+	  :
+\end{verbatim}
+\end{frameboxit}
+
+これを先程のシェルスクリプト``GET\_{}LOCINFO.AJAX.CGI''\footnote{\verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/TEMPLATE.HTML/LOCTABLE_PART.HTML|参照}の次の行で、同様にしてハメんでいる。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	mojihame -hLC_ITERATION $Homedir/TEMPLATE.HTML/LOCTABLE_PART.HTML > $Tmp-loctblhtml0
+\end{verbatim}
+\end{frameboxit}
+階層化された繰り返し対応させるため、今度は``\verb|-h|''というオプションを用いている。これも詳細はmanページを参照してもらいたい。
+
+結果、生成されたHTMLテキストが次のものである。
+\paragraph*{列車在線情報をハメ込んで生成されたHTMLコード（抜粋、右端にループの範囲を記している）} 　\\
+\begin{frameboxit}{160.0mm}
+	\verb|<!-- /LC_HEADER -->                                                                   | \\
+	\verb|    <div class="station near clearfix">                                             ↑| \\
+	\verb|      <div class="station_name">Z14 押上〈スカイツリー前〉</div>                   ↑  ｜| \\
+	\verb|      <div class="train_info">                                                  ｜  ｜| \\
+	\verb|        <div class="train_assort odpt.TrainType:TokyoMetro.Express">急行</div>  列  ｜| \\
+	\verb|        <div class="train_for">中央林間行 (東急電鉄)</div>                        車  ｜| \\
+	\verb|      </div>                                                                    ｜  ｜| \\
+	\verb|      <div class="approach_time">約4分後</div>                                  ↓  ｜| \\
+	\verb|      <div class="station_name">   </div>                                        ↑  ｜| \\
+	\verb|      <div class="train_info">                                                  ｜  ｜| \\
+	\verb|        <div class="train_assort odpt.TrainType:TokyoMetro.Local">各停</div>    列  駅| \\
+	\verb|        <div class="train_for">中央林間行 (東急電鉄)</div>                        車  ｜| \\
+	\verb|      </div>                                                                    ｜  ｜| \\
+	\verb|      <div class="approach_time">約4分後</div>                                  ↓  ｜| \\
+	\verb|      <div class="station_name">   </div>                                        ↑  ｜| \\
+	\verb|      <div class="train_info">                                                  ｜  ｜| \\
+	\verb|        <div class="train_assort odpt.TrainType:TokyoMetro.Local">各停</div>    列  ｜| \\
+	\verb|        <div class="train_for">中央林間行 (東急電鉄)</div>                        車  ｜| \\
+	\verb|      </div>                                                                    ｜  ｜| \\
+	\verb|      <div class="approach_time">約4分後</div>                                  ↓  ｜| \\
+	\verb|    </div>                                                                          ↓| \\
+	\verb|    <div class="between near clearfix">                                             ↑| \\
+	\verb|      <div class="station_name"><a href="#" target="_blank">   </a></div>        ↑  ｜| \\
+	\verb|      <div class="train_info">                                                  ｜  ｜| \\
+	\verb|        <div class="train_assort  "> </div>                                      列  駅| \\
+	\verb|        <div class="train_for">   </div>                                         車  ｜| \\
+	\verb|      </div>                                                                    ｜  ｜| \\
+	\verb|      <div class="approach_time"> </div>                                         ↓  ｜| \\
+	\verb|    </div>                                                                          ↓| \\
+	\verb|    <div class="station near clearfix">                                             ↑| \\
+	\verb|      <div class="station_name">Z13 錦糸町</div>                                 ↑  ｜| \\
+	\verb|      <div class="train_info">                                                  ｜  ｜| \\
+	\verb|        <div class="train_assort  "> </div>                                      列  駅| \\
+	\verb|        <div class="train_for">   </div>                                         車  ｜| \\
+	\verb|      </div>                                                                    ｜  ｜| \\
+	\verb|      <div class="approach_time"> </div>                                         ↓  ｜| \\
+	\verb|    </div>                                                                          ↓| \\
+	\verb|        :                                                                             | \\
+	\verb|<!-- LC_FOOTER -->                                                                    | \\
+\end{frameboxit}
+
+このようにして、mojihameコマンドを使えばHTMLテンプレートとプログラムを別々に管理することができるので、デザイン変更時のメンテナンスも容易であるし、何よりWebデザイナーとの協業がとても楽なのだ。
+
+\subsection*{参照}
+
+\noindent
+→mojihame manページ\footnote{\verb|https://uec.usp-lab.com/TUKUBAI_MAN/CGI/TUKUBAI_MAN.CGI?POMPA=MAN1_mojihame|} \\
+→\ref{recipe:Ajax_without_libraries}（Ajaxで画面更新したい） \\
+→「メトロパイパー」ソースコード\footnote{\verb|https://github.com/ShellShoccar-jpn/metropiper|}

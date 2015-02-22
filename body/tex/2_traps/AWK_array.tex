@@ -1,0 +1,76 @@
+\section{AWKの連想配列が読むだけで変わるワナ}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	AWKの配列で、必要な要素``3''がきちんと生成できていないことが原因で中断している疑いのあるコードがあった。
+	そこで問題の要素``3''に確実に値が入っているかどうかを確認するデバッグコードを入れて動かしたところ、中断せずに動くようになってしまった。
+	もしかしてAWKのバグか??
+	\begin{verbatim}
+		awk 'BEGIN{
+		  str = "data(1/3) data(2/3)";                  # ←1) 本来あるべき第三列"data(3/3)"が無い
+		  split(str, ar);
+		print "***DEBUG*** array#3:",ar[3];             # ←3) ここにデバッグ用コードを入れたら
+		  if ((1 in ar) && (2 in ar) && (3 in ar)) {    #      エラー終了しなくなってしまった!
+		    print "#1:", ar[1];
+		    print "#2:", ar[2];
+		    print "#3:", ar[3];
+		  } else {
+		    print "データが足りません" > "/dev/stderr";   # ←2) 冒頭の問題により
+		    exit;                                       #      ここでエラー終了してしまっていた
+		  }
+		}'
+	\end{verbatim}
+\end{grshfboxit}
+
+\subsection*{回答}
+\textbf{AWKは、存在しない配列要素を読み込むと、その時点で空の要素が生成する。}
+これはAWKの仕様であるので気を付けなければならない。
+
+配列``\textit{array}''の要素``\textit{key}''の内容を確認するコードの前には、
+``\verb|(| \textit{key} \verb|in| \textit{array} \verb|)|''などと記述して、
+まずその要素が存在していることを確認すること。
+
+\subsection*{解説}
+
+「回答」にも記したが、AWKの配列変数は、存在しない要素を読み込むと、空文字を値として勝手にその要素を作成してしまう。
+bash等、他の言語の配列変数ではこのようなことはないのだが、AWKではこのように動作することが仕様であり、バグでない。
+従って、そういうものだと覚えるしかない。
+
+それではもう一つ例を見てみよう。次のシェルスクリプトを書いて、実行してみてもらいたい。
+
+\paragraph{awk\_{}test.sh} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	awk '
+	BEGIN{
+	  split("", array);    # 連想配列を初期化(要素数0にする)
+	  print length(array); # 要素数は当然"0"と表示される。
+
+	  print array["hoge"]; # だから"hoge"なんて要素を表示しようとしても当然空行
+
+	  print length(array); # ところがもう一度要素数を見てみると……
+	}
+	
+	# 配列に対するlengthに非対応のAWK実装を使っている場合は
+	# 下記のコードも記述したうえで、上記のlengthを全てarlenに書き換えて実行する
+	function arlen(ar,i,l){for(i in ar){l++;}return l;}
+	'
+\end{verbatim}
+\end{frameboxit}
+
+実行するとこうなるはずだ。
+
+\begin{screen}
+	\verb|$ ./awk_tesh.sh| \return \\
+	\verb|0| \\
+	\verb|| \\
+	\verb|1     | ←要素数が1になっている \\
+	\verb|$ |
+\end{screen}
+
+AWKの配列変数の取扱いにはご注意を。

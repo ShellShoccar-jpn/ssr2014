@@ -1,0 +1,964 @@
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	シェルスクリプトは環境依存が激しいから……
+\end{grshfboxit}
+
+\noindent
+などとよく言われ、敬遠される。それなら共通しているものだけ使えばいいのだが、それについてまとめているところがなかなかないので書いてみることにした。
+
+\subsection*{「どの環境でも使える」ようにするには？}
+
+\subsubsection*{まずは定義から}
+
+まずは、何をもって「どの環境でも使える」とするのかについて定義する。じつはこれがなかなか難しい。
+あまりこだわりすぎると「古いものも含め、既存のUNIX全てで使えるものでなければダメ」ということになってしまう。しかし、私個人としては\textbf{今も現役（=メンテナンスされている）のUNIX系OSで使いまわせること}にこだわりたい。そこで
+
+\begin{quote}
+  「どの環境でも使える」$=$「POSIXで規定されている」
+\end{quote}
+
+\noindent
+と定義することにした。
+
+とはいっても全てのOSやディストリビューションについて調べられるわけではないので、この記事では基本的に最新のPOSIX\footnote{執筆時点の最新は``IEEE Std 1003.1, 2013 Edition''である}で定義されていることをもって、どの環境でも使えると判断するようにした。従って、互換性確保のため、シェルの中で使ってよい機能は\textbf{Bourneシェルの範囲}ということにし、bash,ksh,zsh,あるいはcsh等の拡張機能は使わないようにする。
+
+ただし、いくらPOSIXで規定されているといっても実際の環境でそれを採用しているものが稀であるとか、POSIXの範囲ではどうしても不足していてるものの殆どの環境で同じように使える、といったものに関しては書くことにする。つまり「基本的にはPOSIXに準拠する」ということとし、実用性と乖離したドキュメントにするつもりはない。
+
+\subsubsection*{結局どうすればいいのか}
+
+というわけで、「どの環境でも使える」シェルスクリプトを書くのであれば基本的にPOSIXの範囲で書くように気を付けることだ。
+具体的には``IEEE Std 1003.1''を記したWebページ\footnote{``ieee''と``POSIX''という単語で検索すれば辿り着く。執筆時は2013年版が最新でURLは\verb|http://pubs.opengroup.org/onlinepubs/9699919799/|である。}を確認、
+特に``Shell \& Utilities''というメニューに書いてある文法やコマンド仕様を読み、今から使おうとしている文法・コマンド・コマンド引数がそこで規定されているかどうかを確認する。
+
+併せて、本章に記したレシピを頭に入れておくといいだろう。
+POSIXドキュメントに基づく解説のみならず、現場で得た実戦的なノウハウも記してある。
+
+\section*{■第一部 文法・変数など}
+
+まずはシェル自身の文法や変数、多くのUNIXコマンドに共通する仕様などについて、どの環境でも動くようにするための注意点を記す。
+
+\section{シェル変数}
+
+まず配列は使えない。従ってbashに存在する組込変数である\verb|PIPESTATUS|も使えない。\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUSさようなら）を参照してもらいたい。
+
+変数の中身を部分的に取り出す記述に関して使っても大丈夫なものに関しては、POSIXの第2.6.2項\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_06_02|}を見るとまとまっている。
+
+\section{スコープ}
+
+\noindent
+→\ref{allenvs:local_keyword}（local修飾子）を参照
+
+\section{正規表現}
+\label{allenvs:regexp}
+
+これはAWK、grep、sed等、コマンドによっても使えるメタキャラは違うし、\verb|grep|なら`-E`オプションを付けるかどうかでも違うし、さらにGNU版でしか使えないものもあるので注意が必要。\verb|grep|コマンド*BSD上でもGNU版が採用されている場合がある。→\ref{allenvs:grep}（grepコマンド）参照
+
+しかし、 \textbf{正規表現メモ}\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html|}というスバラシいまとめページがあるのでここを見れば、使っても互換性が維持できるメタキャラがすぐわかる。
+
+え、シェル変数の正規表現？それは一部シェルの独自拡張機能なので使えない。
+
+\noindent
+→\ref{allenvs:locale}（ロケール）、\ref{allenvs:letterclass}（文字クラス）も参照
+
+\section{文字クラス}
+\label{allenvs:letterclass}
+
+\verb|[[:alnum:]]|のように記述して使う「文字クラス」というものがある。だが、文字クラスは使わない方が無難だ。
+
+これの正式名称は「POSIX文字クラス」\footnote{使えるもの一覧は、\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03_05|参照}という。その名のとおりPOSIX準拠であるのだが、Raspberry PiのAWKなど、一部の実装ではうまく動いてくれない。
+
+まぁ、POSIXに準拠してないそっちの実装が悪いといってしまえばそれまでなのだが、そもそも設定されているロケールによって全角を受け付けたり受け付けなかったりして環境の影響を受けやすいので使わない方がよいだろう。
+
+\section{乱数}
+\label{allenvs:random_number}
+
+乱数を求めたい時、bashの組込変数\verb|RANDOM|を使うのは論外だが、「それなら」とAWKコマンドのrand関数とsrand関数を使えばいいやと思うかもしれないがちょっと待った！
+
+論より証拠。FreeBSDで次の記述を何度も実行してみれば、非実用的であることがすぐわかる。
+
+\begin{screen}
+	\verb|$ for n in 1 2 3 4 5; do awk 'BEGIN{srand();print rand();}'; sleep 1; done| \return \\
+	\verb|0.0205896| \\
+	\verb|0.0205974| \\
+	\verb|0.0206052| \\
+	\verb|0.020613| \\
+	\verb|0.0206209| \\
+	\verb|$ |
+\end{screen}
+
+つまり動作環境によっては乱数としての質が非常に悪いのだ。AWKが内部で利用しているOS提供ライブラリ関数のrand()とsrand()を、FreeBSDは低品質だったオリジナルのまま残し、新たにrandom()という別の高品質乱数源関数を提供することで対応しているのが理由なのだが……。（Linuxではrand()とsrand()を内部的にrandom()にしている）
+
+\subsection*{/dev/urandomを使うのが現実的}
+
+ではどうすればいいか。POSIXで定義されているものではないが、\verb|/dev/urandom|を乱数源に使うのが現実的だと思う。例えば次のようにしてdd、od、sedコマンドを組み合わせれば0$\sim$4294967295の範囲の乱数が得られる。
+
+\begin{screen}
+	\verb!$ dd if=/dev/urandom bs=1 count=4 2>/dev/null | od -A n -t u4 | sed 's/[^0-9]//g'! \return
+\end{screen}
+
+最後の段でtrコマンドではなくsedコマンドを使っている理由については、\ref{allenvs:tr}（trコマンド）を参照。
+
+\section{ロケール}
+\label{allenvs:locale}
+
+どの環境でも動くことを重視するなら、環境変数の中でもとりわけロケール系環境変数の内容には注意しなければならない。
+理由は、ロケール環境変数（\verb|LANG|や\verb|LC_*|）の内容によって動作が変わるコマンドがあるからだ。
+
+具体的に何が変わるかといえば、主に文字列長の解釈や、出力される日付である。下記にそれらをまとめてみた。
+
+\subsection*{ロケール系環境変数の影響を受けるもの}
+
+\subsubsection*{入力文字列の解釈が変わるもの}
+
+例えば環境変数\verb|LANG|や\verb|LC_*|等の内容によって、全角文字を半角の相当文字と同一扱いしたり、全角文字の文字列長を1とするものとして、次のようなものがある。
+
+\begin{itemize}
+  \item AWKコマンド、grepコマンド、sedコマンド等の正規表現（\verb|[[:alnum:]]|、\verb|[[:blank:]]|等の文字クラスや、\verb|+|、\verb|\{n,m\}|などの文字数指定子）
+  \item AWKコマンドの文字列操作関数（\verb|length|、\verb|substr|）
+  \item wcコマンドの文字数（\verb|-m|オプション）
+\end{itemize}
+
+\noindent
+など。
+
+\subsubsection*{列区切り文字が変わるもの}
+
+環境変数\verb|LANG|の内容によって、デフォルトの列区切り文字に全角スペースが加わるもの。
+
+\begin{itemize}
+  \item joinコマンド、sortコマンド等（\verb|-t|オプション）
+\end{itemize}
+
+\noindent
+など。
+
+\subsubsection*{出力フォーマットが変わるもの}
+
+環境変数（\verb|LANG|や\verb|LC_*|）の内容によって、出力される文字列や書式が変わるもの。
+
+\begin{itemize}
+  \item dateコマンドのデフォルト日時フォーマット
+  \item dfコマンドの1行目の列名の言語
+  \item lsコマンド\verb|-l|オプションのタイムスタンプフォーマット
+  \item シェルの各種エラーメッセージ
+\end{itemize}
+
+\noindent
+など。
+
+\subsubsection*{通貨や数値のフォーマットが変わるのも}
+
+環境変数\verb|LC_MONETARY|や\verb|LC_NUMERIC|の影響を受けるもの。
+
+\begin{itemize}
+  \item sort……\verb|-n|オプションを指定した場合に、桁区切りのカンマの影響を受けたり受けなかったりする。
+\end{itemize}
+
+\subsection*{対策}
+
+全ての環境で動くようにするのであれば、ロケール設定無しの状態、すなわち英語で使うべきであろう。対策方法を3つ紹介する。
+
+\paragraph{envコマンドで全環境変数を無効化してコマンド実行} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	echo 'ほげHOGE' | env -i awk '{print length($0)}'
+\end{verbatim}
+\end{frameboxit}
+
+\paragraph*{\verb|LC\_{}ALL=C|を設定し、Cロケールにしてコマンド実行} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	echo 'ほげHOGE' | LC_ALL=C awk '{print length($0)}'
+\end{verbatim}
+\end{frameboxit}
+
+\paragraph*{予め\verb|LC\_{}ALL=C|を設定しておく} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	export LC_ALL=C                            # シェルスクリプトの冒頭でこれを実行
+	   :
+	   :
+	echo 'ほげHOGE' | awk '{print length($0)}' # そして目的のコマンドを実行
+\end{verbatim}
+\end{frameboxit}
+
+ちなみに、いにしえの\verb|export|は、\verb|=|を使って変数の定義とexport化を同時に行えないということだが、今どきのPOSIXのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#export|}によれば使えることになっている。
+
+\section{\$((式))}
+
+よく「exprコマンドを使え」というが、今どきは\verb|$((式))|もPOSIXで規定されており、使っても問題無い。
+
+ただ、数字の頭に``\verb|0|''や``\verb|0x|''を付けると、それぞれ8進数、16進数扱いされるのでexprコマンドとの間で移植をする場合は気を付けなければならない。（exprコマンドは、数字の先頭に``\verb|0|''が付いていても常に10進数と解釈される）
+
+\begin{screen}
+	\verb|$ echo $((10+10))| \return \verb|  |←10進数の10に、10進数の10を足す \\
+	\verb|20| \\
+	\verb|$ echo $((10+010))| \return \verb| |←10進数の10に、8進数の10を足す \\
+	\verb|18| \\
+	\verb|$ echo $((10+0x10))| \return ←10進数の10に、16進数の10を足す \\
+	\verb|26| \\
+	\verb|$ |
+\end{screen}
+
+この問題は、異なる実装のAWK間にもあるので注意。→\ref{allenvs:AWK}（AWKコマンド）参照
+
+\section{case文}
+
+\noindent
+→\ref{allenvs:if}（if文）参照
+
+\section{if文}
+\label{allenvs:if}
+
+たまに、elseの時は何かしたいけどthenの時は何もしたくないということがある。だからといってthenとelseの間に何も書かないと、bash等一部のシェルではエラーを起こしてしまう。
+
+\paragraph{bashの場合、次のコードはエラーになる} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	if [ -s /tmp/hoge.txt ]; then
+	  # 1バイトでも中身があれば何もしない ←ここでエラー
+	else
+	  # 0バイトだったら消す
+	  rm /tmp/hoge.txt
+	fi
+\end{verbatim}
+\end{frameboxit}
+
+elifの後もelseの後も同様であるし、case文でも条件分岐した先に何もコードを書いていなければ同じだ。要するに\textbf{bashでは、条件分岐先に有効なコードを置かないというコードが許されない}のだ。（コメントを書いただけではダメ）
+
+\subsection*{対策}
+
+何らかの無害な処理を書けばいいのだが、一番軽いのはnullコマンド（``\verb|:|''）ではないだろうか。つまり、こう書けばどの環境でも無難に動くようになる。
+
+\paragraph{何もしたくなければnullコマンドを置くとよい（3行目に注目）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	if [ -s /tmp/hoge.txt ]; then
+	  # 1バイトでも中身があれば何もしない ←今度はbashでもエラーにならない
+	  :
+	else
+	  # 0バイトだったら消す
+	  rm /tmp/hoge.txt
+	fi
+\end{verbatim}
+\end{frameboxit}
+
+別の対策としては、条件を反転してそもそもelse節を使わずに済むようにするのもいいだろう。しかしそれによってコードが読みにくくなったり、条件が3つ以上の複雑な場合などは、無理せずこの技法を用いるべきだ。
+
+\section{local修飾子}
+\label{allenvs:local_keyword}
+
+シェル関数の中で用いる変数を、その関数内だけで有効なローカル変数にする場合に用いる修飾子だが、これはPOSIXでは規定されていない。しかし、関数内ローカルな変数は簡単に用意できる。小括弧で囲ってサブシェルを作ればその中で代入した値は外へは影響しないからだ。
+
+次のシェル関数``localvar\_{}sample()''を見てもらいたい。中身を丸ごと小括弧で囲ったシェル関数で定義した次のシェル変数\verb|$a|、\verb|$b|、\verb|$c|は、関数終了後に消滅するし、外部に同名の変数があってもその値を壊すことはない。（だだし初期値はそちらの値になっている）
+
+\paragraph{シェル関数内でローカルな変数を作る} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	localvar_sample() {
+	  (                   # ←小括弧で囲む
+	    a=$(whoami)
+	    b='My name is'
+	    c=$(awk -v id=$a -F : '$1==id{print $5}' /etc/passwd)
+	    echo "$b $c."
+	  )
+	}
+\end{verbatim}
+\end{frameboxit}
+
+\section{PIPESTATUS変数}
+
+例えば組込変数\verb|PIPESTATUS|に依存したシェルスクリプトが既にあって、それをどの環境でも使えるように書き直したいと思った場合、実は可能だ。詳しいやり方については、\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUSさようなら）を参照してもらいたい。
+
+\section*{■第二部 コマンド}
+
+いくらシェルスクリプトの文法に気をつけても、呼び出すコマンドが一部の環境でしか通用しないような使い方では意味をなさない。次に、どの環境でも使えるシェルスクリプトを書くために気をつけるべきコマンドの各論を紹介する。
+
+\section{``[''コマンド}
+
+\noindent
+→\ref{allenvs:test}（testコマンド）参照
+
+\section{AWKコマンド}
+\label{allenvs:AWK}
+
+AWKはそれが1つの言語でもあるので、説明しておくべきことがたくさんある。
+
+\subsection*{\verb|-0|（マイナス・ゼロ）}
+
+FreeBSD 9.xに標準で入っているAWKでは、\verb|-1*0|を計算すると``\verb|-0|''という結果になる。
+
+\paragraph{FreeBSD 9.1で$-1*0$を計算させてみると}　\\
+\begin{screen}
+	\verb|$ awk 'BEGIN{print -1*0}'| \return \\
+	\verb|-0| \\
+	\verb|$ |
+\end{screen}
+
+ところがこの挙動は同じFreeBSDでも10.xでは確認されないし、GNU版AWKでも起こらないようだ。
+
+このようにして、同じ0であっても``\verb|-0|''という二文字で返してくる場合のある実装もあるので注意してもらいたい。
+
+\subsection*{0始まり即値の解釈の違い}
+
+頭に0が付いている数値を即値（プログラムに直接書き入れる値）として与えると、それを8進数と解釈するAWK実装もあれば10進数と解釈するAWK実装もある。
+
+\paragraph{FreeBSDのAWKで即値の010を解釈させた場合}　\\
+\begin{screen}
+	\verb|$ awk 'BEGIN{print 010;}'| \return \\
+	\verb|10| \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{GNU版AWKで即値の010を解釈させた場合}　\\
+\begin{screen}
+	\verb|$ awk 'BEGIN{print 010;}'| \return \\
+	\verb|8| \\
+	\verb|$ |
+\end{screen}
+
+どこでも同じ動きにしたければ文字列として渡せばよい。すると10進数扱いになる。
+
+\paragraph{GNU版AWKでも文字列として"010"を渡せば10進数扱いされる} 　\\
+\begin{screen}
+	\verb|$ awk 'BEGIN{print "010"*1;}'| \return \\
+	\verb|10| \\
+	\verb!$ echo 010 | awk 'BEGIN{print $1*1;}'! \return \\
+	\verb|10| \\
+	\verb|$ |
+\end{screen}
+
+\subsection*{length関数の機能制限}
+
+大抵のAWK実装は、
+
+\begin{screen}
+	\verb|$ awk 'BEGIN{split("a b c",chr); print length(chr);}'| \return \\
+	\verb|3| \\
+	\verb|$ |
+\end{screen}
+
+とやると、きちんと要素数を返すだろう。しかし実装によってはこれに対応しておらず、エラー終了してしまうものがある。このため、例えば次ようにユーザー関数\verb|arlen()|を作り、配列の要素数はその関数で数えるようにすべきだ。
+
+\paragraph{配列の要素数を数える関数を自作しておく} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	awk '
+	  BEGIN{split("a b c",chr); print arlen(chr);}
+	  function arlen(ar,i,l){for(i in ar){l++;}return l;}
+	'
+\end{verbatim}
+\end{frameboxit}
+
+幸い、\textbf{AWKの配列変数は参照渡し}なので要素の中身が膨大だとしてもそれは影響しない。（要素数が大きい場合はやはり負担がかかると思うのだが……）
+
+\subsubsection*{length()が使えるなら使いたい}
+
+「length関数が使えるなら使いたい！」というワガママなアナタは、こうすればいい。
+
+\paragraph{lengthが使えるなら使いたいワガママなアナタへ} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	# シェルスクリプトの冒頭で、配列に対してlength()を使ってもエラーにならないことを確認
+	if awk 'BEGIN{a[1]=1;b=length(a)}' 2>/dev/null; then
+	  arlen='length'  # ←エラーにならないならlength
+	else
+	  arlen='arlen'   # ←エラーになるなら独自関数"arlen"
+	fi
+
+	awk '
+	  BEGIN{split("a b c",chr); print '$arlen'(chr);}       # ←判定結果に応じて適宜選択される
+	  function arlen(ar,i,l){for(i in ar){l++;}return l;}
+	'
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{printf、sprintf関数}
+
+\noindent
+→\ref{allenvs:printf}（printfコマンド）参照
+
+\subsection*{rand関数,srand関数は使うべきではない}
+
+\noindent
+→\ref{allenvs:random_number}（乱数）参照
+
+\subsection*{gensub関数は使えない}
+
+GNU版AWKには独自拡張がいくつかあるが、中でも注意すべき点はgensub関数がそれであること。互換性を優先するなら、多少不便かもしれないがsub関数やgsub関数を使こと。その他、こまごまと気を付けるべきことについては「GNU AWKの`--posix`オプションに関するまとめ@kbkさんのWebページ\footnote{\verb|http://www.kt.rim.or.jp/~kbk/gawk-30/gawk_15.html#SEC135|}が大変参考になる。
+
+\subsection*{正規表現では有限複数個の繰り返し指定ができない}
+
+AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち、``\verb|?|''（0$\sim$1個）と``\verb|*|''（0個以上）と``\verb|+|''（1個以上）は使えるが、2個以上の任意の数を指定するための``\verb|{数}|''には対応していない。GNU版AWKでは独自拡張して使えるようになっているのだが。
+
+その他の基本正規表現\footnote{POSIXドキュメントの``9.3 BRE''（\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03|）において規定されているメタ文字}については全部使えるのだが、正規表現メモさんWebサイトのAWKの記述に\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#AWK|}に詳しくまとまっているので、そちらを見るのが便利だろう。
+
+\subsection*{整数の範囲}
+
+例えば、あなたの環境のAWKは次のように表示されはしないだろうか？
+
+\begin{screen}
+	\verb|$ awk 'BEGIN{print 2147483648}'| \return \\
+	\verb|2.14748e+09| 
+\end{screen}
+
+上記の例は、$\mathrm{0x7FFFFFFF}(=2^{32}-1)$より大きい整数を扱えないAWK実装である。このようなことがあるので、桁数の大きな数字を扱わせようとする時は注意が必要だ。計算をせず、単に表示させたいだけなら文字列として扱えばよい。
+
+\subsection*{ロケール}
+
+\noindent
+→\ref{allenvs:locale}（ロケール）を参照
+
+\section{dateコマンド}
+
+元々の機能が物足りないがゆえか、各環境で独自拡張されているコマンドの一つだ。だが互換性を考えるなら、使えるのは
+
+\begin{itemize}
+  \item \verb|-u|オプション（=UTC日時で表示）
+  \item ``\verb|+フォーマット文字列|''にて表示形式を指定
+\end{itemize}
+の2つだけと考えるが無難だろう。尚、フォーマット文字列中に指定できるマクロ文字の一覧は、POSIXのdateコマンドのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/date.html|}の``Conversion Specifications''の段落にまとめられているので参照されたい。
+
+\subsection*{UNIX時間との相互変換}
+
+マクロの種類はいろいろあるのだが、残念ながらUNIX時間\footnote{エポック秒とも呼ばれる``UTC 1970/1/1 00:00:00''からの秒数}との相互変換は無い。これさえできれば何とでもなるのだが……。
+
+しかしこんなこともあろうかと、相互変換を行うコマンドを作ったのだ。もちろんシェルスクリプト製である。詳しくは、\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）を参照してもらいたい。
+
+\section{duコマンド}
+
+特定ディレクトリー以下のデータサイズを求めるこのコマンド、POSIXで規定されているオプションではないが\verb|-h|というものがある。これはファイルやディレクトリーのデータサイズをk（キロ）、M（メガ）、G（ギガ）等最適な単位を選択して表示するものだ。
+
+しかしこのオプションの表示フォーマットは、環境によって僅かに異なる。
+
+\paragraph{FreeBSDのduコマンド-hオプションの挙動} 　\\
+\begin{screen}
+	\verb!$ du -h /etc | head -n 10! \return \\
+	\verb|118K    /etc/defaults| \\
+	\verb|2.0K    /etc/X11| \\
+	\verb|372K    /etc/rc.d| \\
+	\verb|4.0K    /etc/gnats| \\
+	\verb|6.0K    /etc/gss| \\
+	\verb| 30K    /etc/security| \\
+	\verb| 40K    /etc/pam.d| \\
+	\verb|4.0K    /etc/ppp| \\
+	\verb|2.0K    /etc/skel| \\
+	\verb|144K    /etc/ssh| \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{Linuxのduコマンド-hオプションの挙動} 　\\
+\begin{screen}
+	\verb!$ du -h /etc | head -n 10! \return \\
+	\verb|112K    /etc/bash_completion.d| \\
+	\verb|12K     /etc/abrt/plugins| \\
+	\verb|4.0K    /etc/statetab.d| \\
+	\verb|4.0K    /etc/dracut.conf.d| \\
+	\verb|28K     /etc/cron.daily| \\
+	\verb|4.0K    /etc/audisp| \\
+	\verb|4.0K    /etc/udev/makedev.d| \\
+	\verb|36K     /etc/udev/rules.d| \\
+	\verb|48K     /etc/udev| \\
+	\verb|8.0K    /etc/sasl2| \\
+	\verb|$ |
+\end{screen}
+
+違いがわかるだろうか？ 1列目（サイズ）が、前者は右揃えなのに後者は左揃えなのだ。従ってどちらの環境でも動くようにするには、1列目であっても行頭にスペースが入る可能性を考慮しなければならない。
+
+例えば1列目の最後に単位"B"を付加したいとしたら、下記の1行目はダメで、2行目の記述が正しい。
+
+\paragraph{1行目の最後に"B"(単位)を付けたい場合} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	du -h /etc | sed 's/^[0-9.]\{1,\}[kA-Z]/&B/'   # ←これでは不完全
+
+	du -h /etc | sed 's/^ *[0-9.]\{1,\}[kA-Z]/&B/' # ←こうするのが正しい
+
+	du -h /etc | awk '{$1=$1 "B";print}'           # ←折角の桁揃えがなくなるがまぁアリ
+\end{verbatim}
+\end{frameboxit}
+
+このようにして1列目にインデントが入るコマンドは結構あるし、インデントの幅も環境によりまちまちなので注意が必要だ。（例、 \verb|uniq -c| 、\verb|wc|などなど）
+
+\section{echoコマンド}
+
+例えば次のシェルスクリプト``\verb|echo_test.sh|''を見てもらいたい。これは引数で与えられた文字列を1行ずつ表示するという動きをするように作ってある。
+
+\paragraph{引数を1つ1行で表示するシェルスクリプト echo\_{}test.sh} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	for arg in "$@"; do
+	  echo "$arg"
+	done
+\end{verbatim}
+\end{frameboxit}
+
+このシェルスクリプトで、引数の一つに``\verb|-e|''を付けて実行してみる。FreeBSDでは\verb|-e|もちゃんと表示される一方で、例えば\verb|/bin/sh|の正体がbashになっているLinuxの場合は``\verb|-e|''がうまく表示されない。理由は、bashのechoコマンドが``\verb|-e|''を、表示すべき文字列ではなくてオプションとして解釈するからだ。
+
+\paragraph{FreeBSDのshで前述のシェルスクリプトを動かすと……} 　\\
+\begin{screen}
+	\verb|$ ./echo_test.sh -s -e -d| \return \\
+	\verb|-s| \\
+	\verb|-e| \\
+	\verb|-d| \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{Linuxのbashで前述のシェルスクリプトを動かすと……} 　\\
+\begin{screen}
+	\verb|$ ./echo_test.sh -s -e -d| \return \\
+	\verb|-s| \\
+	\verb|| \\
+	\verb|-d| \\
+	\verb|$ |
+\end{screen}
+
+これはbashで実装されているechoコマンドは、``\verb|-e|''を文字列ではなくオプションとして解釈するためだ。つまり上記のコードは環境によって挙動が変わっているわけで、互換性に問題があるということになる。
+
+ちなみにPOSIXにおけるshのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/echo.html|}によれば、\textbf{echoにはオプションが全く規定されていない}\footnote{詳しく読むと「System Vなど\verb|-n|オプションが効かない環境があるのでそれがやりたい時はprintfコマンドを使え」と書いてある。}。従って、どの環境でも動くシェルスクリプトを目指すなら、FreeBSDのshでも使える\verb|-n|オプションすら使うべきではないのだ。
+
+\subsection*{対策}
+
+このように、環境によっては与えられた文字列がオプションとみなされて意図せぬ動作をするので、\textbf{どんな文字列が入っているかわからない変数を扱いたければprintfコマンド}を使うようにすべきだ。
+
+\paragraph{echoのオプション反応問題を回避する対策を講じたもの} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	for arg in "$@"; do
+	  printf '%s\n' "$arg"
+	done
+\end{verbatim}
+\end{frameboxit}
+
+もちろん、ハイフンで始まらないとわかっているならそのままでよいのだが。
+
+\section{execコマンド}
+
+注意すべきはexecコマンド経由で呼び出すコマンドに環境変数を渡したい時だ。
+
+例えば、execコマンドを経由しない場合、コマンドの直前で環境変数を設定し、コマンドに渡すことができる。
+
+\begin{screen}
+	\verb|$ name=val awk 'BEGIN{print ENVIRON["name"];}'| \return \\
+	\verb|val| \\
+	\verb|$ |
+\end{screen}
+
+しかし、execコマンドを環境変数の直後に挿むと、何も表示されないシェルがある。
+
+\begin{screen}
+	\verb|$ name=val exec awk 'BEGIN{print ENVIRON["name"];}'| \return \\
+	\verb|| \\
+	\verb|$ |
+\end{screen}
+
+一部の環境のexecコマンドは、このようにして設定された環境変数を渡してくれないからだ。
+
+もしexecコマンド越しに環境変数を渡したいのであれば、事前にexportで設定しておくこと。
+
+\begin{screen}
+	\verb|$ export name=val| \return \\
+	\verb|$ awk 'BEGIN{print ENVIRON["name"];}'| \return \\
+	\verb|val| \\
+	\verb|$ |
+\end{screen}
+
+あるいは、execの後にenvコマンドを経由させるのでもよい。
+
+\begin{screen}
+	\verb|$ exec env name=val awk 'BEGIN{print ENVIRON["name"];}'| \return \\
+	\verb|val| \\
+	\verb|$ |
+\end{screen}
+
+\section{grepコマンド}
+\label{allenvs:grep}
+
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	俺は*BSDを使っているから、grepだってGNU拡張されていないBSD版のはず。ここで使えるメタ文字はどこでも使えるでしょ。
+\end{grshfboxit}
+と思っているアナタ。果たして本当にそうか確認してみてもらいたい。
+
+\paragraph{アナタのgrepはホントにBSD版？} 　\\
+\begin{screen}
+	\verb|$ grep --version| \return \\
+	\verb|grep (GNU grep) 2.5.1-FreeBSD| \return \\
+	\verb|| \\
+	\verb|Copyright 1988, 1992-1999, 2000, 2001 Free Software Foundation, Inc.| \\
+	\verb|This is free software; see the source for copying conditions. There is NO| \\
+	\verb|warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.| \\
+	\verb|| \\
+	\verb|$ |
+\end{screen}
+
+なんと、GPLソフトウェア排除に力を入れているFreeBSDでも、grepコマンドはGNU版だ。関係者によれば、主に速さが理由で、grepだけは当面GNU版を提供するのだという。よって、POSIX標準だと思っていたメタ文字が実はGNU拡張だったということがある。代表的なものは``\verb|\+|''や``\verb|?|''や``\verb!\|!''である。
+
+POSIX標準grepで使える正規表現は、\verb|-E|オプション無しの場合にはPOSIXの9.3節``Basic Regular Expression''\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03|}で規定されているものだけ。\verb|-E|オプション付きの場合には同9.4節``Extended Regular Expression''\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04|}で規定されているものだけだ。詳しくは、「正規表現メモ」さんによる日本語解説\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#POSIX|}が分かりやすいかもしれない。
+
+\section{headコマンド}
+
+大抵の環境のheadコマンドは、\verb|-c|オプション（ファイルの先頭をバイト単位で切り出す）に対応している。しかし実は、\textbf{POSIXではheadコマンドに\verb|-c|オプションは規定されていない。}現に、正しく実装されていない環境も存在する\footnote{AIXでは最後に余計な改行コードが付く。}。
+
+ちなみに、POSIXでもtailコマンドでは\verb|-c|オプションがきちんと規定されているので、headにだけ規定されていないのはちょっと不思議だ。
+
+\subsection*{対策}
+
+さて、それでは\verb|-c|オプションが使えない環境で何とかして同等のことができないものか……。大丈夫、ddコマンドでできる。
+
+試に``12345''という5バイト（改行コードを加えれば6バイト）の文字列から先頭の3バイトを切り出してみよう。bs（ブロックサイズ）を1バイトとして、それを3つ（count）と指定すればよい。
+
+\begin{screen}
+	\verb!$ echo 12345 | dd bs=1 count=3 2>/dev/null! \return \\
+	\verb|123$ |
+\end{screen}
+
+これは標準入力のデータを切り出す例だったが、\verb|if|キーワードを使えば実ファイルでもできる。
+
+\begin{screen}
+	\verb|echo 12345 > /tmp/hoge.txt| \return \\
+	\verb|$ dd if=/tmp/hoge.txt bs=1 count=3 2>/dev/null| \return \\
+	\verb|123$ |
+\end{screen}
+
+尚、ddコマンドは標準エラー出力に動作結果ログを吐くので、\verb|head -c|相当にするならddコマンドの最後に\verb|2>/dev/null|などと書いて、ログを捨てること。
+
+\section{ifconfigコマンド}
+
+これもPOSIXで規定されていないコマンドだし、最近ではLinuxなど使わない傾向にあるコマンドであるが、全ての環境で動くことを目指すならまだまだ外せないコマンドである。
+
+さて、実行中のホストに振られているIPアドレスを調べたい時にこのコマンドを使いたいことがあるが、各環境での互換性を確保するには2つのことに注意しなければならない。
+
+\subsection*{パスが通っているとは限らない}
+
+大抵の場合、ifconfigは\verb|/sbin|の中にある。しかし\textbf{多くのLinuxのディストリビューションでは一般ユーザーにsbin系のパスが通されていない。}だから、このコマンドを互換性を確保しつつ使いたい場合は、環境変数\verb|PATH|にsbin系ディレクトリー（\verb|/sbin|、\verb|/usr/sbin|）を追加しておく必要がある。
+
+\subsection*{フォーマットがバラバラ}
+
+ifconfigから返される書式が環境によってバラバラである。そこで、IPアドレスを取得するためのレシピを用意したので参照されたい。→\ref{recipe:ifconfig}（IPアドレスを調べる(IPv6も)）参照
+
+\section{killコマンド}
+\label{allenvs:kill}
+
+killコマンドで送信シグナルを指定する際は、名称でも番号でも指定できるわけだが、番号で指定する場合は気を付けなければならない。POSIXのkillコマンドのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/kill.html|}によれば、どの環境でも使える番号は\ref{tbl:signal_no}に記したもの以外保証されていない。
+
+
+\begin{table}[htb]
+  \caption{POSIXで番号が約束されているシグナル一覧}
+  \begin{center}
+  \begin{tabular}{ll}
+    \HLINE
+    Signal No. & Signal Name \\
+    \hline
+    0          & 0           \\
+    1          & SIGHUP      \\
+    2          & SIGINT      \\
+    3          & SIGQUIT     \\
+    6          & SIGABRT     \\
+    9          & SIGKILL     \\
+    14         & SIGALRM     \\
+    15         & SIGTERM     \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:signal_no}
+  \end{center}
+\end{table}
+
+「え、たったこれだけ!?」と思うだろうか。もちろんシグナルの種類がこれだけしかないわけではない。ただ、\textbf{その他のシグナルは名称と番号が環境によってまちまち}なのだ。例えば``SIGBUS''は、FreeBSDでは10だが、Linuxでは7、といった具合である。
+
+従って、上記以外のシグナルを指定したい場合は名称（"SIG"の接頭辞を略した文字列）で行うこと。使える名称自体は、POSIXでも規定されているとおり\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html|}、豊富にある。
+
+\subsection*{\verb|-l|オプションは避ける}
+
+killコマンドで\verb|-l|オプションを指定すれば、使えるシグナルの種類の一覧が表示されるのはご存知のとおり。しかし、番号と名称の対応がこれで調べられるわけではない。Linuxだと丁寧に番号まで表示されるが、FreeBSDでは単に名称一覧しか表示されない（一応順番と番号は一致してはいるのだが）。
+
+\section{mktempコマンド}
+\label{allenvs:mktemp}
+
+mktempコマンドもやはりPOSIXで規定されたものではない。よって、実際に使えない環境がある。
+
+しかしシェルスクリプトを本気で使いこなすにはテンポラリーファイルが欠かせず、そんな時に便利なコマンドがmktempなのだが……。どうすればいいだろうか。
+
+\underline{一意性のみでセキュリティーは保証しない簡易的なもの}\footnote{もしセキュリティーを確保したい場合は良質な乱数源が必要となり、そうなると/dev/urandom等に頼らざるを得ない。→\ref{allenvs:random_number}（乱数）参照}なら、下記のようなコードを追加しておけば作れる。
+
+\paragraph{mktempコマンドが無い環境で、その「簡易版」を用意するコード} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	which mktemp >/dev/null 2>&1 || {
+	  mktemp_fileno=0
+	  mktemp() {
+	    (
+	      filename="/tmp/${0##*/}.$$.$mktemp_fileno"
+	      touch "$filename"
+	      chmod "$filename"
+	      echo "$filename"
+	    )
+	    mktemp_fileno=$((mktemp_fileno+1))
+	  }
+	}
+\end{verbatim}
+\end{frameboxit}
+
+簡単に解説しておこう。最初にmktempコマンドの有無を確認し、無ければコマンドと同じ使い方ができるシェル関数を定義するものだ。
+
+ただし引数は無視され、必ず/tmpディレクトリーに生成されるので、それでは都合が悪い場合は適宜書き換えておくこと。それから、``\verb|mktemp_fileno|''という変数をグローバルで利用しているので書き換えないようにも注意すること。
+
+\section{nlコマンド}
+
+POSIXでも規定されている\verb|-w|オプションであるが、環境によって挙動が異なるので注意。
+（尚、\verb|-w|オプションはPOSIXでデフォルト値が設定されているため、\textbf{このオプションを記述しなくても同様の問題が起こるので注意！}\footnote{一方、catコマンドの\verb|-n|オプションではこの問題は起こらないようだ。}）
+
+\verb|-w|オプションとは行番号に割り当てる桁数を指定するものであるが、問題は指定した桁数よりも桁があふれてしまった時である。
+溢れた場合の規定は定義されていないので、実装によって解釈が異ってしまったようだ。
+
+2つの実装を例にとるが、まずBSD版のnlコマンドでは、溢れた分の上位桁は消されてしまう。
+
+\paragraph{BSD版nlコマンドの場合} 　\\
+\begin{screen}
+	\verb!$ yes | head -n 11 | nl -w 1! \return \\
+	\verb|1       y| \\
+	\verb|2       y| \\
+	\verb|3       y| \\
+	\verb|4       y| \\
+	\verb|5       y| \\
+	\verb|6       y| \\
+	\verb|7       y| \\
+	\verb|8       y| \\
+	\verb|9       y| \\
+	\verb|0       y| \\
+	\verb|1       y| \\
+	\verb|$ |
+\end{screen}
+
+一方、GNU版のnlコマンドでは、溢れたとしても消しはせず、全桁を表示する。
+
+\paragraph{GNU版nlコマンドの場合} 　\\
+\begin{screen}
+	\verb!$ yes | head -n 11 | nl -w 1! \return \\
+	\verb|1       y| \\
+	\verb|2       y| \\
+	\verb|3       y| \\
+	\verb|4       y| \\
+	\verb|5       y| \\
+	\verb|6       y| \\
+	\verb|7       y| \\
+	\verb|8       y| \\
+	\verb|9       y| \\
+	\verb|10      y| \\
+	\verb|11      y| \\
+	\verb|$ |
+\end{screen}
+
+行番号数字の直後につくのはデフォルトではタブ（``\verb|\t|''）なので、GNU版では桁数が増えるとやがてズレることになる。
+BSD版はズレることはない代わりに上位桁が見えないので、何行目なのかが正確にはわからない。
+
+\section{printfコマンド}
+\label{allenvs:printf}
+
+互換性を重視するなら、\verb|\xHH|（``\verb|HH|''は任意の16進数）という16進数表記によるキャラクターコード指定をしてはいけない。これは一部のprintfの独自拡張だからだ。代わりに\verb|\OOO|（``\verb|OOO|''は任意の8進数）という3桁の8進数表記を用いること。
+
+これは、AWKコマンドのprintf関数、sprintf関数についても同様である。
+
+\section{psコマンド}
+
+現在のpsコマンドは、オプションにハイフンを付けないBSDスタイルなど、いくつかの流派が混ざっているので厄介だ。
+
+\subsection*{\verb|-x|オプションは避ける}
+
+「制御端末を持たないプロセスを含める」という働きであるが、このオプションは使わない方がいい。そもそもPOSIXにおけるpsコマンドのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/ps.html|}にはないし、少なくともGNU版とBSD版では解釈が異なるようだ。
+
+例えばCGI(httpd)によって起動されたプロセス上で、\verb|-a|オプションも\verb|-x|オプションも付けずに自分に関するプロセスのみを表示しようとした場合、前者では表示されるものが後者では\verb|-x|を付けた場合に初めて表示されるなどの違いがある。
+
+結局のところ、互換性を重視するなら、大文字である\verb|-A|オプションを用いてとにかく全てを表示（\verb|-ax|に相当）させる方がよいだろう。
+
+\subsection*{\verb|-l|オプションも避ける}
+
+\verb|-l|オプションは、lsコマンドの同名オプションのように多くの情報を表示するためのものである。これはPOSIXのpsコマンドmanページにも記載されているし、実際主要な環境でサポートされているので問題なさそうだが、使うべきではない。理由は、表示される項目や順序がOSやディストリビューションによってバラバラだからだ。
+
+\subsection*{\verb|-o|オプションほぼ必須}
+
+\verb|-l|オプションを付けた場合の表示項目や順序がバラバラだと言ったが、実は\textbf{付けない場合もバラバラ}だ。どの環境でも期待できる表示内容といえば、
+
+\begin{itemize}
+  \item 1列目にPIDが来ること
+  \item 行のどこかにコマンド名が含まれていること
+\end{itemize}
+
+\noindent
+くらいなものだ。互換性を維持しながらそれ以上の情報を取得しようとするなら、\verb|-o|オプションを使って明確に表示させたい項目と順序を指定しなければならない。
+
+\verb|-o|オプションで指定できる項目一覧についてはPOSIXのpsコマンドmanページ内の「STDOUTセクション」後半に記されている。（太小文字で列挙されている項目で、現在のところ"ruser"から"args"までが記されている）
+
+\subsection*{補足.親プロセスID(PPID)}
+
+Linuxでは、親プロセスIDが0になるのはPIDが1の``init''だけだ。しかし、FreeBSD等では他の様々なシステムプロセスの場合はそれ以外のプロセスの親も0になる場合がある。これは、psコマンドの違いというよりカーネルの違いであるが、互換性のあるプログラムを書くときには注意すべきところだ。
+
+\section{sedコマンド}
+
+sedにもまたAWK同様に、複数の注意すべき点がある。
+
+\subsection*{最終行が改行コードでないテキストの扱い}
+
+試しに\verb@printf 'Hello,\nworld!'  | sed ''@というコードを実行してみてもらいたい。
+
+\paragraph{BSD版sedの場合} 　\\
+\begin{screen}
+	\verb@$ printf 'Hello,\nworld!'  | sed ''@ \return \\
+	\verb|Hello,| \\
+	\verb|world!| \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{GNU版sedの場合} 　\\
+\begin{screen}
+	\verb@$ printf 'Hello,\nworld!'  | sed ''@ \return \\
+	\verb|Hello,| \\
+	\verb|world!$ |
+\end{screen}
+
+と、このように挙動が異なる。最終行が改行コードで終わっていない場合、BSD版は改行を自動的に挿入し、GNU版はしないようだ。
+
+純粋なフィルターとして振る舞ってもらいたい場合にはGNU版の方が理想的ではあるが、すべての環境で動くことを目標にするならBSD版のような実装のsedとて無視するわけにはいかない。このようなsedをはじめ、AWKやgrep等、最終行に改行コードがなければ挿入されてしまうコマンドでの対処法を別のレシピとして記した。→\ref{recipe:nonLFterminated}（改行無し終端テキストを扱う）参照
+
+\subsection*{使用可能なコマンド・メタ文字}
+
+これも、GNU版は独自拡張されているので注意。
+
+sedの中で使えるコマンドに関して迷ったら、POSIXのsedコマンド\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/sed.html|}を見る。また、sedで使用可能な正規表現については、正規表現メモさんの記述\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#SED|}が便利だろう。
+
+\subsection*{標準入力指定の``\verb|-|''}
+
+多くのコマンドではファイル名として``\verb|-|''を指定すると標準入力を意味するのだが、sedではこれを使ってはならない。BSD版のsedは、標準入力ではなく真面目に``\verb|-|''というファイルを開こうとしてエラーになるからだ。
+
+\subsection*{ロケール}
+
+\noindent
+→\ref{allenvs:locale}（ロケール）を参照
+
+\section{sortコマンド}
+
+\noindent
+→\ref{allenvs:locale}（ロケール）を参照
+
+\section{tacコマンド・tailコマンド``-r''オプションによる逆順出力}
+
+ファイルの行を最後の行から順番に（逆順に）並べたい時はtacコマンドを使うか、tailコマンドの\verb|-r|オプションのお世話になりたいところであろう。しかし、どちらも一部の環境でしか使えないし、もちろんPOSIXにも載っていない。
+
+ではどうするか……。定番は、AWKで行番号を行頭に付けて、数値の降順ソートし、最後に行番号をとるという方法が無難だろう。
+
+\paragraph{逆順出力するサンプルコード \#1} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# 逆順に並べたいテキストファイル
+	cat <<TEXT > foo.txt
+	a
+	   b
+	c
+	TEXT
+
+	cat foo.txt         |
+	awk '{print NR,$0}' | # ←行頭に行番号をつける
+	sort -k1nr,1        | # ←行番号で降順にソート
+	sed 's/^[0-9]* //'    # ←行番号を除去
+\end{verbatim}
+\end{frameboxit}
+
+また、ソート対象のテキストデータが標準入力ではなくファイルであることがわかっているのであれば、exコマンドを使うという芸当もある。\footnote{bsdhack氏のブログ記事\verb|http://blog.bsdhack.org/index.cgi/Computer/20100513.html|より引用}
+
+\paragraph{逆順出力するサンプルコード \#2} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# 逆順に並べたいテキストファイル
+	cat <<TEXT > foo.txt
+	a
+	   b
+	c
+	TEXT
+
+	ex -s foo.txt <<-EOF
+	  g/^/mo0
+	  %p
+	EOF
+\end{verbatim}
+\end{frameboxit}
+
+\section{test（``[''）コマンド}
+\label{allenvs:test}
+
+どんな内容が与えられるかわからない文字列（シェル変数など）の内容を確認する時、最近のtestコマンドなら
+
+\paragraph{シェル変数\$strの内容が``!''ならば``Bikkuri!''を表示} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	[ "$str" = '!' ] && echo 'Bikkuri!'
+\end{verbatim}
+\end{frameboxit}
+
+と書いても問題無いものが多い\footnote{さすがに\verb|$str|の中身が``\verb|(|''だった場合ダメなようだが。}。しかし、古来の環境では
+
+\begin{screen}
+	\verb|`[: =: unexpected operator`|
+\end{screen}
+
+というエラーメッセージが表示され、正しく動作しないものが多い。これは\verb|$str|に格納されている``\verb|!|''が、評価すべき文字列ではなく否定のための演算子と解釈され、そうすると後ろに左辺ナシの\verb|=|が現れたと見なされてエラーになるというわけだ。
+
+testコマンドを用いて、全ての環境で安全に文字列の一致、不一致、大小を評価するには、文字列評価演算子の両辺にある文字列の先頭に無難な一文字を置く必要がある。
+
+\paragraph{両辺にある文字列の先頭に無難な1文字を置けば、どこでも正しく動く} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	[ "_$str" = '_!' ] && echo 'Bikkuri!'
+\end{verbatim}
+\end{frameboxit}
+
+もっとも、単に文字列の一致、不一致を評価したいだけなら、testコマンドを使わずに下記のようにcase文を使う方がよい。上記のような配慮は必要ないし、外部コマンド（シェルが内部コマンドとして持ってる場合もあるが）のtestコマンドを呼び出さなくてよいので軽い。
+
+\paragraph{case文で同等のことをする} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	case "$str" in '!') echo 'Bikkuri!';; esac
+\end{verbatim}
+\end{frameboxit}
+
+\section{trコマンド}
+\label{allenvs:tr}
+
+このコマンドは各環境の方言が強く残るコマンドの一種で、無難に作るならなるべく使用を避けたいコマンドだ。
+
+例えばアルファベットの全ての大文字を小文字に変換したい場合、
+\begin{quote}
+	\verb|tr '[A-Z]'  '[a-z]'| ← System V系での書式（運よくどこでも動く）\\
+	\verb|tr 'A-Z'  'a-z'     | ← BSD系、POSIXでの書式
+\end{quote}
+という2つの書式がある。範囲指定の際にブラケット\verb|[|、\verb|]|が要るかどうかだ。
+BSD系の場合、ブラケットは通常文字として解釈されるので、これを用いると置換対象文字として扱われてしまう。
+しかしながら前者のブラケットは置換前も置換後も全く同一の文字なので幸いにしてどこでも動く。
+従って、このようなケースでは前者の記述をとるべきだろう。
+
+しかし、-dオプションで文字を消したい場合はそうはいかない。
+\begin{quote}
+	\verb|tr -d '[a-z]'| ← System V系での書式（これはBSD系、POSIX準拠実装ではNG）\\
+	\verb|tr 'a-z'      | ← BSD系、POSIXでの書式
+\end{quote}
+
+POSIXに準拠してないSystem V実装が悪いと言ってしまえばそれまでなのだが、
+歴史の上ではPOSIXよりも早いので、それを言うのもまた理不尽というもの。ではどうすればいいか。
+
+答えは、「sedで代用する」だ。上記のように、全ての小文字アルファベットを消したいという場合はこう書けばよい。
+\begin{quote}
+	\verb|sed 's/[a-z]//g'|
+\end{quote}
+
+
+\section{trapコマンド}
+
+\noindent
+→\ref{allenvs:kill}（killコマンド）参照

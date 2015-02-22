@@ -1,0 +1,296 @@
+\section{sortコマンドの基本と応用とワナ}
+\label{recipe:sort}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	UNIXのsortコマンドはいろいろな機能があって強力だときいたが、うまく使えない。
+\end{grshfboxit}
+
+\subsection*{回答}
+
+確かにUNIXのsortコマンドは多機能だ。使いこなせば殆どの要求に応えられるだろう。
+しかし知らないとハマるワナがいくつかあるし、またこの質問者は基本からおさらいした方がよさそうだ。そこで、sortコマンドチュートリアルを行うことにする。
+何にもオプションを付けずに\verb|sort|と打ち込むくらいしか知らないというなら、これを読んで便利に使おう。
+
+\subsection*{基本編. 各行を単なる1つの単語として扱う}
+
+sortコマンドの使い方には基本と応用がある。基本的な使い方は単純で、\textbf{各行を1つの単語のように見なして}キャラクターコード順に並べるなどの使い方だ。
+
+\paragraph*{(オプションなし)……キャラクターコード順に並べる}　\\
+\begin{screen}
+	\verb!$ cat <<EXSAMPLE | sort! \return \\
+	\verb!>  perl! \return \\
+	\verb!>  ruby! \return \\
+	\verb!>  Perl! \return \\
+	\verb!>  Ruby! \return \\
+	\verb!>  EXSAMPLE! \return \\
+	\verb!Perl             !  ← 註) \\
+	\verb!Ruby             !  ← キャラクターコード順なので \\
+	\verb!perl             !  ← 大文字から先に並ぶ \\
+	\verb!ruby             !  ← \\
+	\verb!$ !
+\end{screen}
+
+\paragraph*{\verb|-f|……辞書順に並べる}　\\
+\begin{screen}
+	\verb!$ cat <<EXSAMPLE | sort -f! \return \\
+	\verb!>  perl! \return \\
+	\verb!>  ruby! \return \\
+	\verb!>  Perl! \return \\
+	\verb!>  Ruby! \return \\
+	\verb!>  EXSAMPLE! \return \\
+	\verb!Perl             !  ← 註) \\
+	\verb!perl             !  ← 辞書順なので \\
+	\verb!Ruby             !  ← P,p,R,rの順で \\
+	\verb!ruby             !  ← 並ぶ \\
+	\verb!$ !
+\end{screen}
+
+\paragraph*{\verb|-n|……整数順に並べる}　\\
+\begin{screen}
+	\verb!$ cat <<EXSAMPLE | sort -n! \return \\
+	\verb!>  2! \return \\
+	\verb!>  10! \return \\
+	\verb!>  -3! \return \\
+	\verb!>  1! \return \\
+	\verb!>  EXSAMPLE! \return \\
+	\verb!-3               !  ← 註) \\
+	\verb!1                !  ← 値の小さい順に並ぶ。 \\
+	\verb!2                !  ← もし-nを付けないと \\
+	\verb!10               !  ← -3,1,10,2 の順に並ぶことになる(2と10の順番が狂ってしまう)。 \\
+	\verb!$ !
+\end{screen}
+
+\noindent
+※ マイナス記号は認識するが、プラス記号は認識しない。
+
+\paragraph*{\verb|-g|……実数順に並べる(POSIX非標準)}　\\
+\begin{screen}
+	\verb!$ cat <<EXSAMPLE | sort -g! \return \\
+	\verb!>  +6.02e+23! \return \\
+	\verb!>  1.602e-19! \return \\
+	\verb!>  -928.476e-26! \return \\
+	\verb!>  EXSAMPLE! \return \\
+	\verb!-928.476e-26     !  ← 註) \\
+	\verb!1.602e-19        !  ← 浮動小数点表記でも正しくソートする。 \\
+	\verb!+6.02e+23        !  ← -nオプションと違い、+符号も認識する。 \\
+	\verb!$ !
+\end{screen}
+
+\noindent
+※ 単純な整数にも使える、計算量が多くなるので、整数には-nオプションの方がよい。
+
+\paragraph*{\verb|-r|……降順に並べる(他オプションと併用可)}　\\
+\begin{screen}
+	\verb!$ cat <<EXSAMPLE | sort -gr! \return \\
+	\verb!>  +6.02e+23! \return 　　　　　↑註1)他のオプションと組み合わせて使える \\
+	\verb!>  1.602e-19! \return \\
+	\verb!>  -928.476e-26! \return \\
+	\verb!>  EXSAMPLE! \return \\
+	\verb!+6.02e+23        !  ← 註2) \\
+	\verb!1.602e-19        !  ← 先程の-gオプションとは、 \\
+	\verb!-928.476e-26     !  ← 順番が正反対になっている。 \\
+	\verb!$ !
+\end{screen}
+
+\subsection*{応用編. 複数の列から構成されるデータを扱う}
+
+sortコマンドの本領は、ここで紹介する使い方を覚えてこそ発揮される。SQLの``ORDER BY''句のように、第1ソート条件、第2ソート条件……、と指定できるのだ。強力である。
+
+応用編では、2つのサンプルデータを例に紹介する。
+
+\subsubsection*{サンプルデータ(1)…キャラクター名簿}
+
+次のように、キャラクター初出年、性別、キャラクター名、の3列から構成される半角スペース区切りのデータ（sample1.txt）があったとしよう。
+\paragraph{sample1.txt}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	1992 男 りょうおうき
+	1992 女 まさきささみじゅらい
+	2003 女 かわはらさき
+	2003 男 しらせあきら
+	1995 男 るみや
+	1995 女 あまのみさお
+\end{verbatim}
+\end{frameboxit}
+
+ちなみに列と列の間の半角スペースは1つでなければならない。2つのままだとデータによっては失敗するのだが、それについては「ワナ編」で説明しよう。
+
+さてここで「名前順にソートせよ」という要請を受けたとする。名前が1列目にあれば簡単（単にオプション無しのsortに渡すだけ）なのだが、このサンプルデータでは3列目にある。こういう時は、\verb|-k 3,3|というオプションを付けてやる。つまり、\verb|-k|オプションの後ろに\textbf{ソートしたい列番号をカンマ区切りで2つ書く}。
+\begin{screen}
+	\verb!$ sort -k 3,3 sample1.txt! \return \\
+	\verb!1995 女 あまのみさお! \\
+	\verb!2003 女 かわはらさき! \\
+	\verb!2003 男 しらせあきら! \\
+	\verb!1992 女 まさきささみじゅらい! \\
+	\verb!1992 男 りょうおうき! \\
+	\verb!1995 男 るみや! \\
+	\verb!$ !
+\end{screen}
+
+なぜ2つ付けるのかについてであるが、入門段階ではとりあえず「そういうもんだ」と思って覚えておけばよい\footnote{どうしても詳しく知りたい人はFreeBSDやLinuxのmanページのsort(1)を見るとよいだろう。}。
+
+さて次に「名前を降順にソートせよ」という要請を受けたとする。先程は名前をキャラクターコードの昇順にソートしたが、逆順にしたい場合はどうするか。答えは\verb|-k 3r,3|である。つまり、最初の数字の直後に\textbf{基本編で紹介したオプション文字を付ける}。これもとにかくそういうものだと覚えておけばよい。
+\begin{screen}
+	\verb!$ sort -k 3r,3 sample1.txt! \return \\
+	\verb!1995 男 るみや! \\
+	\verb!1992 男 りょうおうき! \\
+	\verb!1992 女 まさきささみじゅらい! \\
+	\verb!2003 男 しらせあきら! \\
+	\verb!2003 女 かわはらさき! \\
+	\verb!1995 女 あまのみさお! \\
+	\verb!$ !
+\end{screen}
+
+ちなみに、もし名前が半角アルファベットで記述されていて、それをアルファベット順に並べたかったとするなら、\verb|-k 3fr,3|と書けばよい。\verb|f|は基本編で出てきた「辞書順に並べる」オプションだ。
+
+今度は「性別→初出年逆順→名前の順でソートせよ」という要請を受けたとしよう。複数のソート条件を指定する場合にはどうすればいいか。答えは「\verb|-k|オプションを複数書く」である。つまりこの場合、\verb|-k 2,2 -k 1nr,1 -k 3,3|だ。
+\begin{screen}
+	\verb!$ sort -k 2,2 -k 1nr,1 -k 3,3 sample1.txt! \return \\
+	\verb!2003 女 かわはらさき! \\
+	\verb!1995 女 あまのみさお! \\
+	\verb!1992 女 まさきささみじゅらい! \\
+	\verb!2003 男 しらせあきら! \\
+	\verb!1995 男 るみや! \\
+	\verb!1992 男 りょうおうき! \\
+	\verb!$ !
+\end{screen}
+
+性別を昇順にすると「女」が先に来るのは、男女を音読みした場合の名前順で女の方が先だからである。また、初出年の降順ソート（\verb|-k 1nr,1|）で``\verb|n|''を付けているのは、もし初出年が3桁以下だった場合でも正常に動作することを保証するためだ。
+
+\subsubsection*{サンプルデータ(2)…パスワードファイル}
+
+ここでサンプルデータを変える。/etc/passwdファイルだ。誰もが持ってるので試すのも楽だろう。中を覗いてみるとこんな感じになっているはずだ。
+
+\paragraph*{/etc/passwdの例}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	# $FreeBSD: release/9.1.0/etc/master.passwd 218047 2011-01-28 22:29:38Z pjd $
+	#
+	root:*:0:0:Charlie &:/root:/bin/csh
+	toor:*:0:0:Bourne-again Superuser:/root:
+	daemon:*:1:1:Owner of many system processes:/root:/usr/sbin/nologin
+	operator:*:2:5:System &:/:/usr/sbin/nologin
+	bin:*:3:7:Binaries Commands and Source:/:/usr/sbin/nologin
+	tty:*:4:65533:Tty Sandbox:/:/usr/sbin/nologin
+	kmem:*:5:65533:KMem Sandbox:/:/usr/sbin/nologin
+	 :
+\end{verbatim}
+\end{frameboxit}
+
+特徴は、スペース区切りではなくてコロン区切りになっている点だ。あと、先頭にコメント行がついているが、これは正しくソートできないのでソートの直前には\verb|grep -v '^#'|を挿んで取り除かなければならない。
+
+ここで次の要請「グループ番号→ユーザー番号の順でソートせよ」を受けたとする。ソート例は一つしかやらないが、sample1.txtを踏まえれば\verb|-k|オプションを使ってどうやるかについてはもうわかるはずだ。グループ番号は第4列、ユーザー番号は第3列にあるのだから\verb|-k 4n,4 -k 3n,3|とすればよい。
+
+問題は区切り文字だ。\textbf{列と列を区切る文字が半角スペース以外の場合には\verb|-t|オプションを使う}。/etc/passwdはコロン区切りなので\verb|-t ':'|と書く。
+
+まとめると答えはこうだ。
+
+\begin{screen}
+	\verb!$ cat /etc/passwd             |! \return \\
+	\verb!>  grep -v '^#'                 |! \return   ←コメント行を除去する \\
+	\verb!>  sort -k 4n,4 -k 3n,3 -t ':'! \return \\
+	\verb!root:*:0:0:Charlie &:/root:/bin/csh! \\
+	\verb!toor:*:0:0:Bourne-again Superuser:/root:! \\
+	\verb!daemon:*:1:1:Owner of many system processes:/root:/usr/sbin/nologin! \\
+	\verb!unbound:*:59:1:unbound dns resolver:/nonexistent:/usr/sbin/nologin! \\
+	\verb!operator:*:2:5:System &:/:/usr/sbin/nologin! \\
+	\verb!  :! \\
+	\verb!kmem:*:5:65533:KMem Sandbox:/:/usr/sbin/nologin! \\
+	\verb!nobody:*:65534:65534:Unprivileged user:/nonexistent:/usr/sbin/nologin! \\
+	\verb!$ !
+\end{screen}
+
+\subsection*{ワナ編. 区切り文字に潜むワナ2つ}
+
+おまちかねのワナ編。応用編のテクニックを使いこなすには、この2つのワナも覚えておかないとハマることになる。
+
+\subsubsection*{その1 半角スペース複数区切りのワナ}
+
+また新たなサンプルデータファイルを用意する。
+
+\paragraph{sample2.txt} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	1  B -
+	10 A -
+\end{verbatim}
+\end{frameboxit}
+
+ご覧のように第2列の位置を揃えるために、1行目の文字``\verb|B|''の手前には半角スペースが2個挿入されている。このような例は、\verb|df|、\verb|ls -l|、\verb|ps|などのコマンド出力結果や、\verb|fstab|などの設定ファイルで身近に溢れている。
+
+このデータを第2列のキャラクターコード順にソートしたらどうなるか？1行目と2行目が入れ替わってもらいたいところだが、やってみると入れ替わらないのだ。少なくともGNU sort 8.4で実行したらそうなった。
+
+\begin{screen}
+	\verb!$ sort -k 2,2 sample2.txt! \return \\
+	\verb!1  B  -! \\
+	\verb!10 A  -! \\
+	\verb!$ !
+\end{screen}
+
+理由は、AWKコマンド等と違い、\textbf{sortコマンドは複数の半角スペースを1つの列区切りと見なせない}からなのだ。1行目の1つ目と2つ目の半角スペースの間にヌル文字から成る第2列が存在すると見なしているのである。
+
+従って列と列を区切る複数のスペースは1個にしなければならない。だから、上記のコードは下記のように修正すれば正しく動く。
+
+\begin{screen}
+	\verb!$ cat sample2.txt                     |! \return \\
+	\verb!>  sed 's/[[:blank:]][[:blank:]]*/ /g'  |! \return  ←註1)連続するスペースを1つにする \\
+	\verb!>  sed 's/^[[:blank:]]*//'              |! \return  ←註2)行頭のスペースを除去する \\
+	\verb!>  sed 's/[[:blank:]]*$//'              |! \return  ←註3)行末のスペースを除去する \\
+	\verb!>  sort -k 2,2! \return \\
+	\verb!10 A  -! \\
+	\verb!1 B  -! \\
+	\verb!$ !
+\end{screen}
+
+まぁ当然、位置取りのスペースが消えてガタガタになってしまうのだが……。
+
+あと、2個目と3個目のsedもあった方が安全だ。これは、\verb|ps|コマンドのように行頭(第1列の手前)にも半角スペースを入れる場合のあるコマンドで誤動作しないようにするための予防策である。
+
+\subsubsection*{その2 全角スペース区切りのワナ}
+
+ロケールに関する環境変数（\verb|LC_*|、\verb|LANG|など）が設定してある環境で使っている人にはもう一つのワナが待ち構えているので注意しなければならない。
+
+次のサンプルデータを見てもらいたい。これは、第1列に人名、第2列にかな、という構成の名簿データだ。注目すべきは苗字と名前の間には全角スペースが入っている点である。
+
+\paragraph{sample3.txt} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	白瀬　慧 しらせ　あきら
+	天野　美紗緒 あまの　みさお
+	本木　紗英 もとき　さえ
+\end{verbatim}
+\end{frameboxit}
+
+このデータを名簿順にソートせよと言われたとする。普通に考えれば、\verb|-k 2,2|でいいはずだ。読みがなが第2列にあるのだから。ところが日本語ロケール(\verb|LANG=ja_JP.UTF-8|など)になっているLinux環境で実行すると失敗する。
+
+\begin{screen}
+	\verb!$ sort -k 2,2 sample3.txt! \return \\
+	\verb!白瀬　慧 しらせ　あきら! \\
+	\verb!天野　美紗緒 あまの　みさお! \\
+	\verb!本木　紗英 もとき　さえ! \\
+	\verb!$ !
+\end{screen}
+
+原因は、\textbf{全角スペースも列区切り文字扱い}されているということだ。
+正しくやるには、環境変数を無効にする、もしくは\textbf{-tオプションで区切り文字は半角スペースだと設定}しなければならない。
+
+具体的には、sortコマンド引数に\verb|-t '  '|と追記してやればよい。
+
+\begin{screen}
+	\verb!$ sort -k 2,2 -t '  '  sample3.txt! \return \\
+	\verb!天野　美紗緒 あまの　みさお! \\
+	\verb!白瀬　慧 しらせ　あきら! \\
+	\verb!本木　紗英 もとき　さえ! \\
+	\verb!$ !
+\end{screen}
+
+おめでとう、これでアナタも今日からsortコマンドマスターだ。
+本当はここで説明していない機能が他にもあるが、それらについて知りたければ、使っているOSのmanコマンドでsortについて調べてもらいたい。
+
+\subsection*{参考}
+
+\noindent
+→\ref{recipe:blacklist}（ブラックリストの100件を1万件の名簿から除去する）…joinコマンドの話

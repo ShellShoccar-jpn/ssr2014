@@ -1,0 +1,139 @@
+\section{改行無し終端テキストを扱う}
+\label{recipe:nonLFterminated}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	標準入力から与えられるテキストデータで、
+	見出し行（インデント無しで大文字1単語だけの行と定義）を除去するフィルターを作りたい。
+	だた、それ以外の加工をされると困る。例えば入力テキストデータの最後が改行で終わっていない場合は、
+	出力テキストデータも最終行は改行無しのままであってもらいたい。
+
+	つまり、次のような動きをするFILTER.shを作りたい。
+	\begin{screen}
+		\verb!$ printf 'PROLOGUE\nA long time ago...\n'  | FILTER.sh! \return \\
+		\verb!A long time ago...! \\
+		\verb!! \\
+		\verb!$ printf 'PROLOGUE\nA long time ago...'  | FILTER.sh! \return \\
+		\verb!A long time ago...$ !　　←元データが改行無し終端なので改行せずにプロンプトが表示されている
+	\end{screen}
+\end{grshfboxit}
+
+\subsection*{回答}
+\verb|grep -v'^[A-Z]\{1,\}$'|というフィルターを作り、これを通せば見出し行を除去することはできる。だが、最終行が改行で終わっていなければ最後に改行コードを付けてしまうので一工夫する必要がある。
+
+どのように一工夫すればよいか、答えはこうだ。まず目的のフィルターを通す前、入力データの最後に改行コードを1つ付加する。そしてフィルターを通し、その後でデータの改行コードを取ってしまえばいい。結局この問題文の目的を果たすには、具体的には次のようなコードを書けばよい。
+
+\paragraph{データの末端に余分な改行を付けないフィルター} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	printf 'PROLOGUE\nA long time ago...' |
+	(cat -; echo)                         |
+	grep -v'^[A-Z]\{1,\}$'                |
+	awk 'BEGIN{
+	       ORS="";
+	       OFS="";
+	       getline line;
+	       print line;
+	       dlm=sprintf("\n");
+	       while (getline line) {
+	         print dlm,line;
+	       }
+	     }'
+\end{verbatim}
+\end{frameboxit}
+
+ただし、目的のフィルターがsedコマンドを使ったものであった場合は注意が必要。BSD版のsedコマンドは最終行が改行終わりでなければ改行コードを付加するが、GNU版のsedコマンドは改行コードを付加しない。この違いを吸収するため、sedコマンドだった場合には、最後のAWKコマンドの前に``\verb|grep ^|''等、改行を付けるコマンドを挿む必要がある。
+
+\paragraph{データの末端に余分な改行を付けないフィルター（sedの場合）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	printf 'PROLOGUE\nA long time ago...' |
+	(cat -; echo)                         |
+	sed '/^[A-Z]\{1,\}$/d'                |
+	grep ^                                | # この行が必要
+	awk 'BEGIN{
+	       ORS="";
+	       OFS="";
+	       getline line;
+	       print line;
+	       dlm=sprintf("\n");
+	       while (getline line) {
+	         print dlm,line;
+	       }
+	     }'
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{解説}
+
+多くのUNIXコマンドは改行が無いと途中のコマンドが勝手に改行を付けてしまうが、純粋なフィルターとして見た場合それでは困る。どうすればこの問題を回避できるかといえば、まず先手を打って先に改行を付けてしまう。そうすると途中に通すコマンドが勝手に改行を付けることは無くなる。そして最後に末端の改行を取り除けばいいというわけだ。では、改行を末端に付けたり、末端から取り除いたりは具体的にどうやればいいのだろうか。
+
+まず、付ける方は簡単だ。「回答」に示したコードを見れば特に説明する必要もないだろう。
+
+一方、最後に除去をしているコードはどうやっているのか。これはAWKコマンドの性質を1つ利用している。AWKコマンドは、printfで改行記号\verb|\n|を付けなかったり、組み込み変数ORS（出力レコード区切り文字）を空にしたりすれば行末に改行コードを付けずにテキストを出力できる。後ろに追加したAWKはこの性質を利用し、普段なら改行コードを出力した時点で行ループを区切るところを、行文字列を出力して改行コードを出力する手前で行ループを一区切りさせるようにしてしまう。
+
+そうすると一番最後の行のループだけは不完全になり、最後の行の文字列の後ろに改行コードが付かないことになる。しかし、予め余分に改行を1個（つまり余分な1行）を付けておいたので、不完全になるのはその余分な1行ということになる。結果、元データの末端に改行が含まれていなければ末端には改行が付かないし、あれば付く。
+
+言葉では分かり難いかもしれないが、図で解説するとこんな感じだ。
+
+\begin{verbatim}
+str_1<LF>
+str_2<LF>
+  :
+str_n<LF有ったり無かったり>
+\end{verbatim}
+
+\noindent
+　　　　↓(末端に改行コードを付加)
+
+\begin{verbatim}
+str_1<LF>
+str_2<LF>
+  :
+str_n<LF有ったり無かったり><LF>
+\end{verbatim}
+
+\noindent
+　　　　↓(加工する。各行末に必ず改行コードがあるので、勝手に付加されない)
+
+\begin{verbatim}
+STR_1<LF>
+STR_2<LF>
+  :
+STR_n<LF有ったり無かったり><LF>
+\end{verbatim}
+
+\noindent
+　　　　↓(各行末の改行コードが次行の行頭に移動したように扱う)
+
+\begin{verbatim}
+STR_1
+<LF>STR_2
+  :
+<LF>STR_n<LF有ったり無かったり>
+<LF>
+\end{verbatim}
+
+\noindent
+　　　　↓(最終行の改行をトル)
+
+\begin{verbatim}
+STR_1
+<LF>STR_2
+  :
+<LF>STR_n<LF有ったり無かったり>
+\end{verbatim}
+
+\noindent
+　　　　$||$ (これはつまり……)
+
+\begin{verbatim}
+STR_1<LF>
+STR_2<LF>
+  :
+STR_n<LF有ったり無かったり>
+\end{verbatim}
+
+ちょっと不思議な気もするが、そういうことだ。

@@ -1,0 +1,66 @@
+\section{URLデコードする}
+\label{recipe:URL_decode}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Webサーバーのログを見ていると、検索ページからジャンプしてきている形跡があった。しかし、検索キーワードはURLエンコードされた状態であり、デコードしないとわからないのでデコードしたい。
+\end{grshfboxit}
+
+\subsection*{回答}
+そんなに難しい仕事でないから素直に書いて作る。基本的には正規表現で``\verb|%[0-9A-Fa-f]{2}|''を検索し、
+見つかるたびにprintf関数を使ってその16進数に対応するキャラクターに置き換えればよい。AWKで書くならこんな感じだ。
+
+\paragraph{URLデコードするコード} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	env i- awk '
+	BEGIN {
+	  # --- prepare
+	  LF  = sprintf("\n");
+	  OFS = "";
+	  ORS = "";
+	  # --- prepare decoding
+	  for (i=0; i<256; i++) {
+	    l  = sprintf("%c",i);
+	    k1 = sprintf("%02x",i);
+	    k2 = substr(k1,1,1) toupper(substr(k1,2,1));
+	    k3 = toupper(substr(k1,1,1)) substr(k1,2,1);
+	    k4 = toupper(k1);
+	    p2c[k1]=l;p2c[k2]=l;p2c[k3]=l;p2c[k4]=l;
+	  }
+	  # --- decode
+	  while (getline line) {
+	    gsub(/\+/, " ", line);
+	    while (length(line)) {
+	      if (match(line,/%[0-9A-Fa-f][0-9A-Fa-f]/)) {
+	        print substr(line,1,RSTART-1), p2c[substr(line,RSTART+1,2)];
+	        line = substr(line,RSTART+RLENGTH);
+	      } else {
+	        print line;
+	        break;
+	      }
+	    }
+	    print LF;
+	  }
+	}'
+\end{verbatim}
+\end{frameboxit}
+
+1文字ではなく1バイトずつ処理する必要があるので``\verb|env -i|''をAWKの手前に付けて、ロケール環境変数の影響を受けないようにする。
+
+\subsection*{解説}
+文字を1バイト毎に、16進数2桁表現でアスキーコード化し、その先頭に``\verb|%|''文字を付けるエンコード方式を\textbf{パーセントエンコーディング}と呼ぶ。ただしURLに用いる文字のうち特殊な意味を持つものだけをパーセントエンコーディングするとともに半角スペースは``\verb|%20|''ではなく``\verb|+|''にエンコードする場合を、「URLエンコーディング」とか「URLエンコード」などと呼んだりする。これは、RFC 3986のSection2.1で定義されている。
+
+このエンコーディングのルールさえ理解できれば、デコーダーを作ることなど大したことではない。
+例えばWeb検索するとurlendecというパッケージ\footnote{\verb|http://www.whizkidtech.redprince.net/urlendec/|}が見つかる。
+しかしPOSIX原理主義者たるものそういったものに安易に頼ってはいけない。
+なんとこのツールは2014/12現在32bit専用らしい。
+もしこのソフトを愛用している人が32bit環境から64bit環境に移行しようとしたら痛い目を見る。（かつての筆者）
+
+\subsection*{参照}
+
+\noindent
+→RFC 3986文書\footnote{http://www.ietf.org/rfc/rfc3986.txt} \\
+→\ref{recipe:URL_encode}（URLエンコードする）

@@ -1,0 +1,64 @@
+\section{grepに対するfgrepのような素直なsed}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	シェル変数に入っている文字列に置換されるマクロ文字列を定義し、それをテキストファイルの中に配置したい。
+	sedコマンドを使おうと思うのだが、シェル変数にはどんな文字が入っているのかわからない。
+	つまりsedの正規表現で使うメタ文字が入っている可能性もあるので、単純にはいかない。
+\end{grshfboxit}
+
+\subsection*{回答}
+sedがメタ文字として解釈しうる文字を予めエスケープしてからsedに掛ける。
+具体的には次のコードを通すことで安全にそれができる。
+置換前の文字列（マクロなど）が入っているシェル変数を\verb|$fr|、置換後の文字列が入っているシェル変数を\verb|$to|とすると、
+
+\noindent
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	# メタ文字をエスケープ
+	fr=$(printf '%s' "$fr"           |
+	     sed 's/\([].\*/[]\)/\\\1/g' | # "^","$"以外の正規表現メタ文字をエスケープ
+	     sed 's/^\^/\\^/'            | # 文字列先頭にあるメタ文字"^"をエスケープ
+	     sed 's/\$$/\\$/'            ) # 文字列末尾にあるメタ文字"$"をエスケープ
+	to=$(printf '%s' "$to"        |
+	     sed 's/\([\&/]\)/\\\1/g' )    # 後方参照として意味を持つメタ文字をエスケープ
+
+	# あとは普通にsedに掛ければよい
+	cat template.txt | sed "s/$a/$b/g"
+\end{verbatim}
+\end{frameboxit}
+
+このような「素直なsed」を``fsed''という名前でGitHubに公開した\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/fsed|}ので、よかったら使ってもらいたい。
+まぁ、grepに対するfgrepが軽いのと違って、\textbf{このfsedはsedより軽いということは無い}のだが……。
+
+\subsection*{解説}
+
+このレシピはもともと、HTMLテンプレートにマクロ文字を置きたいという要望があってまとめたレシピだ。
+
+例えば、
+
+\begin{quote}
+\begin{verbatim}
+	<input type="text" name="string" value="###COMMENT###" />
+\end{verbatim}
+\end{quote}
+
+というHTMLテンプレート（の一部）があって、\verb|###COMMENT###|の部分を、CGI経由で受け取って今\verb|$comment|というシェル変数に入っている任意の文字列を書きたいと思った時、
+
+\begin{quote}
+\begin{verbatim}
+	sed "s/###COMMENT###/$comment/g"
+\end{verbatim}
+\end{quote}
+
+と書けないのだ。なぜか？
+
+「わかった。\verb|"|をエスケープしないとHTMLが不正になるからでしょ」と、気が付いたかもしれない。いや、それもそうなのだが、\textbf{むしろそのエスケープが原因でsedが誤動作}してしまう。ダブルクォーテーションをHTML的にエスケープすると\verb|&quot;|だが、ここに含まれている\verb|&|はsedの後方参照文字ではないか。
+
+\verb|$comment|の部分に、\verb|\|と\verb|&|という後方参照用のメタ文字、また正規表現の仕切り文字である\verb|/|が入っているとsedは誤動作する。
+さらに\verb|###COMMENT###|の部分が、正規表現のメタ文字だったり、仕切り文字\verb|/|になっていてもやはり誤動作する。これらはsedに与える前にエスケープしなければならないのだ。
+
+正規表現のメタ文字を熟知している人なら、「回答」で示したコードを見て「あれ、\verb|(|、\verb|)|、\verb|{|、\verb|}|、\verb|+|とか、他にもいろいろメタ文字あるんじゃないの？」と思うかもしれなが、sedはこれで大丈夫。
+拡張正規表現モードにしない限り、他のメタ文字は手前に\verb|\|を付けることになっているからだ\footnote{「正規表現メモ」さんのsedに関する記述が参考になるだろう→\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#SED|}。

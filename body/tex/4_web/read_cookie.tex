@@ -1,0 +1,59 @@
+\section{シェルスクリプトおばさんの手づくりCookie（読み取り編）}
+\label{recipe:read_cookie}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	クライアント（Webブラウザー）が送ってきたCookie情報を、シェルスクリプトで書いたCGIスクリプトで読み取りたい。
+\end{grshfboxit}
+
+\subsection*{回答}
+Cookie文字列はCGI変数とよく似たフォーマットで、しかも環境変数で渡ってくるので\ref{recipe:GETmethod}（CGI変数の取得(GETメソッド編)）がほぼ流用できる。しかしながら若干の相違点があるので、具体例を示しながら説明する。
+
+例として掲示板のWebアプリケーションの場合を考えてみる。投稿者名とメールアドレスをそれぞれ``name''、``email''という名前でCookieに保存していたとすると、それを取り出すには次のように書けばよい。
+\paragraph{掲示板の投稿者名とe-mailをCookieから取り出す} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	Tmp=/tmp/${0##*/}.$$                                # 一時ファイルの元となる名称
+	
+	printf '%s' "${HTTP_COOKIE:-}" |
+	sed 's/&/%26/g'                |
+	sed 's/[;, ]\{1,\}/\&/g'       |
+	sed 's/^&//; s/&$//'           |
+	cgi-name                       > $Tmp-cookievars    # 正規化し、一時ファイルに格納
+	
+	name=$(nameread name $tmp-cookievars)               # Cookie変数"name"を取り出す
+	email=$(nameread email $tmp-cookievars)             # Cookie変数"email"を取り出す
+	
+	（ここで何らかの処理）
+	
+	rm -f $Tmp-*                                        # 用が済んだら一時ファイルを削除
+\end{verbatim}
+\end{frameboxit}
+
+GETメソッドとの違いは、
+\begin{itemize}
+  \item 読み取る環境変数は``QUERY\_{}STRING''ではなく``HTTP\_{}COOKIE''
+  \item 変数の区切り文字は``\verb|&|''ではなく``\verb|;|'
+\end{itemize}
+の2つである。前述のシェルスクリプトの、printf行は環境変数が替わっており、その下にある3つのsed行はCookie変数文字列のフォーマットをCGI変数文字列のフォーマットに変換し、cgi-nameコマンドに流用するために追加したものである。
+
+\subsection*{解説}
+
+CookieのフォーマットについてはRFC 6265で詳しく定義さてれいるが、次のような文字列でやってくる。
+\begin{quote}
+	\textit{name1}\verb|=|\textit{var1}\verb|; |\textit{name2}\verb|=|\textit{var2}\verb|; ...|
+\end{quote}
+
+このルールさえわかれば自力でやるもの難しくはないが、CGI変数文字列とよく似ているので
+``cgi-name''コマンドと``nameread''コマンドで処理できるように変換するのが簡単だ。
+
+\subsection*{参照}
+
+\noindent
+→RFC 6265文書\footnote{\verb|http://tools.ietf.org/html/rfc6265|} \\
+→\ref{recipe:GETmethod}（CGI変数の取得(GETメソッド編)） \\
+→\ref{recipe:make_cookie}（シェルスクリプトおばさんの手づくりCookie(書き込み編)）

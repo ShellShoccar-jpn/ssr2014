@@ -1,0 +1,121 @@
+\section{Apacheのcombined形式ログを扱いやすくする}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Apacheのログファイル（combined形式）がある。
+	しかしこれ、単純なスペース区切りのファイルではなく、
+	大括弧（\verb|[～]|）やダブルクォーテーションで囲まれている区間は、1つのフィールドとされている。
+	それゆえ、アクセス日時の列、User-Agentの列など、任意のフィールドを抽出することがとても面倒だ。
+	簡単に取り出せるようにならないものか。
+\end{grshfboxit}
+
+\subsection*{回答}
+sedコマンドを4回、trコマンドを2回通せばできる。通すと、各フィールド内の空白文字がアンダースコアに置換され、フィールド区切りとしての空白だけが残るので、以後AWKなどで簡単に列を抽出することができるようになる。
+
+\paragraph{Apacheログを正規化するシェルスクリプト apacomb\_{}norm.sh} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# --- その前に、ちょっと下ごしらえ ---
+	RS=$(printf '\036')             # 元々の改行位置を退避するための記号定義
+	LF=$(printf '\\\n_');LF=${LF%_} # sedで改行コードを挿れるための定義
+	c='_'                           # ここに空白の代替文字(今はアンダースコアにしている)
+
+	# --- 本番 ---
+	cat "$1"                                   | # 第一引数でApacheログを指定しておく
+	sed 's/^\(.*\)$/\1'"$RS"'/'                |
+	sed 's/"\([^"]*\)"/'"$LF"'"\1"'"$LF"'/g'   |
+	sed 's/\[\([^]]*\)\]/'"$LF"'[\1]'"$LF"'/g' |
+	sed '/^["[]/s/[[:blank:]]/'"$c"'/g'        |
+	tr -d '\n'                                 |
+	tr "$RS" '\n'
+\end{verbatim}
+\end{frameboxit}
+
+このシェルスクリプトを通した後、日時フィールドが欲しければ\verb|awk '{print $4}'|、同様にHTTPリクエストパラメーターフィールドなら\verb|awk '{print $5}'|、User-Agentフィールドなら\verb|awk '{print $9}'|をパイプ越しに書き足せばよいわけだ。
+
+\subsection*{解説}
+
+ご承知のとおり、Apacheで一般的に使われているcombinedという形式のログはこんな内容になっている。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	192.168.0.1 - - [17/Apr/2014:11:22:33 +0900] "GET /index.html HTTP/1.1" 200 43206 "https://www.g
+	oogle.co.jp/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome
+	/34.0.1847.116 Safari/537.36"
+\end{verbatim}
+\end{frameboxit}
+
+User-Agentフィールド（\verb|"mozilla/5.0 (Windows NT 6.1 ……  Safari/537.36"|の部分）が欲しいと思って、AWKで抽出しようとしても
+\begin{screen}
+	\verb|$ awk '{print $12}' httpd-access.log| \return \\
+	\verb|"Mozilla/5.0| \\
+	\verb|$ |
+\end{screen}
+となってしまって、全然使い物にならない。
+
+しかし、そこは我らがUNIX。シェルスクリプトとパイプと標準コマンドであるsedとtrさえあればお手のものだ。他言語に走る必要など全く無い。
+
+「回答」で示したシェルスクリプトに掛けてみるとご覧のとおりだ。
+\begin{screen}
+	\verb!$ cat httpd-access.log | apacomb_norm.sh! \return \\
+	\verb|192.168.0.1 -  -  [17/Apr/2014:11:22:33_+0900] "GET_/index.html_HTTP/1.1" 200 43206 "h| \\
+	\verb|ttps://www.google.co.jp/" "Mozilla/5.0_(Windows_NT_6.1;_WOW64)_AppleWebKit/537.36_(K| \\
+	\verb|HTML,_like_Gecko)_Chrome/34.0.1847.116_Safari/537.36"| \\
+	\verb|$ |
+\end{screen}
+
+\subsubsection*{各々のsedとtrは何をやってるのか？}
+
+1つ1つ説明していこう。
+
+\paragraph{sed \#1}
+（加工の都合により、途中で一時的に改行を挿むので）元の改行を別の文字$<$0x1E$>$で退避させておく。
+
+\paragraph{sed \#2}
+ダブルクォーテーションで囲まれている区間\verb|"～"|があったら、その前後に改行を挿み、その区間を単独の行にする。
+
+\paragraph{sed \#3}
+ブラケットで囲まれている区間\verb|[～]|も同様に、前後に改行を挿んで、この区間を単独の行にする。
+
+\paragraph{sed \#4}
+ダブルクォーテーション、またはブラケットで始まる行は、先程行を独立させた区間なので、これらの行にある空白をそうでない文字列に置換する。
+
+\paragraph{tr \#1}
+改行を全部取り除く。
+
+\paragraph{tr \#2}
+退避させていた元々の改行を復活させる。
+
+\subsubsection*{全部sedでやることもできる}
+
+ちなみにtrコマンドをsedに置き換え、全てをsedにすることもできる。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	cat "$1"                                   |
+	sed 's/^\(.*\)$/\1'"$RS"'/'                |
+	sed 's/"\([^"]*\)"/'"$LF"'"\1"'"$LF"'/g'   |
+	sed 's/\[\([^]]*\)\]/'"$LF"'[\1]'"$LF"'/g' |
+	sed '/^["[]/s/[[:blank:]]/'"$c"'/g'        |
+	sed 'N;$s/\n//g'                           |
+	sed 's/'"$RS"'/'"$LF"'/g'
+\end{verbatim}
+\end{frameboxit}
+trコマンドの方が速いので意味のあることではないが……。
+
+\subsection*{コマンド化したものをGitHubにて提供中}
+
+いちいち本書を読んで書き写すのも面倒であろうし、少し改良したものをGitHub上に公開した。よければ使ってみてもらいたい。
+
+\begin{quote}
+	\verb|https://gist.github.com/richmikan/7254345|
+\end{quote}
+
+スペースの代替文字が\verb|_|では気に入らない人向けに、オプションで指定できるよにしてある本格派だ。Apacheサーバー管理者は、これで少し幸せになれるかもしれない。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:sed_LF}（sedによる改行文字への置換を、綺麗に書く）

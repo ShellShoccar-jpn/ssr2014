@@ -1,0 +1,209 @@
+\section{あなたはいくつ問題点を見つけられるか!?}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	次のシェルスクリプトは
+	引数で指定したディレクトリー直下にあるデッドリンク（実体ファイルを失ったシンボリックリンク）を見つけて
+	削除するためのものである。
+	しかし、いくつも問題点を含んでいると指摘された。優秀な読者の皆さんに問題点を全部指摘してもらいたい。
+	\begin{quote}
+	\begin{frameboxit}{100.0mm}
+	\begin{verbatim}
+		#! /bin/sh
+
+		[ $# -eq 1 ] || {
+		  echo "Usage : ${0##*/} <target_dir>" 1>&2
+		  exit 1
+		}
+
+		dir=$1
+
+		cd $dir
+		ls -1 |
+		while read file; do
+		  # デッドリンクの場合、"-e"でチェックすると偽が返される
+		  [ -L "$file" ] || continue
+		  [ -e  $file  ] || rm -f $file
+		done
+	\end{verbatim}
+	\end{frameboxit}
+	\end{quote}
+\end{grshfboxit}
+
+\subsection*{概要}
+これは本章のまとめとしての、演習問題だ。まとめといっても本章では説明していないこともあるが……。さて読者の皆さん、全部見つけられるかな？\verb|:-)|
+
+\noindent
+　　　：\\
+　　　：\\
+　　　：\\
+
+\subsection*{解答}
+
+\subsubsection*{1. 意図しない場所の同名コマンドが実行される恐れがある}
+
+環境変数PATHがいじくられていると同名の予期せぬコマンドが実行される恐れがある。安全を期すなら、環境変数PATHを\verb|/bin|と\verb|/usr/bin|だけにすべきだ。今回使っているコマンドはいずれもPOSIX範囲内なので、どちらかのディレクトリーにあるはずだ。
+
+\paragraph{環境変数PATHがヘンに弄られていた場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	PATH=/bin:/usr/bin # シェルスクリプトの冒頭にこの行を追加
+\end{verbatim}
+\end{frameboxit}
+
+尚、「/binや/usr/binにあるコマンドそのものが不正に書き換えられていたら？」という指摘があるかもしれないが、それはOSそのものが既に正常ではないことを意味し、言いだしたらキリがないためここでは無視する。
+
+\subsubsection*{2. 引数\verb|\$1|がディレクトリーであることを確かめていない}
+
+ディレクトリーでない引数を指定するとその後のcdコマンドが誤作動する。そのため冒頭のtestコマンド(\verb|[|)に、引数がディレクトリーとして実在していることを確認するためのコードを追加すべきである。
+
+\paragraph{ディレクトリーの実在性確認} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	[ \( $# -eq 1 \) -a \( -d "$1" \) ] || {     # ディレクトリー実在性確認を追加
+	  echo "Usage : ${0##*/} <target_dir>" 1>&2
+	  exit 1
+	}
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{3. 引数\verb|\$1|が\verb|-|で始まっていると誤作動する}
+
+ディレクトリー名がハイフンで始まっていると、cdコマンドにそれはオプションであると誤解され、誤動作してしまう。これを防ぐためには、絶対ディレクトリーでないと判断した時、強制的に先頭にカレントディレクトリ―\verb|./|を付けるようにすべきである。
+
+具体的には、シェル変数dirを代入している行の後ろに次のコードを追加する。
+
+\paragraph{ディレクトリー名がハイフンで始まる場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	case "$dir" in
+	  /*) :;;             # 先頭が/で始まってる（絶対パス）ならそのまま。
+	  *)  dir="./$dir";;  # さもなければ先頭に"./"を付ける。
+	esac
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{4. 引数\verb|\$1|がスペースを含んでいると誤動作する}
+
+半角スペースを含んでいるような特殊なディレクトリー名だと、cdコマンドには複数の引数として渡され、誤動作してしまう。そうならないようにcdコマンドの引数\verb|$dir|はダブルクォーテーションで囲むべきである。
+
+\paragraph{ディレクトリー名がスペースを含む場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	cd "$dir"
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{5. 引数\verb|\$1|のディレクトリーに移動できなかった場合でも作業が止まらない}
+
+いくら引数\verb|$1|でディレクトリーが実在していることを確認しても、パーミッションが無い等の理由でそのディレクトリーに移動できなかったら……。そう、意図せずカレントディレクトリーのデッドリンクを消そうとしてしまうのだ。そうなってしまわないようにcdコマンドの次の行に下記のコードを挿入し、ディレクトリー移動に失敗したら、中断するようにすべきである。
+
+\paragraph{指定されたディレクリーに移動できなかった場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	[ $? -eq 0 ] || exit 1
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{6. 隠しファイルを見逃してしまう}
+
+UNIXでは先頭がピリオド``\verb|.|''で始まるファイルは、（特殊ファイルの``\verb|.|''と``\verb|..|''を除き）隠しファイルとして扱われる。従ってlsコマンドでもデフォルトでは隠しファイルを列挙しないが、これでは隠しファイルとして存在するデッドリンクも見つけられない。隠しファイルでも列挙するようにするため、lsコマンドには\verb|-a|オプションを追加すべきである。
+
+\paragraph{lsコマンドに隠しファイルを列挙させるための対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	ls -1a |
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{7. ファイル名がスペースを含んでいると誤動作する}
+
+これも指摘4と同じ理屈だ。testコマンドもrmコマンドも誤動作してしまう。よって両方ともダブルクォーテーションで囲むべきである。
+
+\paragraph{ファイル名がスペースを含んでいる場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	  [ -L "$file" ] || continue
+	  [ -e "$file" ] || rm -f "$file"
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{8. ファイル名が\verb|-|で始まっていると誤作動する}
+
+これも指摘4と同じ理屈だ。もし、先の6の対策コードも下記に記す対策コードもなかったら、``\verb|-rf /home/your_homedir|''\textbf{などというヒネくれたリンクファイルが置かれていた日には、大変なことになるぞ！}
+
+\paragraph{ファイル名がハイフンで始まる場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	  file="./$file"
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{9. ファイル名にバックスラッシュを含んでいるものを正しく扱えない}
+
+これは\ref{recipe:while_read}（while readで文字列が正しく渡せない）で示した問題だ。readコマンドはデフォルトだとバックスラッシュをエスケープ文字扱いするため、そうさせないようにreadコマンドには\verb|-r|オプションを追加すべきである。
+
+\paragraph{ファイル名がハイフンで始まる場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+		while read -r file; do # -rオプションを追加する
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{10. ファイル名の先頭・末尾にスペース類が付いているものを正しく扱えない}
+
+これも\ref{recipe:while_read}（while readで文字列が正しく渡せない）で示した問題だ。readコマンドは文字列の先頭・末尾に付いているスペース類（半角スペースとタブの連続）を除去してしまうから、文字列の両端にそうでない文字を付加してからreadコマンドを通し、抜けたところで直ちに除去すべきである。
+
+\paragraph{ファイル名がハイフンで始まる場合への対策} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	ls -1a       |         # （-aオプションは指摘6での対策）
+	sed 's/^/_/' |         # ファイル名の先頭にダミー文字として"_"を付加
+	sed 's/$/_/' |         # ファイル名の末尾にダミー文字として"_"を付加
+	while read -r file; do # （-rオプションは指摘8での対策）
+	  file=${file#_}       # ファイル名の先頭につけたダミー文字"_"を除去
+	  file=${file%_}       # ファイル名の末尾につけたダミー文字"_"を除去
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{まとめ}
+
+以上、指摘された10項目を全て反映させ、修正すると次のとおりになる。
+
+\noindent
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	PATH=/bin:/usr/bin
+
+	[ \( $# -eq 1 \) -a \( -d "$1" \) ] || {
+	  echo "Usage : ${0##*/} <target_dir>" 1>&2
+	  exit 1
+	}
+
+	dir=$1
+	case "$dir" in
+	  /*) :;;
+	  *)  dir="./$dir";;
+	esac
+
+	cd "$dir"
+	[ $? -eq 0 ] || exit 1
+	ls -1a |
+	sed 's/^/_/' |
+	sed 's/$/_/' |
+	while read -r file; do
+	  file=${file#_}
+	  file=${file%_}
+	  file="./$file"
+	  # デッドリンクの場合、"-e"でチェックすると偽が返される
+	  [ -L "$file" ] || continue
+	  [ -e "$file" ] || rm -f "$file"
+	done
+\end{verbatim}
+\end{frameboxit}
+
+果たして、全部指摘することはできただろうか……。何、「これ以外にも指摘がある」と!? それは是非、筆者に教えてもらいたい！

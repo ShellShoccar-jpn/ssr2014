@@ -1,0 +1,111 @@
+\section{Webブラウザーからのファイルアップロード}
+\label{recipe:file_upload}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Webブラウザーからファイルをアップロードして、受け取れるようにしたい。
+\end{grshfboxit}
+
+\subsection*{回答}
+CGI変数の受け取りと同様に、アップロードされてきたファイルを受け取るのに便利なコマンド（``mime-read''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが321516氏によって提供されているので、まずこれをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/mime-read|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
+
+GET、POSTのレシピと同様に例をあげて説明しよう。今、Webブラウザーが次のようなHTMLに基づいてCGI変数を送ってくるものとする。
+\paragraph{Webブラウザーが送信する元になるHTML} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	<form action="form.cgi" method="POST" enctype="multipart/form-data">
+	  <dl>
+	    <dt>証明写真ファイル</dt>
+	      <dd><input type="file" name="photo" /></dd>
+	    <dt>写っている人の名前</dt>
+	      <dd><input type="text" name="fullname" value="" /></dd>
+	  </dl>
+	  <input type="submit" name="post" value="送信" />
+	</form>
+\end{verbatim}
+\end{frameboxit}
+
+ファイルアップロード時は一般的に、POSTメソッドでmultipart/form-data形式を用いるが、
+これを取得するためのシェルスクリプトは次のようになる。
+\paragraph{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	Tmp=/tmp/${0##*/}.$$                               # 一時ファイルの元となる名称
+	
+	dd bs=${CONTENT_LENGTH:-0} count=1 > $Tmp-cgivars  # そのまま一時ファイルに格納
+	
+	mime-read photo $Tmp-cgivars > $Tmp-photofile      # CGI変数"photo"をファイルとして保存
+
+	# アップロードされたファイル名を取り出すなら例えばこのようにする
+	filename=$(mime-read -v $Tmp-cgivars                                                |
+	           grep -i '^[0-9]\+[[:blank:]]*Content-Disposition:[[:blank:]]*form-data;' |
+	           grep '[[:blank:]]name="photo"'                                           |
+	           head -n 1                                                                |
+	           sed 's/.*[[:blank:]]filename="\([^"]*\)".*/\1/'                          |
+	           tr '/"' '--'                                                             )
+
+	fullname=$(mime-read fullname $Tmp-cgivars)        # CGI変数"fullname"をファイルとして保存
+
+	（ここで何らかの処理）
+	
+	rm -f $Tmp-*                                       # 用が済んだら一時ファイルを削除
+\end{verbatim}
+\end{frameboxit}
+
+通常のPOSTメソッドの場合と違い、到来したCGI変数データは何も加工せずにそのまま一時ファイルに置き、
+ファイルやCGI変数が欲しいたびにmime-readコマンドを使う。
+
+また、ファイルに関してはアップロード時のファイル名も取得可能だ。
+mime-readコマンドの\verb|-v|オプションを付けると、MIMEヘッダーを返すようなるため、
+UNIXコマンドを駆使して取り出せばよい。
+
+\subsection*{解説}
+
+HTTPでのファイルアップロードは一般的に、POSTメソッドを用いて行うため、
+\ref{recipe:POSTmethod}（CGI変数の取得(POSTメソッド編)）と同様に標準入力を読み出せばいいのだが、
+multipart/form-dataというMIMEヘッダー付のフォーマットで到来する点が異なる。
+
+先程のHTMLであれば、次のようなデータが送られてくる。
+
+\paragraph{前述のHTMLから送られてくるデータの例} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	--751A8F78020934B141231A1121CD31EF
+	Content-Disposition: form-data; name="photo"; filename="D:\work\komei.jpg"
+	Content-Type: image/jpeg
+
+	（ここにJPEGファイルの中身………
+	　　　：
+	　　　：
+	　　　：
+	…………………………………………）
+	--751A8F78020934B141231A1121CD31EF
+	Content-Disposition: form-data; name="fullname"
+
+	諸葛孔明
+	--751A8F78020934B141231A1121CD31EF
+\end{verbatim}
+\end{frameboxit}
+
+ハイフンで始まる行は各々のCGI変数データセクションの境界を表しており、
+後ろのランダムな数字をもって、データの中身と重複しないようにしている。
+1つのセクションはヘッダー部とボディー部からなり、セクション内の最初の空行で仕切られる。
+従って変数名やファイル名はヘッダー部から取り出し、値はボディー部をそのまま取り出せばよい。
+
+ボディー部分は、基本的に何のエンコードもされないためバイナリーデータである。
+これを取り出すのは一工夫必要だ、AWKはNULL（$<$0x00$>$）を含んでいるとそこを行末とみなして以降の行末までの文字列が取り出せない\footnote{GNU版AWKは取り出せるのだが。}ので、取り出すのには使えないからだ。
+
+ではどうするかというと、目的のデータのボディー部分は何行目から始まって何行目まで終わるのかを先に数える。
+そしてその区間をheadコマンドとtailコマンドで抽出し、データ終端についている改行文字を消すのだ。
+この作業をコマンド化したものが、POSIXの範囲で書き直したmime-readコマンドなのである。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:GETmethod}（CGI変数の取得(GETメソッド編)） \\
+→\ref{recipe:file_upload}（Webブラウザーからのファイルアップロード） \\
+→\ref{recipe:nonLFterminated}（改行無し終端テキストを扱う）

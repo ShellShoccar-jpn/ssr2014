@@ -1,0 +1,180 @@
+\section{シェルスクリプトでメール送信}
+\label{recipe:sendjpmail}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Webサーバーのアクセスログの集計結果を自動的に管理者と、Cc:付けて営業部長にメールで送りたい。
+	ただ営業部長はエンジニアではないので、できれば日本語の件名と文面で送りたい。
+	どうすればよいか。
+\end{grshfboxit}
+
+\subsection*{回答}
+POSIX標準のmailxコマンドを使って送れと言いたいところだが、Cc:で送ること、
+さらに日本語メールを送ることができない\footnote{任意のメールヘッダーを付けられず、マルチバイト文字を使っていることを示すヘッダーが付けられないため、受信先の環境によっては文字化けしてしまうから。}。
+
+POSIX原理主義を貫きたいところであるが、ここは涙を飲んでいくつかの非POSIX標準コマンドに頼る。詳細については次のチュートリアルを参照せよ。
+
+\subsection*{Step(0/3) ― 必要な非POSIXコマンド}
+
+表\ref{tbl:command_for_sendjpmail}に必要なコマンドの一覧を記す。非POSIX標準ではあるが、多くの環境に初めから入っている、もしくは容易にインストールできるものではあると思う。
+
+\begin{table}[htb]
+  \caption{日本語メールを送るために用いる非POSIXコマンド}
+  \begin{center}
+  \begin{tabular}{c!{\VLINE}>{\PBS\raggedright}m{18zw}|>{\PBS\raggedright}m{22zw}}
+    \HLINE
+        コマンド名 & 目的 & 備考 \\
+    \hline
+    \hline
+        sendmail & Cc:や任意のヘッダー付、また日本語のメールを送るため & 多くのUNIX系OSに標準で入っていたり、Postfixやqmailを入れても互換コマンドが/usr/sbinに入る。 \\
+    \hline
+        nkf      & 日本語文字エンコード（特にSubject:欄）のため & パッケージとして提供されているOSも多く、ソースからインストールすることも可能（ver.2.1.2以降推奨） \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:command_for_sendjpmail}
+  \end{center}
+\end{table}
+
+もし、Sujbect:ヘッダーやFrom:、Cc:、Bcc:ヘッダー等には日本語文字を使わないというのであればnkfコマンドについては、POSIX標準のiconvコマンドで代用することができる。
+
+\subsection*{Step(1/3) ― 英数文字メールを送ってみる}
+
+まずはsendmailコマンドだけで済む内容のメールを送り、sendmailコマンドの使い方を覚えることにしよう。
+といっても、 \verb|-i| と \verb|-t| オプションさえ覚えればOK。これらさえ知っていれば、他のものは覚えなくても大丈夫だ\footnote{どうしても意味を知っておきたいという人は、sendmailコマンドのmanを参照のこと。URLは例えば\verb|http://www.jp.freebsd.org/cgi/mroff.cgi?subdir=man&lc=1&cmd=&man=sendmail&dir=jpman-10.1.2%2Fman&sect=0|である。}。
+
+ここで肝心なことは、\textbf{一定の書式のテキスト作って、標準入出力経由で``\verb|sendmail -i -t|''に流し込む}ということだけである。
+
+ではまず、適当なテキストエディターで下記のテキストを作ってもらいたい。
+\paragraph{メールサンプル（mail1.txt）}　\\
+\begin{frameboxit}{160.0mm}
+	\verb|From: <|\textit{SENDER@example.com}\verb|>| \\
+	\verb|To: <|\textit{RECIEVER@example.com}\verb|>| \\
+	\verb|Subject: Hello,  e-mail!| \\
+	\verb|| \\
+	\verb|Hi, can you see me?|
+\end{frameboxit}
+
+メールテキストを作る時のお約束は、\textbf{ヘッダー部分のセクションと本文セクションの間に空行1つを挟むこと}だ。これを怠るとメールは送れない。
+
+\textit{RECIEVER@example.com}にはあなた本物のメールアドレスを書くように。それから\textit{SENDER@example.com}にも、なるべく何か実際のメールアドレスを書いておいてもらいたい。あまりいい加減なものを入れると、届いた先でspam判定されるかもしれないからだ。
+
+\textbf{「Cc:やBcc:も追記したら、Cc:やBcc:でも送れるのか」}と想像するかもしれないが、そのとおりである。実験してみるといい。
+それができたら送信する。次のコマンド打つだけだ。
+\begin{screen}
+	\verb!$ cat mail1.txt | sendmail -i -t! \return \\
+	\verb!$ !
+\end{screen}
+
+コマンドを連打すれば、連打した数だけ届くはずだ。確かめてみよ。
+
+\subsection*{step(2/3) ― 本文が日本語のメールを送ってみる}
+
+このドキュメントを読んでいるのは日常的に日本語を使う人々のはずだから、次は本文が日本語のメールを送ってみることにする。
+
+まずは、日本語の本文を交えたメールテキストを作る。
+\paragraph{メールサンプル（mail2.txt）}　\\
+\begin{frameboxit}{160.0mm}
+	\verb|From: <|\textit{SENDER@example.com}\verb|>| \\
+	\verb|To: <|\textit{RECIEVER@example.com}\verb|>| \\
+	\verb|Subject: Hello,  e-mail!| \\
+	\verb|Content-type: text/plain; charset=ISO-2022-JP| \\
+	\verb|| \\
+	\verb|やぁ、これ読める?|
+\end{frameboxit}
+
+本文に日本語文字が入った他に、ヘッダー部に\verb|Content-type: text/plain; charset=ISO-2022-JP|を追加した。実際のところ、今となってはこれが無くても読める環境が多いのだが、本文が日本語文字コードを使っていることを示すための約束事であるので付けるべきである。
+
+「このテキストはUTF-8で書いてるんだけど」と心配するかもしれないが大丈夫、これからnkfコマンドを使ってJISコードに変換するのだ。
+
+今度は、途中に``\verb|nkf -j|''（JISコードに変換）を挿んでメール送信する。
+
+\begin{screen}
+	\verb!$ cat mail1.txt | nkf -j | sendmail -i -t! \return \\
+	\verb!$ !
+\end{screen}
+
+きちんと文字化けせずにメールが届いたことを確認してもらいたい。
+
+\subsection*{step(3/3) ― 件名や宛先も日本語化したメールを送る}
+
+From:やTo:はまぁ許せるとしても、Subject:(件名)には日本語を使いたい。そこで最後は、件名や宛先も日本語化する送信方法を説明する。
+
+まず、メールヘッダーには生のJISコード文字列が置けず、置いた場合の動作は保証されないということを知らなければならない。ヘッダーはメールに関する制御情報を置く場所なので、あまり変な文字を置いてはいけないのだ。だがBase64エンコードもしくはquoted-stringエンコードしたものであれば置いてもよいことになっている。そこで、Base64エンコードを使うやり方を説明する。現在殆どのメールではBase64エンコードが用いられている。
+
+\subsubsection*{メールで使えるBase64エンコード済JISコード文字列の作り方}
+
+例として、送りたいメールの件名は「ハロー、e-mail!」、そして宛先は「あなた」ということにしてみる。
+
+冒頭で好きな文字列を書いたechoコマンドを入れて、xargsとnkfコマンドに流すだけだ。
+\paragraph{「ハロー、e-mail!」をエンコード}　\\
+\begin{screen}
+	\verb@$ echo -n 'ハロー、e-mail!'              |@ \return ←改行コードが入らぬように-nオプションを付ける \\
+	\verb!>  nkf -jMB                             |! \return ←オプションは``\verb|-jMB|'' \\
+	\verb!>  xargs printf '=?ISO-2022-JP?B?%s?=\n'! \return   ←文字列両端をエンコード済を意味する表記で挟む \\
+	\verb!=?ISO-2022-JP?B?GyRCJU8lbSE8ISIbKEJlLW1haWwh?=! \\
+	\verb!$ !
+\end{screen}
+
+\paragraph{「あなた」をエンコード}　\\
+\begin{screen}
+	\verb@$ echo -n 'あなた'                       |@ \return \\
+	\verb!>  nkf -jMB                              |! \return \\
+	\verb!>  xargs printf '=?ISO-2022-JP?B?%s?=\n'! \return \\
+	\verb!=?ISO-2022-JP?B?GyRCJCIkSiQ/GyhC?=! \\
+	\verb!$ !
+\end{screen}
+
+コード中のコメントにも書いたが、ポイントは次の3つである。
+\begin{enumerate}
+  \item 最初に流す文字列には余計な改行をつけぬこと（echoの\verb|-n|オプションを使うなどして）
+  \item nkfコマンドを使うが、オプションは\verb|-jMB|とする（JIS化してさらにBase64エンコード）
+  \item 生成された文字列の左端に``\verb|=?ISO-2022-JP?B?|''を、右端に``\verb|?=|''を付加
+\end{enumerate}
+
+\subsubsection*{送信してみる}
+
+送るには、上記の作業で生成された文字列をメールヘッダーにコピペすればよい。早速メールテキストを作ってみよう。
+
+\paragraph{メールサンプル（mail3.txt）}　\\
+\begin{frameboxit}{160.0mm}
+	\verb|From: <|\textit{SENDER@example.com}\verb|>| \\
+	\verb|To: =?ISO-2022-JP?B?GyRCJCIkSiQ/GyhC?= <|\textit{RECIEVER@example.com}\verb|>| \\
+	\verb|Subject: =?ISO-2022-JP?B?GyRCJU8lbSE8ISIbKEJlLW1haWwh?=| \\
+	\verb|Content-type: text/plain; charset=ISO-2022-JP| \\
+	\verb|| \\
+	\verb|やぁ、これ読める?|
+\end{frameboxit}
+
+しかし、これを先程のnkf+sendmailコマンドに送ると失敗してしまう。理由は、nkfコマンドがせっかく作ったBase64エンコードを解いてくれてしまうからなのだ。これを回避するため、テンポラリーファイルを介してシェルスクリプトで送る。
+
+\paragraph*{第一引数で指定されたファイルをメール送信するシェルスクリプト}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	# ヘッダーセクションはそのまま書き出す
+	awk '{print} length($0)==0{exit}' "$1" >  /tmp/${0##*/}.$$.txt
+	
+	# 本文部分はnkfでJISエンコードして、追記する
+	startofbody=$(awk 'END{print NR+1}' /tmp/${0##*/}.$$.txt)
+	cat "$1"                               |
+	tail -n +$startofbody                  |
+	nkf -j                                 >> /tmp/${0##*/}.$$.txt
+	
+	# メール送信
+	cat /tmp/${0##*/}.$$.txt |
+	nkf -j                   |
+	sendmail -i -t
+	
+	# 一時ファイル削除
+	rm /tmp/${0##*/}.$$.txt
+\end{verbatim}
+\end{frameboxit}
+
+宛先、件名共に日本語文字列になったメールが届いたか確かめてもらいたい。
+
+　\\
+
+これで問題文にあった「Cc:付けて営業部長に日本語メール」もできるようになるだろう。

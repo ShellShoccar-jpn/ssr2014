@@ -1,0 +1,173 @@
+\section{PIPESTATUSさようなら}
+\label{recipe:Sayonara_PIPESTATUS}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	bash上で動いていたシェルスクリプトを、他のシェルでも使えるように書き直している。
+	しかし、組込変数のPIPESTATUSを参照している箇所があり、これを書き換えられずに悩んでいる。
+	PIPESTAUTS相当の変数を用意する方法はないか？
+\end{grshfboxit}
+
+\subsection*{回答}
+方法はあるので安心してもらいたい。
+
+まず、次に示すシェル関数``run()''をシェルスクリプトの中で定義する。
+
+\paragraph{PIPESTAUTS相当の機能を実現するシェル関数``run()''} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	run() {
+	  local a j k l com # ←ここはPOSIX範囲外なんだけど……
+	  j=1
+	  while eval "\${pipestatus_$j+:} false"; do
+	    unset pipestatus_$j
+	    j=$(($j+1))
+	  done
+	  j=1 com= k=1 l=
+	  for a; do
+	    if [ "x$a" = 'x|' ]; then
+	      com="$com { $l "'3>&-
+	                  echo "pipestatus_'$j'=$?" >&3
+	                } 4>&- |'
+	      j=$(($j+1)) l=
+	    else
+	      l="$l \"\${$k}\"" # ←修正箇所はここ
+	    fi
+	    k=$(($k+1))
+	  done
+	  com="$com $l"' 3>&- >&4 4>&-
+	             echo "pipestatus_'$j'=$?"'
+	  exec 4>&1
+	  eval "$(exec 3>&1; eval "$com")"
+	  exec 4>&-
+	  j=1
+	  while eval "\${pipestatus_$j+:} false"; do
+	    eval "[ \$pipestatus_$j -eq 0 ]" || return 1
+	    j=$(($j+1))
+	  done
+	  return 0
+	}
+\end{verbatim}
+\end{frameboxit}
+
+そして、この``run''を頭に付ける形で、パイプに繋がれた一連のコマンドを実行する。ただし、このシェル関数に引数を渡すため、シェルが解釈してしまう文字は全て、エスケープするかシングルクォーテーション等で囲むこと。（詳細は「解説」を参照）\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	run command1 \| command2 '2>/dev/null' \| ...
+\end{verbatim}
+\end{frameboxit}
+
+各コマンドの戻り値は、``\verb|pipestatus_|\textit{n}''（\textit{n}はコマンドの順番で、最初は1）に格納されている。
+
+\subsection*{解説}
+
+このシェル関数はもともとWeb上で公開されてるもの\footnote{The UNIX and Linux Forumsの``return code capturing for all commands connected by "\verb!|!" ...''というスレッドである。URLは\verb|http://www.unix.com/302268337-post4.html|だ。}である。
+
+しかしながら、引数が10個以上になると動作しなくなる不具合を抱えているために若干の修正を加えた（2番目のコメント部分）。また、シェル関数内で使われている変数をローカルスコープにするため、関数の冒頭でlocal宣言をしているが、これはPOSIX範囲を逸脱しているため、使えなければ外しつつ、中で使っている5つのシェル変数に気を付けること。
+
+\subsubsection*{実際に使ってみる}
+
+ここで試してみるコマンドは次のものとする。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	printf 1                      |
+	awk '{print $1+1}END{exit 2}' |
+	cat                           |
+	awk '{print $1+1}END{exit 4}' |
+	cat
+\end{verbatim}
+\end{frameboxit}
+
+動作シナリオはこうだ。1行目で値``1''を渡され、2行目と4行目のAWKを通るたびに1つ加算され、最後は``3''と表示される。ただし、途中のAWKは戻り値としてそれぞれ2と4を返す。もしPIPESTATUSが使えるなら、先頭から順に、0、2、0、4、0という戻り値が得られるわけだ。
+
+さて、先のシェル関数run()を使って前述のコマンドを書き直したシェルスクリプトを用意してみる。
+\paragraph{run()関数のテスト用シェルスクリプト pipestatus\_{}test.sh}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# 1) シェル関数run()の定義
+	run() {
+	  :      # ここに、前述のシェル関数run()の中身を書く
+	}
+
+	# 2) run()を使って実行する
+	run                              \
+	printf 1                      \| \
+	awk '{print $1+1}END{exit 2}' \| \
+	cat                           \| \
+	awk '{print $1+1}END{exit 4}' \| \
+	cat
+
+	# 3) pipestatusの内容を列挙してみる
+	set | grep '^pipestatus_'
+\end{verbatim}
+\end{frameboxit}
+
+run()を使った書き方に注意。このコードのように、可読性確保のために改行をさせている場合は行末にバックスラッシュを付けておかねばならない。この時点で注意すべき事をまとめるとこうだ。
+\begin{itemize}
+  \item パイプで繋ぐ一連のコマンド列の先頭にキーワード``\verb|run|''をつける。
+  \item コマンドを繋ぐパイプ記号``\verb!|!''はエスケープする。
+  \item その他、シェルにエスケープされては困る文字（\verb!|!はもちろん、\verb!&!、\verb!>!、\verb!<!、\verb!(!、\verb!)!、\verb!{!、\verb!}!など）も全てエスケープする、あるいはシングルクォーテーションで囲む。
+  \item 可読性のために改行を入れたい場合は、行末にバックスペース``\verb|\|''を付けることによって行う。
+\end{itemize}
+
+書き終えたら実行してみよう。
+
+\begin{screen}
+	\verb|$ sh pipestatus_test.sh| \return \\
+	\verb|3| \\
+	\verb|pipestatus_1=0| \\
+	\verb|pipestatus_2=2| \\
+	\verb|pipestatus_3=0| \\
+	\verb|pipestatus_4=4| \\
+	\verb|pipestatus_5=0| \\
+	\verb|$ |
+\end{screen}
+
+各コマンドの戻り値をきちんと拾えていることがわかる。
+
+\subsubsection*{シェル関数を使わないこともできる}
+
+もしシェル関数を使いたくないということであれば、それもできないわけではない。その場合は、run()関数を使って書いたシェルスクリプトを実行ログが出力される形\footnote{shコマンドから-xオプション付けて実行する。}で実行してみるとよい。
+
+すると、evalしている箇所が見るつかるはずだ。上記のシェルスクリプトで例を示すとこうなる。
+\begin{screen}
+	\verb|$ sh -x pipestatus_test.sh| \return 　　←\verb|-x|オプションを付けて実行 \\
+	\verb|   :   | \\
+	\verb!+ eval ' {  "${1}" "${2}" 3>&-! \\
+	\verb!                  echo "pipestatus_1=$?" >&3! \\
+	\verb!                } 4>&- | {  "${4}" "${5}" 3>&-! \\
+	\verb!                  echo "pipestatus_2=$?" >&3! \\
+	\verb!                } 4>&- | {  "${7}" 3>&-! \\
+	\verb!                  echo "pipestatus_3=$?" >&3! \\
+	\verb!                } 4>&- | {  "${9}" "${10}" 3>&-! \\
+	\verb!                  echo "pipestatus_4=$?" >&3! \\
+	\verb!                } 4>&- |  "${12}" 3>&- >&4 4>&-! \\
+	\verb!             echo "pipestatus_5=$?"'! \\
+	\verb|   :   |
+\end{screen}
+
+run()コマンドはこのようにして、シェルスクリプトを動的に生成して実行しているに過ぎない。だからこれを参考にして自分で作ってしまえばいいのだ。そして、作ったものが次のシェルスクリプトだ。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	exec 4>&1
+	eval "$(
+	         exec 3>&1
+	         { printf 1                      3>&-         ; echo pipestatus_1=$? >&3; } 4>&- |
+	         { awk '{print $1+1}END{exit 2}' 3>&-         ; echo pipestatus_2=$? >&3; } 4>&- |
+	         { cat                           3>&-         ; echo pipestatus_3=$? >&3; } 4>&- |
+	         { awk '{print $1+1}END{exit 4}' 3>&-         ; echo pipestatus_4=$? >&3; } 4>&- |
+	           cat                           3>&- >&4 4>&-; echo pipestatus_5=$?
+	       )"
+	exec 4>&-
+
+	set | grep '^pipestatus_'
+\end{verbatim}
+\end{frameboxit}
+
+ファイルディスクリプターの4番を最終的な標準出力の出口に、3番を``pipestatus\_{}\textit{n}''作成のための出口にするという実に巧妙な技を使っている。例えそれの理解が難しかったとしても、どう書けばよいかという規則性は見えてくるのではないだろうか。

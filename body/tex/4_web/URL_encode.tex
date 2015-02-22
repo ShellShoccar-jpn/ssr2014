@@ -1,0 +1,73 @@
+\section{URLエンコードする}
+\label{recipe:URL_encode}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	WebAPIを叩きたいのだが、パラメーターにはURLエンコーディングされた文字列を渡さなければならない。
+	どうすればいいか？
+\end{grshfboxit}
+
+\subsection*{回答}
+URLデコードよりも多少面倒だが、やはりそんなに難しい仕事でないから素直に書いて作る。
+基本的には文字列を1バイトずつ読み込んで、2桁16進数（大文字）のアスキーコードにしながら先頭に``\verb|%|''を付ける。
+「多少面倒」というのは、変換の必要がある文字かどうかを判断して必要な場合のみ変換するということだ。
+
+その注意点を踏まえながらAWKで書くならこんな感じだ。
+
+\paragraph{URLエンコードするコード} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	env -i awk '
+	BEGIN {
+	  # --- prepare
+	  LF = sprintf("\n");
+	  OFS = "";
+	  ORS = "";
+	  # --- prepare encoding
+	  for(i= 0;i<256;i++){c2p[sprintf("%c",i)]=sprintf("%%%02X",i);}
+	  c2p[" "]="+";
+	  for(i=48;i< 58;i++){c2p[sprintf("%c",i)]=sprintf("%c",i);    }
+	  for(i=65;i< 91;i++){c2p[sprintf("%c",i)]=sprintf("%c",i);    }
+	  for(i=97;i<123;i++){c2p[sprintf("%c",i)]=sprintf("%c",i);    }
+	  c2p["-"]="-"; c2p["."]="."; c2p["_"]="_"; c2p["~"]="~";
+	  # --- encode
+	  while (getline line) {
+	    for (i=1; i<=length(line); i++) {
+	      print c2p[substr(line,i,1)];
+	    }
+	    print LF;
+	  }
+	}'
+\end{verbatim}
+\end{frameboxit}
+
+1文字ではなく1バイトずつ処理する必要があるので``\verb|env -i|''をAWKの手前に付けて、ロケール環境変数の影響を受けないようにするのはデコードの時と同じである。
+
+\subsection*{解説}
+URLエンコーディングとは何かについては\ref{recipe:URL_decode}（URLデコードする）で説明したので省略する。そこで不足していた説明としては、エンコーディングする必要のある文字が何かということだが、逆に必要の無い文字は次のとおりである。
+
+\begin{quote}
+  アルファベット（\verb|A|～\verb|Z|、\verb|a|～\verb|z|）、数字（\verb|0|～\verb|9|）、ハイフン（\verb|-|）、ピリオド（\verb|.|）、アンダースコア（\verb|_|）、チルダ（\verb|~|）
+\end{quote}
+
+これらの文字がについては、エンコーディングせずにそのまま出力するのだが1つ1つ判定するのは大変であるので、「回答」で示したコードのようにAWKの連想配列を使うのが良いだろう。
+
+\subsubsection*{おススメはしないけど}
+
+GNU版sedを使うと\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	s="ここにURLエンコードした文字"
+	echo -e $(echo -n "$s" | od -An -tx1 -v -w99999 | tr ' ' % | sed 's/%20/+/g' | sed 's/%\(2[de]\|
+	3[0-9]\|4[^0]\|5[0-9AaFf]\|6[^0]\|7[0-9]\)/\\x\1/g')
+\end{verbatim}
+\end{frameboxit}
+というワンライナーにできるらしいが、POSIX原理主義者ならとーぜん禁じ手だ。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:URL_decode}（URLデコードする）\\
+→RFC 3986文書\footnote{http://www.ietf.org/rfc/rfc3986.txt}

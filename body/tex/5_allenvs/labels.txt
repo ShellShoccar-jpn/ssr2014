@@ -1,0 +1,9 @@
+\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUS相当の変数を用意したい）
+\ref{allenvs:local_keyword}（local修飾子）
+\ref{allenvs:locale}（ロケール）
+\ref{allenvs:letterclass}（文字クラス）
+\ref{allenvs:test}（testコマンド）
+\ref{recipe:UNIXtime_converter（シェルスクリプトで時間計算を一人前にこなす）
+\ref{recipe:ifconfig}（IPアドレスを取得する(IPv6対応)）
+→\ref{recipe:Cookie}（シェルスクリプトおばさんの手づくりCookie）\\
+→\ref{recipe:HTTP_session}（シェルスクリプトによるCGIのセッション管理）

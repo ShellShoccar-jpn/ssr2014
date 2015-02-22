@@ -1,0 +1,157 @@
+\section{Ajaxで画面更新したい}
+\label{recipe:Ajax_without_libraries}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	Webアプリ制作で、画面全体を更新せず、Ajaxを用いて部分更新したい。\\
+	ただ、JavaScriptライブラリーは懲り懲りだ。prototype.jsは下火になってしまったし、
+	jQueryも頻繁にアップデートを繰り返していて、追いかけるのが大変だし。
+\end{grshfboxit}
+
+\subsection*{回答}
+POSIX原理主義を貫く意義を省みれば、クライアント上のJavaScriptでもW3Cで勧告されていない範囲のライブラリーを使うべきではない。従ってここでも自力で行う方法を紹介する。
+
+\subsection*{POSIX原理主義者的Ajaxチュートリアル}
+
+では、簡単なAjax利用Webアプリを作ってみよう。HTMLフォームのボタンを押すたびAjaxでサーバーに現在時刻を問い合わせ、時刻欄を書き換えるというものだ。
+リストは3つ必要だ。まずはHTMLから。
+\paragraph{CLOCK.HTML} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	<html>
+	  <head>
+	    <title>Ajax Clock</title>
+	    <style type="text/css">
+	      #clock {border: 1px solid;width 20em}
+	    <script type="text/javascript" src="CLOCK.JS"></script>
+	  </head>
+	  <body onload="update_clock()">
+	    <h1>Ajax Clock</h1>
+	    <div id="clock">
+	      <dl>
+	        <dt>Date:</dt><dd>0000/00/00</dd>
+	        <dt>Time:</dt><dd>00:00:00</dd>
+	      </dl>
+	    </div>
+	    <input type="button" value="update" onclick="update_clock()">
+	  </body>
+	</html>
+\end{verbatim}
+\end{frameboxit}
+
+次にAjax通信時にサーバー上でレスポンスを返すCGIスクリプト。
+WebブラウザーからAjaxとして呼ばれた際、現在時刻を取得して前述HTMLの\verb|<div id="clock">|～\verb|</div>|の中身を生成して返すというものだ。
+
+このCGIスクリプトが\textbf{XMLやJSONではなく、部分的なHTMLを返している}という点もJavaScriptライブラリー依存から脱するための重要な工夫だ。
+\paragraph{CLOCK.CGI} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	datetime=$(date '+%Y/%m/%d %H:%M:%S')
+	cat <<HTTP_RESPONSE
+	Content-Type: text/html
+
+	      <dl>
+	        <dt>Date:</dt><dd>${datetime% *}</dd>
+	        <dt>Time:</dt><dd>${datetime#* }</dd>
+	      </dl>
+	HTTP_RESPONSE
+	exit 0
+\end{verbatim}
+\end{frameboxit}
+
+そして最後に、Ajax通信を行うJavaScript(CLOCK.JS)の中身は次のとおりだ。
+\paragraph{CLOCK.JS} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	// 1.Ajaxオブジェクト生成関数
+	// (IE、非IE共にXMLHttpRequestオブジェクトを生成するためのラッパー関数)
+	function createXMLHttpRequest(){
+	  if(window.XMLHttpRequest){return new XMLHttpRequest()}
+	  if(window.ActiveXObject){
+	    try{return new ActiveXObject("Msxml2.XMLHTTP.6.0")}catch(e){}
+	    try{return new ActiveXObject("Msxml2.XMLHTTP.3.0")}catch(e){}
+	    try{return new ActiveXObject("Microsoft.XMLHTTP")}catch(e){}
+	  }
+	  return false;
+	}
+
+	// 2.Ajax通信関数
+	// (このAjax通信をしたい時にはこの関数を呼び出す)
+	function update_clock() {
+	  var url,xhr,to;
+	  url = '/PATH/TO/THE/CLOCK.CGI';
+	  xhr = createXMLHttpRequest();
+	  if (! xhr) {return;}
+	  to =  window.setTimeout(function(){xhr.abort()}, 30000); // 30秒でタイムアウト
+	  xhr.onreadystatechange = function(){update_clock_callback(xhr,to)};
+	  xhr.open('GET' , url+'?dummy='+(new Date)/1, true);      // キャッシュ対策
+	  xhr.send(null); // POSTメソッドの場合は、send()の引数としてCGI変数文字列を指定
+	}
+
+	// 3.コールバック関数
+	// (Ajax通信が正常終了した時に実行したい処理を、このif文の中に記述する)
+	function update_clock_callback(xhr,to) {
+	  var str, elm;
+	  if (xhr.readyState === 0) {alert('タイムアウトです。');}
+	  if (xhr.readyState !== 4) {return;                     } // Ajax未完了につき無視
+	  window.clearTimeout(to);
+	  if (xhr.status === 200) {
+	    str = xhr.responseText;
+	    elm = document.getElementById('clock');
+	    elm.innerHTML = str;
+	  } else {
+	    alert('サーバーが不正な応答を返しました。');
+	  }
+	}
+\end{verbatim}
+\end{frameboxit}
+このように、コメントを除けば40行足らずのJavaScriptコードで、Ajaxが実装できてしまう。
+
+この3つのコードを適宜Webサーバーにアップロード（CLOCK.JS内で指定しているURLは適切に記述すること)し、
+WebブラウザーでCLOCK.HTMLを開いてみるとよい。updateボタンを押すたびに現在時刻に更新されるはずだ。
+
+\subsection*{解説}
+
+世の中JavaScriptが流行っており、同時に、それを便利に使うためのライブラリーも実に様々なものが登場している。
+昔はprototype.jsが流行ったが廃れ、トレンドはjQueryへ移りっている。しかし度重なるバージョンアップに追加モジュールがある。もうこうなると「一体どれを使えばよいのか???」、AjaxやJavaScript初心者はまずそこから悩むことになる。そんなことに時間を費やすくらいなら前述のような40行足らずのコードを理解し、コピー＆ペーストして使う方がよっぽど簡単ではなかろうか。
+
+前述のJavaScriptコードはXMLHttpRequestというAjaxのためのオブジェクトを使うためのコードだが、いくつかのポイントを押さえれば理解は簡単だ。
+
+\subsubsection*{ポイント1．XMLHttpRequestオブジェクト生成方法}
+
+IE（Internet Explorer）は他のブラウザーと違って少々クセがある。まずはXMLHttpRequestオブジェクトの生成方法が違う（オブジェクトの使い方は同じ）。
+IEでも最近のものは他と同様の方法で生成できるが、古いIEはActiveXオブジェクトとして生成しなければならない。
+そこで、オブジェクトの生成を色々な手段で成功するまで試みるのが最初の関数createXMLHttpRequest()である。これを使えばどのブラウザーで動かされるのかを気にせずオブジェクトが生成できる。
+
+\subsubsection*{ポイント2．キャッシュ回避テクニック}
+
+これまたIE対策なのだが、IEは同じ内容でAjax通信を行うと2回目以降はキャッシュを見にいってしまい、実際のWebサーバーへはアクセスをしないという困ったクセがある。
+これを回避するテクニックが「キャッシュ対策」とコメントしてある行の記述だ。
+URLの後ろに、ダミーのCGI変数を置き、その値としてUNIX時間(のミリ秒単位を求めるDateオブジェクトの利用)とすることで、アクセスする度、リクエスト内容が変わるようにしている。これでIEもキャッシュを使わなくなる。
+一応XMLHttpRequestにはキャッシュを使わせないためのメソッドが用意されているのだが、これまたバージョンによって使い方が微妙に異なるので、
+CGI変数を毎回替えるというこの原始的な方法が最も確実である。尚、POSTメソッドの場合のCGI変数は、その一つ後のsendメソッドの引数として指定することになっているので注意。
+
+XMLHttpRequestオブジェクトやその各種メソッドやプロパティーの使い方については、その名前でWeb検索してもらいたい。様々なページで解説されている。
+
+\subsubsection*{ポイント3．無理にXMLやJSONを使おうとしない}
+
+このサンプルコードのもう一つの特徴は、\textbf{AjaxでありながらXMLをやりとりしていない}ことだ。だからといって、最近XMLの代わりに使われるようになってきたJSONも利用していない。
+サーバー側のCGIは時刻データをXMLやJSONで表現したものを返しているのではなく、ハメ込まれる\verb|<div>|タグの中身の部分HTMLごと作ってしまっている。
+こうするとJavaScript側は受け取った文字列をinnerHTMLプロパティーに代入するだけで済んでしまう。
+このようにしてサーバー側に部分HTMLの生成を任せてしまえば、ライブラリー無しのJavaScript側で、苦労してHTMLのDOMツリーを操作するなどといった面倒な作業が要らなくなる。
+そのぶんサーバー側が大変になると思うかもしれないが、\ref{recipe:mojihame}（HTMLテーブルを簡単綺麗に生成する）で紹介している便利なmojihameコマンドを使えば、それほど大変なことにはならないのだ。
+
+ただし困ったことに\textbf{IE8は、\verb|<select>|タグにはinnerHTMLプロパティー代入ができない}というバグがある。
+これがやりたい場合は残念ながらXMLやJSONを使うしかない。
+
+\subsection*{参照}
+
+\noindent
+→MDN（Mozilla Developer Network）サイトのXMLHttpRequestメソッド説明ページ\footnote{\verb|https://developer.mozilla.org/ja/docs/Web/API/XMLHttpRequest|} \\
+→\ref{recipe:mojihame}（HTMLテーブルを簡単綺麗に生成する）

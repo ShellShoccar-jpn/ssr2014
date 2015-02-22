@@ -1,0 +1,635 @@
+%% 
+%% This is file `mathchm2.sty', generated 
+%% on <1996/8/12> with the docstrip utility (2.2i).
+%% 
+%% The original source files were:
+%% 
+%% mathchm2.dtx  (with options: `mathchm2')
+%% 
+%% This is a generated file. 
+%% 
+%% Copyright 1996 by Shinsaku Fujita 
+%% 
+%% This file is part of ``mathchm2''. 
+%% ================================== 
+%% 
+%% Released on August 30, 1996 
+%% 
+%% Copyright (C) 1996 by Shinsaku Fujita, all rights reserved. 
+%% This style file is created for submitting a manuscript to 
+%% scientific journals. 
+%% 
+%% Copying of this file is authorized only if either 
+%% 
+%% (1) you make absolutely no changes to your copy, including name and 
+%% directory name 
+%% (2) if you do make changes, 
+%% (a) you name it something other than the names included in the 
+%% ``chemist'' directory and 
+%% (b) you acknowledge the original name. 
+%% This restriction ensures that all standard styles are identical. 
+%% 
+%% ======================================= 
+%% 
+%% This file contains codes modified from latex.tex (LaTeX2.09) and of 
+%% latex.ltx (a LaTeX2e), where the reused parts are subject to 
+%% Copyright 1994 the LaTeX3 project and the individual authors 
+%% (For further copyright information see the file legal.txt of 
+%% the LaTeX2e standard distribution, and any other copyright 
+%% indicated in this file.) 
+%% 
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%%
+%% `mathchm2.dtx' ver3.01 (for LaTeX2e) 1996/08/30
+%%  by Shinsaku Fujita
+%%
+\@ifundefined{NeedsTeXFormat}{}
+{\NeedsTeXFormat{LaTeX2e}}
+\@ifundefined{ProvidesFile}{}{\ProvidesFile{mathchm2.sty}
+         [1996/08/30 v3.01
+     mathchm2 package ]}
+\def\j@urnalname{mathchm2} \def\journalID{mathchm2}
+\def\versi@ndate{August 30, 1996}
+\def\versi@nno{ver3.01}
+\def\copyrighth@lder{SF} % Shinsaku Fujita
+\typeout{Package `\j@urnalname' (\versi@nno) <\versi@ndate>\space
+[\copyrighth@lder]}
+\typeout{[Macros for grouping equations with %
+ individual sequential numbers]}
+\typeout{[for LaTeX2.09 and LaTeX2e]}
+\def\dotfillelement{$\m@th\mkern1.5mu\cdot\mkern1.5mu$}
+\def\dotfilleqn{\if@eqnsw\leaders%
+  \hbox{\dotfillelement}\hfill\else\hfil\fi}
+\newif\if@doteqn \@doteqnfalse
+\newif\if@oldeqsw \@oldeqswtrue%1995/10/15 by S. Fujita
+\def\doteqnoff{\let\dotorspace=\hfil%
+ \let\eqnSpan=& \relax\@doteqnfalse%
+ \@oldeqswtrue}%1995/10/15 by S. Fujita
+\doteqnoff%default setting
+\def\doteqnon{\let\dotorspace=\dotfilleqn%
+ \let\eqnSpan=\span\@doteqntrue%
+ \@oldeqswfalse}%1995/10/15 by S. Fujita
+\def\eqrelstretch{0.41667}%ca. 5/12
+\def\eqnostretch{0.5}
+\def\eqleftstretch{1}
+\newif\if@eqnflush \@eqnflushfalse
+\def\eqnflushon{\@eqnflushtrue}
+\def\eqnflushoff{\@eqnflushfalse}
+\def\eqnosep{0}
+\def\@eqnnum{(\theequation)\kern\eqnosep\parindent}
+\newcount\EQ@cnt%added by SF for version 2.02(1995/10/27)
+\@ifundefined{p@renwd}{\newdimen\p@renwd \p@renwd=8.75\p@}{}
+\def\equAtion{\stepcounter{equation}\let\@currentlabel=\theequation
+\w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+\setbox0=\hbox{\@eqnnum}\dimen1=\wd0
+\advance\dimen1 by\eqnostretch\arraycolsep
+\global\@eqnswtrue\tabskip\@centering
+$$\halign to \displaywidth\bgroup\hskip\@centering
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+ \hskip\eqnostretch\arraycolsep%
+ \hskip\dimen1
+\fi%%%%%%%%%%%%%%%%
+$\displaystyle\tabskip\z@{##}$%
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+  \hskip\eqnostretch\arraycolsep%
+\fi%%%%%%%%%%%%%%%%
+  \dotorspace
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+  \hskip\dimen1
+\fi%%%%%%%%%%%%%%%%
+  \tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \mathstrut&\cr\noalign{\vskip-\baselineskip}}
+\def\endequAtion{\eqnSpan%
+ \if@eqnsw\@eqnnum\stepcounter{equation}\fi%
+ \global\@eqnswtrue\cr\egroup
+ \global\advance\c@equation\m@ne$$\global\@ignoretrue}
+\let\@seqncr=\@eqncr
+\@namedef{equAtion*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\equAtion}
+\@namedef{endequAtion*}{\nonumber\endequAtion\@frameeqnstarfalse}
+\def\Equation{\stepcounter{equation}\let\@currentlabel=\theequation
+\w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+\setbox0=\hbox{\@eqnnum}\dimen1=\wd0
+\advance\dimen1 by\eqnostretch\arraycolsep
+\global\@eqnswtrue
+$$\dimen0=\displaywidth%
+\advance\dimen0-\eqleftstretch\leftmargini%
+\rightline\bgroup\noindent$%
+\vcenter\bgroup\kern\fboxsep
+\halign to \dimen0\bgroup\hskip\@centering
+  $\displaystyle\tabskip\z@{##}$
+  \hskip\eqnostretch\arraycolsep%
+  \dotorspace\hskip\dimen1\tabskip\@centering
+   &\llap{##}\tabskip\z@\cr
+  \mathstrut&\cr\noalign{\vskip-\baselineskip}}
+\def\endEquation{\eqnSpan%
+ \if@eqnsw\@eqnnum\stepcounter{equation}\fi%
+ \global\@eqnswtrue\cr\egroup
+ \global\advance\c@equation\m@ne%
+ \egroup$\egroup$$\global\@ignoretrue}
+\let\@seqncr=\@eqncr
+\@namedef{Equation*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\Equation}
+\@namedef{endEquation*}{\nonumber\endEquation\@frameeqnstarfalse}
+\def\equation{\if@eqnflush\Equation\else\equAtion\fi}
+\def\endequation{\if@eqnflush\endEquation\else\endequAtion\fi}
+\@namedef{equation*}{\@oldeqswtrue%1995/10/15 for ver2.01
+\def\@eqncr{\nonumber\@seqncr}\equation}
+\@namedef{endequation*}{\nonumber\endequation%
+ \if@doteqn\@oldeqswfalse\fi}%1995/10/15 for ver2.01
+\def\eqnArray{\stepcounter{equation}\let\@currentlabel=\theequation
+ \if@eqna \let\@currentlabels=\theequations\fi%
+   %added for referring an eqn-group 1996/08/04 by S. Fujita (v3.00a)
+\w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+\global\@eqnswtrue
+\setbox0=\hbox{\@eqnnum}\dimen1=\wd0
+\advance\dimen1 by\eqnostretch\arraycolsep
+\global\@eqcnt\z@\tabskip\@centering\let\\=\@eqncr
+$$\halign to \displaywidth\bgroup%
+\hskip\@centering
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+ \hskip\eqnostretch\arraycolsep%
+ \hskip\dimen1
+\fi%%%%%%%%%%%%%%%%
+  $\displaystyle\tabskip\z@{##}$\@eqnsel%
+  &\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+  \hskip\eqnostretch\arraycolsep%
+\fi%%%%%%%%%%%%%%%
+  \dotorspace
+\if@oldeqsw\else%%%%%%%%%%%1995/10/15 for ver2.01
+  \hskip\dimen1%
+\fi%%%%%%%%%%%%%%%%
+ \tabskip\@centering
+ &\llap{##}\tabskip\z@\cr
+ \noalign{\global\EQ@cnt=\@eqcnt}%
+  %added by SF for version 2.02(1995/10/27)
+ \mathstrut&&&\cr%
+ \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endeqnArray{\@@eqncr\egroup
+      \global\advance\c@equation\m@ne$$\global\@ignoretrue}
+\def\@@eqncr{\let\@tempa\relax
+    \ifcase\@eqcnt%
+     \def\@tempa{& & \eqnSpan}\or \def\@tempa{& \eqnSpan}
+    \else \def\@tempa{\eqnSpan }\fi
+     \@tempa \if@eqnsw\@eqnnum\stepcounter{equation}\fi
+     \global\@eqnswtrue\global\@eqcnt\z@\cr}
+\def\Eqnarray{\stepcounter{equation}\let\@currentlabel=\theequation
+ \if@eqna \let\@currentlabels=\theequations\fi%
+  %added for referring an eqn-group 1996/08/04 by S. Fujita (v3.00a)
+\w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+\setbox0=\hbox{\@eqnnum}\dimen1=\wd0
+\advance\dimen1 by\eqnostretch\arraycolsep
+\global\@eqnswtrue\global\@eqcnt\z@\tabskip\z@\let\\=\@eqncr
+$$\dimen0=\displaywidth%
+\advance\dimen0-\eqleftstretch\leftmargini%
+\rightline\bgroup\noindent$%
+\vcenter\bgroup\kern\fboxsep
+\halign to \dimen0\bgroup\hskip\@centering%\hskip\fboxsep
+  $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$
+  \hskip\eqnostretch\arraycolsep%
+  \dotorspace\hskip\dimen1\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \noalign{\global\EQ@cnt=\@eqcnt}%
+    %added by SF for version 2.02(1995/10/27)
+  \mathstrut&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endEqnarray{\@@eqncr\egroup
+  \global\advance\c@equation\m@ne%
+  \egroup$\egroup$$\global\@ignoretrue}
+\let\@seqncr=\@eqncr
+\@namedef{Eqnarray*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\Eqnarray}
+\@namedef{endEqnarray*}{\nonumber\endEqnarray\@frameeqnstarfalse}
+\let\@seqncr=\@eqncr
+\def\eqnarray{\if@eqnflush\Eqnarray\else\eqnArray\fi}
+\def\endeqnarray{\if@eqnflush\endEqnarray\else\endeqnArray\fi}
+\@namedef{eqnarray*}{\@oldeqswtrue%1995/10/15 for ver2.01
+ \def\@eqncr{\nonumber\@seqncr}\eqnarray}
+\@namedef{endeqnarray*}{\nonumber\endeqnarray%
+ \if@doteqn\@oldeqswfalse\fi}%1995/10/15 for ver2.01
+\def\newlabels#1#2{\global\@namedef{rx@#1}{#2}}
+\def\refset#1{\@ifundefined{rx@#1}{{\bf ??}\@warning
+  {Reference `#1 for eqn-group referring' on page \thepage \space
+    undefined}}{\edef\@tempa{\@nameuse{rx@#1}}\expandafter
+    \@car\@tempa \@nil\null}}
+\newif\if@eqna \@eqnafalse
+\def\label#1{\@bsphack
+ \if@filesw {%
+  \let\thepage\relax
+   \def\protect{\noexpand\noexpand\noexpand}%
+   \xdef\@gtempa{\write\@auxout{\string
+      \newlabel{#1}{{\@currentlabel}{\thepage}}}}%
+   \if@eqna%for referring an eqn-group
+    \xdef\@gtemps{\write\@auxout{\string
+      \newlabels{#1}{{\@currentlabels}{\thepage}}}}%
+   \fi%
+   }\@gtempa\if@eqna\@gtemps\fi
+   \if@nobreak \ifvmode\nobreak\fi\fi%
+ \fi\@esphack}
+\def\@currentlabels{} % For \label and \refset commands
+                      % that come before any environment
+\def\theequations{\@ifundefined{chapter}{\theenumi}{%
+\ifnakaguro\thechapter\niten\theenumi\else
+\thechapter.\theenumi\fi}}% added for version 2.00 by S. Fujita
+\def\finpushw@ll{\wd0=0pt \box0}
+\def\makepushw@ll#1{\setbox0=\hbox{#1}\finpushw@ll}
+\def\mathpushw@ll#1#2{\setbox0=\hbox{$\m@th#1{#2}$}\finpushw@ll}
+\def\pushtowall{\relax \leavevmode
+ \ifmmode\def\next{\mathpalette\mathpushw@ll}
+ \else\let\next\makepushw@ll \fi \next}
+\newif\ifnakaguro \nakagurofalse%
+ %trueÇ…Ç∑ÇÈÇ∆íÜçïÇê›íË
+\newif\ifsubarabic \subarabicfalse%
+ %trueÇ…Ç∑ÇÈÇ∆ç◊ï™î‘çÜÇ™ÉAÉâÉrÉAêîéöÇ…Ç»ÇÈ
+\newif\ifsubhyphen \subhyphenfalse%
+ %trueÇ…Ç∑ÇÈÇ∆ç◊ï™î‘çÜÇ™1-aÇÃÇÊÇ§Ç…Ç»ÇÈ
+\def\niten{\hbox to .5zw{\hfil\raise.5ex\hbox{.}\hfil}}%îºäpíÜçï
+\def\eqn@rraya{%
+ \c@enumi=\c@equation
+ \advance\c@enumi by 1
+ \global\@eqnatrue%added for referring an equation group (v1.01)
+ \c@equation=0
+\ifsubarabic
+ \@ifundefined{chapter}%
+{\def\theequation{\theenumi-\arabic{equation}}}%
+{\def\theequation{\ifnakaguro%
+\thechapter\niten\theenumi\niten\arabic{equation}%
+\else\thechapter.\theenumi-\arabic{equation}\fi}}
+\else
+\ifsubhyphen
+ \@ifundefined{chapter}%
+{\def\theequation{\theenumi-\alph{equation}}}%
+{\def\theequation{\ifnakaguro%
+\thechapter\niten\theenumi-\alph{equation}%
+\else\thechapter.\theenumi-\alph{equation}\fi}}
+\else
+ \@ifundefined{chapter}%
+{\def\theequation{\theenumi\alph{equation}}}%
+{\def\theequation{\ifnakaguro%
+\thechapter\niten\theenumi\alph{equation}%
+\else\thechapter.\theenumi\alph{equation}\fi}}
+\fi\fi}
+\def\nakaguroon{\nakagurotrue
+\@ifundefined{chapter}{}{%
+\def\theequation{\thechapter\niten\arabic{equation}}}}
+\def\eqnarraya{\eqn@rraya \eqnarray}
+\def\endeqnarraya{\endeqnarray
+\global\c@equation=\c@enumi}
+\def\eqnCases{%
+ \stepcounter{equation}%
+ \let\@currentlabel=\theequation%
+ \if@eqna \let\@currentlabels=\theequations\fi%
+  %added for referring an eqn-group
+ \w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+ \global\@eqnswtrue
+ \if@doteqn%
+  \setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+  \advance\dimen4 by\eqnostretch\arraycolsep
+  \else\dimen4=\z@\fi
+ \global\@eqcnt\z@\tabskip\@centering\let\\=\@eqncr%
+ $$\global\dimen0=\displaywidth%
+ \setbox4=\vbox\bgroup\halign to\dimen0\bgroup\hskip\@centering
+ \if@doteqn\hskip\eqnostretch\arraycolsep\fi
+ \hskip\dimen4\kern\p@renwd
+ $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$%
+  \if@doteqn\hskip\eqnostretch\arraycolsep\fi
+  \dotorspace\hskip\dimen4\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \noalign{\global\EQ@cnt=\@eqcnt}%
+    %added by SF for version 2.02(1995/10/27)
+  \mathstrut&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endeqnCases{\@@eqncr\egroup%
+  \global\advance\c@equation\m@ne\egroup
+  \setbox2=\vbox{\unvcopy4\global\setbox1\lastbox}%
+  \setbox2=\hbox{\unhbox1\lastbox}%
+  \dimen1=\dimen0\advance\dimen1 -\wd2\relax%
+  \divide\dimen1 by 2\relax\advance\dimen1 -.5\p@renwd%
+  \if@doteqn
+    \advance\dimen1 \eqnostretch\arraycolsep
+    \advance\dimen1 \dimen4
+  \fi
+  \dimen2=\ht4 \advance\dimen2 by 2\fboxsep%
+  \setbox2=\hbox{\pushtowall{\hbox{$\kern\dimen1\left\{%
+  \vcenter{\hrule height\dimen2 width 0pt}\right.$}}%
+  $\vcenter{\kern\fboxsep\box4\kern\fboxsep}$}%
+  \null\hss\hbox{\box2}$$\global\@ignoretrue%
+  \global\@eqnafalse%added for referring an eqn-group
+}
+\let\@seqncr=\@eqncr
+\@namedef{eqnCases*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\eqnCases}
+\@namedef{endeqnCases*}{\nonumber\endeqnCases\@frameeqnstarfalse}
+\def\eqnCasesa#1{\eqn@rraya\eqnCases{#1}}
+\def\endeqnCasesa{\endeqnCases\global\c@equation=\c@enumi}
+\def\eqnSpec#1{%
+ \setbox4=\hbox{$\displaystyle #1$}
+ \stepcounter{equation}\let\@currentlabel=\theequation%
+ \if@eqna \let\@currentlabels=\theequations\fi%
+    %added for referring an eqn-group
+ \w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+ \global\@eqnswtrue
+ \if@doteqn%
+  \setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+  \global\advance\dimen4 by\eqnostretch\arraycolsep
+  \else\global\dimen4=\z@\fi
+ \global\@eqcnt\z@\tabskip\@centering%%%\tabskip0pt
+ \let\\=\@eqncr%
+ $$\global\dimen0=\displaywidth \advance\dimen0 -\wd4%
+ \setbox0=\vbox\bgroup\halign to\dimen0\bgroup
+ \hskip\@centering
+ \if@doteqn\hskip\eqnostretch\arraycolsep\fi
+ \hskip\dimen4\kern\p@renwd
+ $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$%
+  \if@doteqn\hskip\eqnostretch\arraycolsep\fi
+  \dotorspace\hskip\dimen4\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \noalign{\global\EQ@cnt=\@eqcnt}%
+    %added by SF for version 2.02(1995/10/27)
+  \mathstrut&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endeqnSpec{\@@eqncr\egroup%
+  \global\advance\c@equation\m@ne\egroup
+  \setbox2=\vbox{\unvcopy0\global\setbox1\lastbox}%
+  \setbox2=\hbox{\unhbox1\lastbox}%
+  \dimen1=\dimen0\advance\dimen1 -\wd2\relax%
+  \divide\dimen1 by 2\relax\advance\dimen1 -.5\p@renwd%
+  \if@doteqn\advance\dimen1 \eqnostretch\arraycolsep
+  \advance\dimen1 \dimen4\fi
+ \setbox2=\hbox{$\kern\dimen1\box4%
+  \left\{\kern-\dimen1\kern-1.15\p@renwd%
+  \vcenter{\kern\fboxsep\box0\kern\fboxsep}\right.$}%
+  \null\hss\hbox{\box2}$$\global\@ignoretrue
+  \global\@eqnafalse%added for referring an eqn-group
+}
+\let\@seqncr=\@eqncr
+\@namedef{eqnSpec*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\eqnSpec}
+\@namedef{endeqnSpec*}{\nonumber\endeqnSpec\@frameeqnstarfalse}
+\def\eqnSpeca#1{\eqn@rraya\eqnSpec{#1}}
+\def\endeqnSpeca{\endeqnSpec\global\c@equation=\c@enumi}
+\def\Eqncases{\stepcounter{equation}\let\@currentlabel=\theequation
+\setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+\advance\dimen4 by\eqnostretch\arraycolsep
+ \if@eqna \let\@currentlabels=\theequations\fi%
+    %added for referring an eqn-group
+ \w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+ \global\@eqnswtrue\global\@eqcnt\z@\tabskip0pt%%\tabskip\@centering
+ \let\\=\@eqncr%
+ $$\dimen0=\displaywidth%
+ \advance\dimen0-\eqleftstretch\leftmargini%
+ \rightline\bgroup\noindent$%
+ \left\{\,\vcenter\bgroup\kern\fboxsep
+ \halign to \dimen0\bgroup\hskip\@centering%\hskip\fboxsep
+  $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$
+  \hskip\eqnostretch\arraycolsep%
+  \dotorspace\hskip\dimen4\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \noalign{\global\EQ@cnt=\@eqcnt}%
+    %added by SF for version 2.02(1995/10/27)
+  \mathstrut&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endEqncases{\@@eqncr\egroup%
+      \global\advance\c@equation\m@ne\kern\fboxsep\egroup\right.$%
+      \egroup$$\global\@ignoretrue
+  \global\@eqnafalse%added for referring an eqn-group
+}
+\let\@seqncr=\@eqncr
+\@namedef{Eqncases*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\Eqncases}
+\@namedef{endEqncases*}{\nonumber\endEqncases\@frameeqnstarfalse}
+\def\Eqncasesa#1{\eqn@rraya\Eqncases{#1}}
+\def\endEqncasesa{\endEqncases\global\c@equation=\c@enumi}
+\def\Eqnspec#1{%
+ \setbox4=\hbox{$\displaystyle #1$}%
+ \stepcounter{equation}\let\@currentlabel=\theequation
+\setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+\advance\dimen4 by\eqnostretch\arraycolsep
+ \if@eqna \let\@currentlabels=\theequations\fi%
+    %added for referring an eqn-group
+ \w@dottedlefteqn%added for Version 3.00 by S. Fujita(1996/05/24)
+ \global\@eqnswtrue\global\@eqcnt\z@\tabskip0pt%%\tabskip\@centering
+ \let\\=\@eqncr$$\dimen0=\displaywidth \dimen3=\displaywidth
+ \advance\dimen0-\eqleftstretch\leftmargini \dimen3=\dimen0
+ \advance\dimen0 -\wd4 \advance\dimen0 -\p@renwd%
+ \advance\dimen0 -0.33333em% 6mu
+ \rightline\bgroup\noindent\hbox to\dimen3\bgroup$\vcenter{\box4}\hss%
+ \left\{\,\vcenter\bgroup\kern\fboxsep
+ \halign to \dimen0\bgroup\hskip\@centering%
+  $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$
+  \hskip\eqnostretch\arraycolsep%
+  \dotorspace\hskip\dimen4\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr
+  \noalign{\global\EQ@cnt=\@eqcnt}%
+     %added by SF for version 2.02(1995/10/27)
+  \mathstrut&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endEqnspec{\@@eqncr\egroup
+      \global\advance\c@equation\m@ne\kern\fboxsep\egroup\right.$%
+      \egroup\egroup$$\global\@ignoretrue
+  \global\@eqnafalse%added for referring an eqn-group
+}
+\let\@seqncr=\@eqncr
+\@namedef{Eqnspec*}{\@frameeqnstartrue%
+ \def\@eqncr{\nonumber\@seqncr}\Eqnspec}
+\@namedef{endEqnspec*}{\nonumber\endEqnspec\@frameeqnstarfalse}
+\def\Eqnspeca#1{\eqn@rraya \Eqnspec{#1}}
+\def\endEqnspeca{\endEqnspec
+\global\c@equation=\c@enumi}
+\@ifundefined{eqncases}{%
+\typeout{Caution: mathchem.sty should not be incorporated after^^J
+mathchm2.sty!}}{%
+\typeout{The `eqncases' and `eqnspec' environments of mathchem.sty^^J
+have been redefined by mathchm2.sty.}}
+\def\eqncases{\if@eqnflush\Eqncases\else\eqnCases\fi}
+\def\endeqncases{\if@eqnflush\endEqncases\else\endeqnCases\fi}
+\let\@seqncr=\@eqncr
+\@namedef{eqncases*}{\def\@eqncr{\nonumber\@seqncr}\eqncases}
+\@namedef{endeqncases*}{\nonumber\endeqncases}
+\def\eqncasesa{\eqn@rraya\eqncases}
+\def\endeqncasesa{\endeqncases
+\global\c@equation=\c@enumi}
+\def\eqnspec#1{\if@eqnflush\Eqnspec{#1}\else\eqnSpec{#1}\fi}
+\def\endeqnspec{\if@eqnflush\endEqnspec\else\endeqnSpec\fi}
+\let\@seqncr=\@eqncr
+\@namedef{eqnspec*}{\def\@eqncr{\nonumber\@seqncr}\eqnspec}
+\@namedef{endeqnspec*}{\nonumber\endeqnspec}
+\def\eqnspeca#1{\eqn@rraya\eqnspec{#1}}
+\def\endeqnspeca{\endeqnspec
+\global\c@equation=\c@enumi}
+\def\@EQNcr{{\ifnum0=`}\fi\@ifstar{\global\@eqpen\@M
+  \@yEQNcr}{\global\@eqpen\interdisplaylinepenalty \@yEQNcr}}
+\def\@yEQNcr{\@ifnextchar [{\@xEQNcr}{\@xEQNcr[\z@]}}
+\def\@xEQNcr[#1]{\ifnum0=`{\fi}\@@EQNcr
+  \noalign{\penalty\@eqpen\vskip\jot\vskip #1\relax}}
+\def\@@EQNcr{\let\@tempa\relax
+  \ifcase\@eqcnt%
+  \def\@tempa{& & & \eqnSpan}\or \def\@tempa{& & \eqnSpan}
+  \else \def\@tempa{& \eqnSpan }\fi
+  \@tempa \if@eqnsw\@eqnnum\stepcounter{equation}\fi
+  \global\@eqnswtrue\global\@eqcnt\z@\cr}
+\newdimen\eqnframesep \eqnframesep=12\p@
+\def\eqnFrame{%
+ \stepcounter{equation}%
+ \let\@currentlabel=\theequation%
+ \if@eqna \let\@currentlabels=\theequations\fi%
+   %added for referring an eqn-group
+ \global\@eqnswtrue
+ \w@dottedlefteqn
+ \global\@tempdimb=\eqnostretch\arraycolsep
+ \if@doteqn%
+  \setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+  \advance\dimen4 by\@tempdimb\else\dimen4=\z@\fi
+ \global\@eqcnt\z@\tabskip\@centering\let\\=\@EQNcr%
+ $$\global\dimen0=\displaywidth%
+ \setbox4=\vbox\bgroup\halign to\dimen0\bgroup\hskip\@centering
+ \if@doteqn\hskip\@tempdimb\hskip\eqnframesep\fi
+ \hskip\dimen4%
+ $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$%
+  \if@doteqn\hskip\eqnframesep\fi
+  &\hbox to\@tempdimb{##\hss}
+  \dotorspace\hskip\dimen4\tabskip\@centering
+  &\llap{##}\tabskip\z@\cr\noalign{\global\EQ@cnt=\@eqcnt}%
+  \mathstrut&&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endeqnFrame{\@@EQNcr\egroup
+ \global\advance\c@equation\m@ne\egroup
+  \setbox2=\vbox{\unvcopy4\global\setbox1\lastbox}%
+  \setbox2=\hbox{\unhbox1\lastbox}%
+  \dimen2=\wd2 \dimen3=\ht4
+  \if@doteqn
+   \advance\dimen2-\@tempdimb \advance\dimen2-\@tempdimb
+   \advance\dimen2-\dimen4 \advance\dimen2-\dimen4
+   \advance\dimen2-\eqnframesep \advance\dimen2-\eqnframesep
+  \fi
+  \fboxsep=\eqnframesep
+  \dimen1=\dimen0 \advance\dimen1-\wd2\relax
+  \divide\dimen1 by2\relax \advance\dimen1-\fboxsep%
+   \advance\dimen1-\fboxrule
+  \if@doteqn \advance\dimen1 \@tempdimb
+   \advance\dimen1 \dimen4 \advance\dimen1 \eqnframesep\fi
+  \setbox2=\hbox{$\kern\dimen1
+   \hbox to\z@{\fbox{$\vcenter to\dimen3{%
+    \hbox to\dimen2{\strut\hss}\vss}$}\hss}\kern-\dimen1%
+   \vcenter{\kern\fboxsep
+    \kern\fboxrule\box4\kern\fboxsep\kern\fboxrule}$}
+   \null\hss\hbox{\box2}$$\global\@ignoretrue
+  \global\@eqnafalse}%added for referring an eqn-group
+\let\@sEQNcr=\@EQNcr
+\@namedef{eqnFrame*}{\@frameeqnstartrue%
+ \def\@EQNcr{\nonumber\@sEQNcr}\eqnFrame}
+\@namedef{endeqnFrame*}{\nonumber\endeqnFrame\@frameeqnstarfalse}
+\def\eqnFramea#1{\eqn@rraya\eqnFrame{#1}}
+\def\endeqnFramea{\endeqnFrame\global\c@equation=\c@enumi}
+
+\newif\if@lefteqnum \@lefteqnumfalse
+\newif\if@frameeqnstar \@frameeqnstarfalse
+\def\w@dottedlefteqn{%
+ \setbox0=\hbox{\kern\displaywidth\@eqnnum}%
+ \ifdim\wd0<.2pt \global\@lefteqnumtrue\fi
+ \if@lefteqnum\if@doteqn\if@frameeqnstar\else
+ \typeout{Mathchm2 warning: Left equation numbers should not
+ be used in a dotted form!}\fi\fi\fi}
+\def\Eqnframe{%
+ \stepcounter{equation}%
+ \let\@currentlabel=\theequation%
+ \if@eqna \let\@currentlabels=\theequations\fi%
+   %added for referring an eqn-group
+ \global\@eqnswtrue
+ \w@dottedlefteqn
+ \global\@tempdimb=\eqnostretch\arraycolsep
+ \if@doteqn \setbox0=\hbox{\@eqnnum}\dimen4=\wd0
+  \advance\dimen4 by\@tempdimb\else\dimen4=\z@\fi
+ \global\@eqcnt\z@\tabskip\z@%
+ \let\\=\@EQNcr%
+ $$\global\dimen0=\displaywidth%
+ \dimen1=\eqleftstretch\leftmargini
+ \if@lefteqnum \global\advance\dimen1 by 20pt\fi
+ \advance\dimen0-\dimen1%
+ \setbox4=\vbox\bgroup\halign to\dimen0\bgroup\hskip\@centering
+ \hskip\eqnframesep
+ $\displaystyle\tabskip\z@{##}$\@eqnsel&\global\@eqcnt\@ne
+  \hskip \eqrelstretch\arraycolsep \hfil${##}$\hfil
+  &\global\@eqcnt\tw@ \hskip \eqrelstretch\arraycolsep
+  $\displaystyle\tabskip\z@{##}$%
+  \if@doteqn\hskip\eqnframesep\fi
+  &\hbox to\@tempdimb{##\hss}\dotorspace\hskip\dimen4
+  \tabskip\@centering
+  &\llap{##}\tabskip\z@\cr\noalign{\global\EQ@cnt=\@eqcnt}%
+  \mathstrut&&&&\cr%
+  \noalign{\global\@eqcnt=\EQ@cnt\vskip-\baselineskip}}
+\def\endEqnframe{\@@EQNcr\egroup
+ \global\advance\c@equation\m@ne\egroup
+  \setbox2=\vbox{\unvcopy4\global\setbox1\lastbox}%
+   \global\setbox2=\hbox{\unhbox1\lastbox}%
+  \dimen2=\wd2 \dimen3=\ht4
+  \if@doteqn %%\advance\dimen2-\@tempdimb%
+   \advance\dimen2-\dimen4 \advance\dimen2-\eqnframesep\fi
+  \advance\dimen2-\eqnframesep \fboxsep=\eqnframesep
+  \advance\dimen1-\fboxrule
+  \advance\dimen1-\fboxrule
+    \advance\dimen1 -\@tempdimb
+ \setbox2=\hbox{$\kern\dimen1
+   \hbox to\z@{\fbox{$\vcenter to\dimen3{%
+    \hbox to\dimen2{\strut\hss}\vss}$}\hss}\kern-\dimen1%
+\rightline{$%
+\vcenter{\kern\fboxsep
+    \kern\fboxrule\box4\kern\fboxsep\kern\fboxrule}$}$}
+   \null\hss\hbox{\box2}$$\global\@ignoretrue
+  \global\@eqnafalse}%added for referring an eqn-group
+\let\@sEQNcr=\@EQNcr
+\@namedef{Eqnframe*}{\@frameeqnstartrue%
+ \def\@EQNcr{\nonumber\@sEQNcr}\Eqnframe}
+\@namedef{endEqnframe*}%
+ {\nonumber\endEqnframe\@frameeqnstarfalse}
+\def\Eqnframea#1{\eqn@rraya\Eqnframe{#1}}
+\def\endEqnframea{\endEqnframe\global\c@equation=\c@enumi}
+\def\eqnframe{\if@eqnflush\Eqnframe\else\eqnFrame\fi}
+\def\endeqnframe{\if@eqnflush\endEqnframe\else\endeqnFrame\fi}
+\let\@sEQNcr=\@EQNcr
+\@namedef{eqnframe*}{\@frameeqnstartrue%
+ \def\@EQNcr{\nonumber\@sEQNcr}\eqnframe}
+\@namedef{endeqnframe*}%
+ {\nonumber\endeqnframe\@frameeqnstarfalse}
+\def\eqnframea#1{\eqn@rraya\eqnframe{#1}}
+\def\endeqnframea{\endeqnframe\global\c@equation=\c@enumi}
+\endinput
+%% 
+%% End of file `mathchm2.sty'.

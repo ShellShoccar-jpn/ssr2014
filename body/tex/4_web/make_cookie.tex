@@ -1,0 +1,126 @@
+\section{シェルスクリプトおばさんの手づくりCookie（書き込み編）}
+\label{recipe:make_cookie}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	掲示板Webアプリケーションを作ろうと思う。
+	投稿者の名前とe-mailアドレスをCookieで、クライアント（Webブラウザー）に1週間覚えさせたい。
+\end{grshfboxit}
+
+\subsection*{回答}
+順を追っていけばシェルスクリプトでも手づくり（POSIXの範囲）でCookieが焼ける（Cookieヘッダーを作れる）し、
+クライアントから読み取ることもできる。しかしやることがたくさんあるので、POSIXの範囲で実装した``mkcookie''コマンド\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/mkcookie|}をダウンロードして使うことにする。
+
+そして例えば、名前（name）とメールアドレス（email）をCookieに覚えさせるCGIスクリプトであれば、次のように書く。
+\paragraph{掲示板で名前とメールアドレスをCookieに覚えさせるCGIスクリプト（bbs.cgi）} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	Tmp=/tmp/${0##*/}.$$                 # 一時ファイルの元となる名称
+	
+	# （名前とメールアドレスを設定するための何らかの処理）
+	
+	# "変数名+スペース1文字+値" で表現された元データファイルを作成
+	cat <<-FOR_COOKIE > $Tmp-forcookie
+	    name $name
+	    email $email
+	FOR_COOKIE
+	
+	# Cookie文字列を作成
+	cookie_str=$(mkcookie -e +604800 -p /bbs -s Y -h Y $Tmp-forcookie)
+	             # -e +604800: 有効期限を604800秒後(1週間後)に設定
+	             # -p /bbs   : サイトの/bbsディレクトリー以下で有効なCookieとする
+	             # -s Y      : Secureフラグを付けて、SSL接続時以外には読み取れないようにする
+	             # -h Y      : httpOnlyフラグを付けて、JavaScriptには拾わせないようにする
+	
+	# HTTPヘッダーを出力
+	cat <<-HTTP_HEADER
+	    Content-Type: text/html$cookie_str
+	    
+	HTTP_HEADER
+	
+	# （ここでHTMLのボディー部分を出力）
+	
+	rm -f $Tmp-*                         # 用が済んだら一時ファイルを削除
+\end{verbatim}
+\end{frameboxit}
+
+mkcookieコマンドに渡す変数は、1変数につき1行で
+\begin{quote}
+	\textbf{変数名}$<$半角スペース1文字$>$\textbf{値}
+\end{quote}
+という書式にして作る。変数名と値の間に置く半角スペースは1文字にすること。もし2文字にすると2文字目は値としての半角スペースとみなすので注意。
+
+mkcookieコマンドのオプションについては、``\verb|--help|''オプションなどで表示されるUsageを参照されたい。RFC 6265で定義されている属性に対応しているのですぐわかるだろう。
+
+最後に、ここで出来上がったCookie文字列は、出力しようとしている他のHTTPヘッダーに付加して送る。
+注意すべき点が1つある。\textbf{mkcookieコマンドは、先頭に改行を付ける仕様になっている}ので、前述の例のように他のヘッダー（例えばContent-Type）の行末に付加し、単独の行とはしないよう気を付けなければならないということだ。
+
+\subsection*{解説}
+
+クライアントにCookieを送るためにはまず、Cookie文字列がどんな仕様になっているかを知る必要がある。そこで具体例を示そう。まず、次のような条件があるとする。
+\begin{itemize}
+  \item 投稿者の名前（name）は、「6号さん」
+  \item 投稿者のメールアドレス（email）は、``\verb|6go3@example.com|''
+  \item 有効期限は、現在（2014/12/30日 10:20:30とする）から1週間後
+  \item サイトの``/bbs''ディレクトリー以下で有効
+  \item ``example.com''というドメインでのみ有効
+  \item Secureフラグ（SSLでアクセスしている時のみ）有効
+  \item httpOnlyフラグ（JavaScriptには取得させない）有効
+\end{itemize}
+
+この時に生成すべきCookie文字列は次のとおりだ。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	Set-Cookie: name=6%E5%8F%B7%E3%81%95%E3%82%93; expires=Tue, 06-Jan-2015 19:20:30 GMT; path=/bbs;
+	 domain=example.com; Secure; HttpOnly
+	Set-Cookie: email=6go3%40example.com; expires=Tue, 06-Jan-2015 19:20:30 GMT; path=/bbs; domain=e
+	xample.com; Secure; HttpOnly
+\end{verbatim}
+\end{frameboxit}
+
+つまり、``Set-Cookie:''という名前のHTTPヘッダーを用意し、そこに、\textit{変数名}=\textit{値}
+\begin{itemize}
+  \item \textit{変数名}\verb|=|\textit{値}（必須）
+  \item \verb|expires=|\textit{有効期限の日時}（RFC 2616 Sec3.3.1形式、省略可）
+  \item \verb|path=|\textit{URL上で使用を許可するディレクトリー}（省略可）
+  \item \verb|domain=|\textit{URL上で使用を許可するドメイン}（省略可）
+  \item \verb|Secure|（省略可）
+  \item \verb|HttpOnly|（省略可）
+\end{itemize}
+という各種プロパティーを、カンマ区切りで付けていく。もし送りたいCookie変数が複数ある場合は、1つ1つに``Set-Cookie:''行をつけ、expires以降のプロパティーは同じものを使えばよい。
+
+このようなCookie文字列を生成するにあたっては、ここまで紹介してきたレシピのうちの2つを活用する。値をURLエンコードするには\ref{recipe:URL_encode}（URLエンコードする）、有効日時の計算には\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）だ。有効日時は、``RFC 2616 Sec3.3.1形式''ということになっているが、その形式を作るには次のコードで可能だ。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	TZ=UTC+0 date +%Y%m%d%H%M%S |
+	TZ=UTC+0 utconv             | # UNIX時間に変換
+	awk  '{print $1+86400}'     | # 有効期限を1日としてみた
+	TZ=UTC+0 utconv -r          | # UNIX時間から逆変換
+	awk '{                      #   "Wdy, DD-Mon-YYYY HH:MM:SS GMT"形式に変換
+	  split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",monthname);
+	  split("Sun Mon Tue Wed Thu Fri Sat",weekname);
+	  Y = substr($0, 1,4)*1; M = substr($0, 5,2)*1; D = substr($0, 7,2)*1;
+	  h = substr($0, 9,2)*1; m = substr($0,11,2)*1; s = substr($0,13,2)*1;
+	  Y2 = (M<3) ? Y-1 : Y; M2 = (M<3)? M+12 : M;
+	  w = (Y2+int(Y2/4)-int(Y2/100)+int(Y2/400)+int((M2*13+8)/5)+D)%7;
+	  printf("%s, %02d-%s-%04d %02d:%02d:%02d GMT\n",
+	         weekname[w+1], D, monthname[M], Y, h, m, s);
+	}'
+\end{verbatim}
+\end{frameboxit}
+
+Cookieを手づくりするのも、本書のレシピをもってすれば十分可能だ。
+
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:URL_encode}（URLエンコードする） \\
+→\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす） \\
+→\ref{recipe:read_cookie}（シェルスクリプトおばさんの手づくりCookie(読み込み編)） \\
+→RFC 6265文書\footnote{\verb|http://tools.ietf.org/html/rfc6265|} \\
+→RFC 2616文書\footnote{\verb|http://tools.ietf.org/html/rfc2616|}

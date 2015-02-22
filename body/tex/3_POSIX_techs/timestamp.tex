@@ -1,0 +1,125 @@
+\section{findコマンドで秒単位にタイムスタンプ比較をする}
+\label{recipe:timestamp}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	様々な条件でファイルの絞り込みができるfindコマンドだが、タイムスタンプでの絞り込み機能が弱い。
+	POSIX標準では日（=86400秒）単位でしか絞り込めない。実装によっては分単位まで指定できるものがあるが、
+	独自拡張なのでできたりできなかったりするし記述方法もバラバラだ。
+	\begin{itemize}
+	  \item 指定した年月日時分秒より新しい、より古い、等しい
+	  \item n秒前より新しい、より古い、等しい
+	\end{itemize}
+	という絞り込みはできないものか。
+\end{grshfboxit}
+
+\subsection*{回答}
+比較用のタイムスタンプを持つファイルを生成し、そのファイルを基準として\verb|-newer|オプションを使えば可能である。
+
+\subsubsection*{1.指定日時との比較}
+
+日時``YYYY/MM/DD hh:mm:ss''よりも新しいファイルを抽出したいなら、こんなシェルスクリプトを書けばよい。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	touch -t YYYYMMDDhhmm.ss thattime.tmp
+	find /TARGET/DIR -newer thattime.tmp
+	rm thattime.tmp
+\end{verbatim}
+\end{frameboxit}
+
+touchコマンドの書式の事情により、mmとssの間にピリオドを挿れないといけない点に注意してもらいたい。
+
+次に「より古い」ものを抽出したいならどうするか。それには基準となる日時の1秒前（\verb|YYYYMMDDhhmms1|とする）のタイムスタンプを持つファイルを作り、-newerオプションの否定形を使えばよい。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	touch -t YYYYMMDDhhmm.s1 1secbefore.tmp # 基準日時の1秒前
+	find /TARGET/DIR \( \! -newer 1secbefore.tmp \)
+	rm 1secbefore.tmp
+\end{verbatim}
+\end{frameboxit}
+
+それでは「等しい」としたいならどうすればよいか。それには基準日時のファイルとその1秒前のファイルの2つを作り、「基準日時1秒前より新しい」かつ「基準日時を含むそれ以前」という条件にすればよい。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	touch -t YYYYMMDDhhmm.ss thattime.tmp
+	touch -t YYYYMMDDhhmm.s1 1secbefore.tmp
+	find /TARGET/DIR -newer 1secbefore.tmp \( \! -newer thattime.tmp \)
+	rm 1secbefore.tmp thattime.tmp
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{2. $n$秒前より新しい、古い、等しい}
+
+基準日時との新旧比較のやり方がわかったのだから、あとは現在日時の$n$秒前、および$n-1$秒前という計算ができれば実現できることになる。
+
+それはどうやるのかといえば、\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）を活用すればいい。つまり、日常時間（YYYYMMDDhhmmss）をUNIX時間に変換して引き算し、逆変換すればいいのだ。こういう需要を想定し、utconvというコマンドは用意されたのである（もちろんシェルスクリプトで）。
+
+それでは、例として1分30秒前より新しい、等しい、古いファイルを抽出するシェルスクリプトを紹介する。
+
+\paragraph{1分30秒前より新しいファイルを抽出}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	now=$(date '+%Y%m%d%H%M%S')
+	t0=$(echo $now                |
+	     utconv                   |
+	     awk '{print $0-60*1-30}' |
+	     utconv -r                |
+	     sed 's/..$/.&/'          )
+	touch -t $t0 thattime.tmp
+	find /TARGET/DIR -newer thattime.tmp
+	rm thattime.tmp
+\end{verbatim}
+\end{frameboxit}
+
+\paragraph{1分30秒前より古いファイルを抽出}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	now=$(date '+%Y%m%d%H%M%S')
+	t1=$(echo $now                |
+	     utconv                   |
+	     awk '{print $0-60*1-31}' |
+	     utconv -r                |
+	     sed 's/..$/.&/'          )
+	touch -t $t1 1secbefore.tmp
+	find /TARGET/DIR \( \! -newer 1secbefore.tmp \)
+	rm 1secbefore.tmp
+\end{verbatim}
+\end{frameboxit}
+
+\paragraph{ぴったり1分30秒前のファイルを抽出}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	now=$(date '+%Y%m%d%H%M%S')
+	t0=$(echo $now                |
+	     utconv                   |
+	     awk '{print $0-60*1-30}' |
+	     utconv -r                |
+	     sed 's/..$/.&/'          )
+	t1=$(echo $now                |
+	     utconv                   |
+	     awk '{print $0-60*1-31}' |
+	     utconv -r                |
+	     sed 's/..$/.&/'          )
+	touch -t $t0 thattime.tmp
+	touch -t $t1 1secbefore.tmp
+	find /TARGET/DIR -newer 1secbefore.tmp \( \! -newer thattime.tmp \)
+	rm thattime.tmp 1secbefore.tmp
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{解説}
+
+findコマンドは、様々な条件でファイル抽出ができて便利。でも時間の新旧で絞り込む機能は弱いと言わざるを得ない。
+
+通常のタイムスタンプ(m:ファイルの中身を修正した日時)において、POSIXで規定されているのは\verb|-mtime|だけであり、しかも後ろには単純な数字しか指定できない。つまり現在から1日（=86400秒）単位での新旧比較しかできない。その代わり\verb|-newer|というオプションが用意されており、これを使うとそのファイルより新しいかどうかという条件指定ができるため、これで辛うじて新旧比較ができるようになる。タイムスタンプはどの環境でも秒単位まであるから、つまり秒単位まで新旧比較ができることになる。
+
+ただ、\verb|-newer|というオプション自体は「より新しい（等しいものはダメ）」という判定のみであるので、色々と工夫が必要である。「より古い」を判定したければ否定演算子を併用して「目的の日時の1秒前のより新しくない」とすることになるし、「等しい」にしたければ「目的の日時の1秒前のより新しく、かつ、目的の日時より新しくない」というように1秒ずらして前後から挟み込む。
+
+現在日時からの相対で指定したい場合は、前に紹介したレシピを活用して時間の計算をして絶対日時を求め、同様の比較をすればよいというわけだ。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）

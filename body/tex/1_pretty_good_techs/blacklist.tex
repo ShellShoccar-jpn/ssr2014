@@ -1,0 +1,190 @@
+\section{ブラックリストの100件を1万件の名簿から除去する}
+\label{recipe:blacklist}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	今、約1万人の会員名簿（members.txt）と、諸般の事情によりブラックリスト入りしてしまった約100人会員名一覧（blacklist.txt）がある。
+	会員名簿からブラックリストに登録されている会員のレコードを全て除去した、「キレイな会員名簿」を作るにはどうすればいいか。 \\
+	ただし、各々の列構成は次のようになっている。
+	\begin{description}
+	  \item[members.txt] \textbf{1列目}:会員ID、\textbf{2列目}:会員名
+	  \item[blacklist.txt ] \textbf{1列目}:会員名（1列のみのデータ）
+	\end{description}
+\end{grshfboxit}
+
+\subsection*{回答}
+SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join''を活用する。
+この場合、「会員名」で外部結合（OUTER JOIN）し、結合できなかった行だけ残せばよい。
+
+\paragraph{ブラックリスト会員を除去するシェルスクリプト（del\_{}blmembers.sh）} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# 結合に使う列は予めソートしておかなければならない（ここでは「会員名」）
+	sort -k1,1 blacklist.txt   > blacklist1.tmp
+
+	cat members.txt                                            |
+	sort -k2,2                                                 | #・「会員名」でソート
+	join -1 1 -2 2 -a 2 -e '*' -o 1.1,2.1,2.2 blacklist1.tmp - | #・B.L.を右外部結合
+	awk '$1=="*"{print $2,$3;}'                                  #・null相当値のある
+	                                                             #  行だけ抽出
+	rm blacklist1.tmp
+\end{verbatim}
+\end{frameboxit}
+
+
+\subsection*{解説}
+
+もしjoinコマンドを知らなかったらどうプログラミングするだろう。
+恐らくブラックリスト会員をwhile文でループを回し、全会員のテキストから1行ずつスキャン（\verb|grep -v|）してくということをするのではないだろうか。
+だが、それはあまりにも効率が悪すぎる。
+
+あまり知られていないかもしれないがUNIXにはjoinコマンドというものがあり、リレーショナルデータベースと同様の作業ができるのだ。
+リレーショナルデータベースを使い、SQL文でこの作業をやってよいと言われれば、外部結合（OUTER JOIN）を用いるという発想はすぐに出てくると思う。
+
+ここから先はjoinコマンドのチュートリアルを行いながら解説を進めていくことにする。
+
+\subsection*{joinコマンドチュートリアル}
+
+実際にデータを作ってJOINすることで、joinコマンドの使い方を見ていこう。
+
+\subsubsection*{まずはデータを作る}
+
+さすがに1万人分のサンプルネームを生成するのは大変だ。
+そこで\verb|/dev/urandom|を用いた4桁の16進数を便宜上の名前ということにして、そういう会員名簿を作ってみる。
+こんなふうにしてワンライナーでササっと作ろう。
+
+\paragraph{ダミーの会員リスト（members.txt）を作る}　\\
+\begin{screen}
+	(註) 第1列に会員ID、第2列に(便宜上の)「名前」が入ったデータを作る \\
+	\\
+	\verb!$ dd if=/dev/urandom bs=1 count=20000 2>dev/null |! \return \\
+	\verb!>  od -A n -t x2 -v                               |! \return \\
+	\verb!>  tr '  '  '\n'                                     |! \return \\
+	\verb!>  grep -v '^$'                                    |! \return \\
+	\verb!>  awk '{printf("ID%05d %s\n",NR,$0)}'             >  members.txt! \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{ダミーのブラック会員リスト（blacklist.txt）を作る}　\\
+\begin{screen}
+	(註) ブラックリストの(便宜上の)「名前」が入ったデータを作る \\
+	\\
+	\verb!$ dd if=/dev/urandom bs=1 count=200 2>/dev/null |! \return \\
+	\verb!>  od -A n -t x2 -v                              |! \return \\
+	\verb!>  tr '  '  '\n'                                    |! \return \\
+	\verb!>  grep -v '^$'                                   >  blacklist.txt! \\
+\end{screen}
+
+できたら、データの中に16進数4桁があることを確認しておこう。これがダミーの名前である。
+ただし前者（members.txt）は、次のように名前の手前に会員IDが振られているはずだ。
+
+\begin{verbatim}
+	ID00001 9fc6
+	ID00002 e13d
+	ID00003 6575
+	ID00004 1594
+	ID00005 1629
+	      :
+\end{verbatim}
+
+\subsubsection*{ブラック会員除去をする}
+
+これらのファイルを冒頭のシェルスクリプト（del\_{}blmembers.sh）に掛ければよい。
+結果をファイルに保存して、元のファイルと行数を比較してみよう。
+
+\begin{screen}
+	\verb!$ ./del_blmembers.sh >  cleanmembers.txt! \return \\
+	\verb!$ wc -l cleanmembers.txt! \return                \\
+	\verb!    9988 cleanmembers.txt!                       \\
+	\verb!$ wc -l members.txt! \return                     \\
+	\verb!   10000 members.txt!                            \\
+	\verb!$ !
+\end{screen}
+
+この例では、10000人の会員のうち12人がブラックリストに登録されていたことがわかった。
+
+\subsection*{joinコマンド解説}
+
+チュートリアルも済んだところで、joinコマンドの解説に移る。
+
+
+元のコードのjoinの意味を説明していこう。
+\begin{verbatim}
+	join -1 1 -2 2 -a 2 -e '*' -o 1.1,2.1,2.2 blacklist1.tmp -
+\end{verbatim}
+
+まず、最後の2つの引数を見てもらいたい。これは結合しようとしている2つのテキストデータを指示している。
+2つのテキストのうち左に記したもの（この例ではblacklist1.tmp）が左から、右に記したもの（この例では標準入力）が右から結合されることになるが、
+それぞれ「1番」、「2番」という表番号が与えられることを頭に入れておいてもらいたい。
+
+さて、以降はオプションを先頭から順番に説明していく。
+
+\verb|-1|、\verb|-2|というオプションは、JOINしようとする2つの表のそれぞれ何番目の列を見るかを指定するものだ。
+1番の表は1列目を、2番の表は2列目を見て、それらが等しい行同士をJOINせよという意味である。
+
+\verb|-a|というオプションは、外部結合のためのものであり、JOINできなかった行についても出力する場合はその表番号を指定する。
+\verb|-a 1|とすれば左外部結合（LEFT OUTER JOIN）を意味し、\verb|-a 2|とすれば右外部結合（RIGHT OUTER JOIN）を意味する。
+もし、完全外部結合（FULL OUTER JOIN）にしたければ\verb|-a 1 -a 2|と\verb|-a|オプションを2度記述する。
+
+\verb|-e|というオプションも外部結合のためのものである。JOINできずにNULLになった列に詰める文字列を指定する。
+テキスト表記の場合はNULLを表現できない\footnote{厳密にできないわけではない。\verb|-e|オプションを指定しなかった場合は何も詰めるものが無いので半角スペースが連続した箇所ができる。だがそれはわかりにくい。}ので、このオプションによってNULL相当の文字列を定義する。
+
+\verb|-o|というオプションは、出力する列の並びを指定するためのものである。
+SQLではSELECT句の直後で出力する列の並びを指定するが、あれと同じものだ。
+何番の表の何列目を出力するのかをカンマ区切りで列挙していく。
+
+本当はこの他に、\verb|-v|オプションというものがあり、
+これが指定された場合は\textbf{JOINできなかった行だけ表示}するようになる。
+例えば\verb|-v 1|と書けばJOINできなかった1番の表の行だけが表示される。
+勘のいい読者なら気づくと思うが、例示したシェルスクリプトは実は次のようにもっと簡単に書けるのだ。
+
+\begin{verbatim}
+	join -1 1 -2 2 -a 2 -e '*' -o 1.1,2.1,2.2 blacklist1.tmp - |
+	awk '$1=="*"{print $2,$3;}'
+
+	   ↓
+
+	join -1 1 -2 2 -v 2 blacklist1.tmp - |
+\end{verbatim}
+
+ちなみに、もしSQLのSELECT文で同じことをするなら、次のように書ける。
+
+\begin{verbatim}
+	SELECT
+	  MEM."会員ID",
+	  MEM."会員名"
+	FROM
+	  blacklist AS MEM
+	    RIGHT OUTER JOIN
+	  members   AS BL
+	    ON BL."会員名" = MEM."会員名"
+	WHERE
+	  BL."会員名" IS NOT NULL
+	ORDER BY
+	  MEM."会員ID" ASC;
+\end{verbatim}
+
+このようにしてSELECT文でできることは、joinを始め、sed、AWK、grepなどを使えばUNIXコマンドでも大抵できる。
+ついでに言うと、SELECT文でデータの流れを追えば、
+FROM句→(RIGHT OUTER JOIN句)→WHERE句→ORDER BY句→(最初に戻って)SELECTの直後、であるが、
+シェルスクリプトの場合はほぼ上から下へ一直線であるのが個人的には好きだ。
+
+\subsection*{joinコマンド使用上の注意}
+
+利用する場合は一つ注意しなければならない点がある。
+日本語ロケールになっている場合は、\textbf{デフォルトで全角空白も列区切り文字として解釈}してしまう。
+例えば人名フィールドがあって姓名が全角スペースで区切られている場合には注意が必要だ。
+
+そのような場合は、\verb|export LC_ALL=C|などとしてCロケールにしておくか、\verb|-t|オプションを使って区切り文字をしっかり定義しておかくこと。
+
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:sort}（sortコマンドの基本と応用とワナ） \\
+→\ref{allenvs:locale}（ロケール）

@@ -1,0 +1,112 @@
+\section{IPアドレスを調べる（IPv6も）}
+\label{recipe:ifconfig}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	現在自分が動いているホストのIPアドレスを全て抜き出し、ファイルに書き出したい。 \\
+	ただし、知りたいのはグローバルIPアドレスだけ。
+\end{grshfboxit}
+
+\subsection*{回答}
+一部のLinuxでは古いコマンド扱いされるようになったifconfigコマンド\footnote{中には、後から追加インストールしないと存在しないLinuxディストリビューションもある。}だが、
+UNIX全体の互換性を考えればまだまだ不可欠。とりあえず、下記のコードをコピペすれば大抵の環境では動くだろう。
+
+\paragraph{ifconfigからIPアドレスを抽出(v4)} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	/sbin/ifconfig -a                                 | # ifconfigコマンドを実行
+	grep inet[^6]                                     | # IPv4アドレスの行だけを抽出
+	sed 's/.*inet[^6][^0-9]*\([0-9.]*\)[^0-9]*.*/\1/' | # IPv4アドレス文字列だけを抽出
+	grep -v '^127\.'                                  | # lookbackアドレスを除去
+	grep -v '^10\.'                                   | # private(classA)を除去
+	grep -v '^172\.\(1[6-9]\|2[0-9]\|3[01]\)\.'       | # private(classB)を除去
+	grep -v '^192\.168\.'                             | # private(classC)を除去
+	grep -v '^169\.254\.'                             | # link localを除去
+	cat                                               > IPaddr.txt
+\end{verbatim}
+\end{frameboxit}
+\paragraph{ifconfigからIPアドレスを抽出(v6)} 　\\
+%$\!\!\!\!\!$
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	/sbin/ifconfig -a                                          | # ifconfig実行
+	grep inet6                                                 | # IPv6行抽出
+	sed 's/.*[[:blank:]]\([0-9A-Fa-f:]*:[0-9A-Fa-f:]*\).*/\1/' | # IPv6抽出
+	grep -v  '^::1$'                                           | # loopback除去
+	grep -v  '^\(0\+:\)\{7\}0*1$'                              | # loopback除去
+	grep -vi '^fd00:'                                          | # private除去
+	grep -vi '^fe80:'                                          | # link local除去
+	cat                                                        > IPaddr.txt
+\end{verbatim}
+\end{frameboxit}
+
+\subsection*{解説}
+
+ifconfigの出力を、ループ文やif文などを使って1つ1つパースするようなコードを書くと長く複雑になりがち。
+しかしパイプと複数のコマンドを駆使すればご覧のとおり、短くてわかりやすくなる。
+\textbf{パイプを使えば「スモール・イズ・ビューティフル」}というわけだ！
+
+\subsection*{シェル変数で受け取りたい場合は？}
+
+上記のコードはファイルに出力する場合だったが、シェル変数で受け取りたいこともあるだろう。
+その場合の方法は2つある。ただ、取得できたIPアドレスがv4、v6それぞれ複数ある場合でも1つの変数に入るので後で適宜分離すること。
+
+\subsubsection*{(1)全体を\verb|\$(～)|で囲む}
+
+方法その1は、全体を\verb|$(～)|で囲み、サブシェル化してしまうというものだ。
+
+\paragraph{グローバルIPv4アドレスを取得後、変数に代入} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	ipv4addrs=$(/sbin/ifconfig -a                                 |
+	            grep inet[^6]                                     |
+	            sed 's/.*inet[^6][^0-9]*\([0-9.]*\)[^0-9]*.*/\1/' |
+	            grep -v '^127\.'                                  |
+	            grep -v '^10\.'                                   |
+	            grep -v '^172\.\(1[6-9]\|2[0-9]\|3[01]\)\.'       |
+	            grep -v '^192\.168\.'                             |
+	            grep -v '^169\.254\.'                             )
+\end{verbatim}
+\end{frameboxit}
+
+パイプ（``\verb!|!''）で繋がっている一連のコマンドを囲めばよい。IPv6の場合も同様だ。
+
+\subsubsection*{(2)シェル関数にしてしまう}
+
+あちこちで使い回したい場合はシェル関数化するのがよいだろうか。
+シェル関数化したら同じくそれを\verb|$(～)|で囲めばシェル変数に代入もできる。
+
+シェル関数化して、あたかも外部コマンドであるかのように用いる例を示す。
+
+\paragraph{グローバルIPv4アドレス取得のためのシェル関数} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	get_ipv4addrs() {
+	  /sbin/ifconfig -a                                 |
+	  grep inet[^6]                                     |
+	  sed 's/.*inet[^6][^0-9]*\([0-9.]*\)[^0-9]*.*/\1/' |
+	  grep -v '^127\.'                                  |
+	  grep -v '^10\.'                                   |
+	  grep -v '^172\.\(1[6-9]\|2[0-9]\|3[01]\)\.'       |
+	  grep -v '^192\.168\.'                             |
+	  grep -v '^169\.254\.'
+	}
+
+	num_ipv4=$(get_ipv4addrs | wc -l)
+	echo "現在持っているグローバルIPv4アドレスの数:" $num_ipv4
+\end{verbatim}
+\end{frameboxit}
+
+\section*{補足}
+
+このレシピで紹介したコードのifconfigコマンドは\verb|/sbin|にあること前提で絶対パス指定している。
+これはLinuxで使う場合の対策である。
+
+多くのLinuxディストリビューションでは、一般ユーザーに\verb|/sbin|へのパスを設定していない。
+そのため大抵\verb|/sbin|の中に置かれているifconfigコマンドが見つからないのだ。
+もし、\verb|/sbin|には無いかもしれない環境も考慮するのであれば、
+環境変数\verb|PATH|に、\verb|/sbin|、\verb|/usr/sbin|、\verb|/etc|\footnote{AIXなど、\verb|/etc|に置いてあるOSなんてのがあるのだ。}あたりを追加しておくとよいだろう。 
+

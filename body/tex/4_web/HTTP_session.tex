@@ -1,0 +1,174 @@
+\section{シェルスクリプトによるHTTPセッション管理}
+\label{recipe:HTTP_session}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	ショッピングカートを作りたい。そのためには買い物カゴを実装する必要があり、HTTPセッションが必要になる。
+	どうすればよいか？
+\end{grshfboxit}
+
+\subsection*{回答}
+mktempコマンド\footnote{mktempコマンドはPOSIXで規定されたコマンドではないのだが、多くのUNIX系OSに広く普及しているとして使わせてもらった。POSIXの範囲でも類似のものを作れなくはないが、/dev/urandom等の良質な乱数源が必要になり、やはりPOSIXを逸脱せざるを得ない。→\ref{allenvs:mktemp}（mktempコマンド）参照}を使って一時ファイルを作り、そこにセッション内で有効な情報を置くようにするのがよい。
+またmktempで作った一時ファイルの名前はランダムなので、これをセッションIDに利用する。
+セッションIDはクライアント（Webブラウザー）とやり取りする必要があるが、それにはCookieを利用すればよい。
+
+次項でシェルスクリプトでHTTPセッションを管理するデモプログラムを紹介するが、セッションファイルを管理する部分をコマンド化したものも用意しているので、手っ取り早く済ませたい人は「解説」を参照されたい。
+
+\subsubsection*{HTTPセッション実装の具体例}
+
+シェルスクリプトが自力でHTTPセッション管理を行うための要点をまとめたデモプログラムを紹介する。まず、このデモプログラム動作は次のとおりだ。
+\begin{itemize}
+  \item 初めてアクセスすると、セッションが新規作成され、ウェルカムメッセージを表示する。
+  \item 1分以内にアクセスすると、セッションを延命し、前回アクセス日時を表示する。
+  \item 1分以降2分以内にアクセスすると、セッションは有効期限切れだが、Cookieによって以前にアクセスされたことを覚えているので「作り直しました」と表示する。
+  \item 2分以降経ってアクセスすると、以前にアクセスしたことを完全に忘れるので、新規の時と同じ動作をする。
+\end{itemize}
+
+\paragraph{HTTPセッション管理デモスクリプト} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+	
+	# --- 0)各種定義 -----------------------------------------------------
+	Dir_SESSION='/tmp/session'      # セッションファイル置き場
+	SESSION_LIFETIME=60             # セッションの有効期限(1分にしてみた)
+	COOKIE_LIFETIME=120             # Cookieの有効期限(2分にしてみた)
+	
+	# --- 1)CookieからセッションIDを読み取る -----------------------------
+	session_id=$(printf '%s' "${HTTP_COOKIE:-}"                      |
+	             sed 's/&/%26/g; s/[;, ]\{1,\}/\&/g; s/^&//; s/&$//' |
+	             cgi-name                                            |
+	             nameread session_id                                 )
+	
+	# --- 2)セッションIDの有効性検査 -------------------------------------
+	session_status='new'                          # デフォルトは「要新規作成」とする
+	while :; do
+	  # --- セッションID文字列が正しい書式(英数字16文字とした)でないならNG
+	  printf '%s' "$session_id" | grep -q '^[A-Za-z0-9]\{16\}$' || break
+	  # --- セッションID文字列で指定されたファイルが存在しないならNG
+	  [ -f "$Dir_SESSION/$session_id" ] || break
+	  # --- ファイルが存在しても古すぎだったらNG
+	  touch -t $(date '+%Y%m%d%H%M%s'                |
+	             utconv                              |
+	             awk "{print \$1-$SESSION_LIFETIME}" |
+	             utconv -r                           |
+	             awk 'sub(/..$/,".&")'               ) $Tmp-session_expire
+	  find "$Dir_SESSION" -name "$session_id" -newer $Tmp-session_expire | awk 'END{exit (NR!=0)}'
+	  [ $? -eq 0 ] || { session_status='expired'; break; }
+	  # --- これらの検査に全て合格したら使う
+	  session_status='exist'
+	  break
+	done
+	
+	# --- 3)セッションファイルの確保(あれば延命、なければ新規作成) -------
+	case $session_status in
+	  exist) File_session=$Dir_SESSION/$session_id
+	         touch "$File_session";;                              # セッションを延命する
+	  *)     File_session=$(mktemp $Dir_SESSION/XXXXXXXXXXXXXXXX)
+	         [ $? -eq 0 ] || { echo 'cannot create session file' 1>&2; exit; }
+	         session_id=${File_session##*/};;
+	esac
+	
+	# --- 4)-1セッションファイル読み込み ---------------------------------
+	msg=$(cat "$File_session")
+	case "${msg}${session_status}" in
+	  new)     msg="はじめまして! セッションを作りました。(ID=$session_id)";;
+	  expired) msg="セッションの有効期限が切れたので、作り直しました。(ID=$session_id)";;
+	esac
+	
+	# --- 4)-2セッションファイル書き込み ---------------------------------
+	printf '最終訪問日時は、%04d年%02d月%02d日%02d時%02d分%02d秒です。(ID=%s)' \
+	       $(date '+%Y %m %d %H %M %S') "$session_id"                            \
+	       > "$File_session"                                                            （→次頁へ続く）
+\end{verbatim}
+\end{frameboxit} \\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	（→前頁からの続き）
+	
+	# --- 5)Cookieを焼く -------------------------------------------------
+	cookie_str=$(echo "session_id ${session_id}"              |
+	             mkcookie -e+${COOKIE_LIFETIME} -p / -s Y -h Y)
+	
+	# --- 6)HTTPレスポンス作成 -------------------------------------------
+	cat <<-HTTP_RESPONSE
+	    Content-type: text/plain; charset=utf-8$cookie_sid
+	
+	    $msg
+	HTTP_RESPONSE
+\end{verbatim}
+\end{frameboxit}
+
+尚、このシェルスクリプトを動かすには、\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）で紹介したutconvコマンド、及び\ref{recipe:make_cookie}（シェルスクリプトおばさんの手づくりCookie(書き込み編)）で紹介したmkcookieコマンドが必要になるので、実際に試してみたい人は予め準備しておくこと。
+
+\subsection*{解説}
+
+「回答」で例示したHTTPセッション管理デモプログラムが行っている作業の流れは次のとおりである。
+\begin{quote}
+\begin{description}
+  \item[1)] Webブラウザーが申告してきたセッションIDがあれば、それをCookieから読む。
+  \item[2)] そのセッションIDが有効なものかどうか審査する。
+  \item[3)] 有効であればセッションファイルが存在するはずなのでタイムスタンプ更新をして延命し、無効であれば新規作成する。
+  \item[4)] セッションファイルの内容を見つつ、それに応じた応答メッセージを作成し、セッションファイルに書き込む。
+  \item[5)] 改めてセッションファイルをWebブラウザーに通知するため、Cookie文字列を作成する。
+  \item[6)] Cookieヘッダーと共に応答メッセージをWebブラウザーに送る。
+\end{description}
+\end{quote}
+
+今回は、手順3)において有効セッションがあった場合は単に延命しただけであったが、セキュリティーを強化したいならここでセッションIDを付け替えてもよい。
+
+しかしながら毎回いちいち書くにはちょっとコードが多いような気もする。厳密に言うと、\textbf{セッションファイルに書き込みを行う場合はファイルのロック（排他制御）も、これとは別に必要}なのである。そこで、せめて手順2)、3)の処理を簡単に書けるよう、例によってコマンド化したものを用意した。HTTPセッションで用いるファイルの管理用コマンドということで``sessionf''である\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/sessionf|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}。
+mktempという非POSIXコマンドを使っているためにPOSIX完全準拠とはいかないのだが。
+
+\subsubsection*{sessionfコマンドの使い方}
+
+まず前述のスクリプトの置き替えで使用例を示す。つまり、有効なセッションが無ければ新規作成し、有れば延命するというパターンだ。それには、デモスクリプトの2)～3)の部分を \\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	File_session=$(sessionf avail "$session_id" at=$Dir_SESSION/XXXXXXXXXXXXXXXXXXXXXXXX" \
+	                                            lifemin=$SESSION_LIFETIME                 )
+	case $? in 0) session_status='exist';; *) session_status='new';; esac
+	session_id=${File_session##*/}
+\end{verbatim}
+\end{frameboxit}
+と、書き換えればよい。たったの4行になる。sessionfのサブコマンド``avail''は、有効なものがあれば延命、無ければ新規作成を意味する。そして後ろの``at''プロパティーは、セッションファイルの場所と、無かった場合のセッションファイルのテンプレートをmktempと同じ書式で指定するものであり、``lifetime''プロパティーは、有効期限を判定するための秒数を指定するものだ。
+
+一方、セキュリティーを高めるため、有効なセッションがあった場合には既存のセッションファイルの名前と共にセッションIDを付け替えたい、ということであればサブコマンドを``renew''にするだでよい。\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	File_session=$(sessionf renew "$session_id" at=$Dir_SESSION/XXXXXXXXXXXXXXXXXXXXXXXX" \
+	                                            lifemin=$SESSION_LIFETIME                 )
+	case $? in 0) session_status='exist';; *) session_status='new';; esac
+	session_id=${File_session##*/}
+\end{verbatim}
+\end{frameboxit}
+
+sessionfの詳しい使い方については、ソースコードの冒頭にあるコメントを参照されたい。
+
+\subsubsection*{``\verb|XXXX...|''は長めにするべき}
+
+これは、sessionfコマンドというより、依存しているmktempコマンドに起因する問題であるが、ランダムな文字列の長さを指定するための``\verb|XXXX...|''という記述の``\verb|X|''は長めにするべきである。理由は、CentOS 5を動かせる環境があれば実際に試してみるとよくわかる。
+
+\paragraph{CentOS 5でmktempコマンドを実行すると……} 　\\
+\begin{screen}
+	\verb|$ mktemp /tmp/XXXXXXXX| \return \\
+	\verb|/tmp/OyA10700|                  \\
+	\verb|$ mktemp /tmp/XXXXXXXX| \return \\
+	\verb|/tmp/sPr10701|                  \\
+	\verb|$ |
+\end{screen}
+
+生成されたランダムなはずのファイル名の末尾を見ると数字になっている。
+なんとこれはその時に発行されたプロセスIDなのだ。
+つまり、\textbf{CentOS 5のmktempコマンド実装は、ランダム文字列としての質が低い}ということだ。だから文字列を長くしてランダム文字列の不規則性を高めてやらなければならない。
+ちなみにCentOS 6以降ではこの問題は解消されている。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）\\
+→\ref{recipe:read_cookie}（シェルスクリプトおばさんの手づくりCookie(読み込み編)）\\
+→\ref{recipe:make_cookie}（シェルスクリプトおばさんの手づくりCookie(書き込み編)）\\
+→\ref{allenvs:mktemp}（mktempコマンド）

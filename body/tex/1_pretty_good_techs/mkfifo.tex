@@ -1,0 +1,138 @@
+\section{mkfifoコマンドの活用}
+\label{recipe:mkfifo}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	他人のシェルスクリプトを見ていたらmkfifoというコマンドが出てきたが、これの使い方がわからないので知りたい。
+\end{grshfboxit}
+
+\section*{回答}
+
+mkfifoコマンド、もとい名前付きパイプ（FIFO）は技術的にはとてもオモシロい。そこで使い方を解説しよう。
+
+\section*{mkfifoコマンド入門}
+
+まずは同じホストでターミナルを2つ開いておいてもらいたい。
+そして最初に、片方のターミナル（ターミナルA）で次のように打ち込む。
+すると\verb|hogepipe|という名のちょっと不思議なファイルが出来るので、確認してみてもらいたい。
+
+\paragraph{ターミナルA. \#1} 　
+\begin{screen}
+	\verb|$ mkfifo hogepipe| \return \\
+	\verb|$ ls -l| \return \\
+	\verb|prw-rw-r-- 1 richmikan staff 0 May 15 00:00 hogepipe| \\
+	\verb|$ |
+\end{screen}
+
+このように\verb|ls -l|コマンドで内容を確認してみる。行頭を見ると\verb|-|（通常ファイル）でもない、\verb|d|（ディレクトリー）でもない、珍しいフラグが立っている。
+
+\verb|p|とは一体何なのか……。そこでとりあえずcatコマンドで中身を見てみる。
+
+\paragraph{ターミナルA. \#2} 　
+\begin{screen}
+	\verb|$ cat hogepipe| \return \\
+	\verb||
+\end{screen}
+
+すると、まるで引数無しでcatコマンドを実行したかのように（どこにも繋がっていない標準入力を読もうとしているかのように）固まってしまった。
+だが\keytop{CTRL}+\keytop{C}で止めるのはちょっと待ってもらいたい。ここで先程立ち上げておいたもう一つのターミナル（ターミナルB）から、
+今度は\verb|hogepipe|に対して何かechoで書き込んでみてもらいたい。こんな具合に……
+
+\paragraph{ターミナルB. \#1} 　
+\begin{screen}
+	\verb|echo "Hello,  mkfifo." > hogepipe| \return \\
+	\verb|$ |
+\end{screen}
+
+すると何も無かったかのように終了してしまった。
+今書いた文字列はどこへ行ったんだろうかと思って、ターミナルAをを見てみると……
+
+\paragraph{ターミナルA. \#3} 　
+\begin{screen}
+	\verb|$ cat hogepipe| \return \\
+	\verb|Hello,  mkfifo.| \\
+	\verb|$ |
+\end{screen}
+
+先程実行していたcatコマンドがいつの間にか終了しており、ターミナルBに打ち込んだ文字列が表示されている。
+実はこれがmkfifoコマンドで作った不思議なファイル、「名前付きパイプ」の挙動なのだ。
+
+つまり、
+\begin{enumerate}
+  \item 名前付きパイプから読み出そうとすると、誰かがその名前付きパイプに書き込むまで待たされる。
+  \item 名前付きパイプへ書き込もうとすると、誰かがその名前付きパイプから読み出すまで待たされる。
+\end{enumerate}
+\noindent
+という性質があるのだ。今は1の例を行ったが、ターミナルBのechoコマンドをターミナルAのcatコマンドより先に打ち込めば
+今度はechoがcatの読み出しを待つので、試してみてもらいたい。
+
+\section*{mkfifoの応用例}
+
+こんな面白い性質がありながら、いざ用途を考えてみるとなかなか思いつかない。
+あえて提案するなら、例えばこういうのはどうだろうか。
+
+\begin{itemize}
+  \item 外部Webサーバー上に、定点カメラ映像を\textbf{プログレッシブJPEG}画像ファイル\footnote{最初はぼんやり表示され、データが読み込まれるどクッキリ表示されるJPEG形式である。}として配信するサーバーがある。
+  \item ただしそのWebサーバーは人気があって帯域制限が激しく、JPEG画像を最後まで\textbf{ダウンロードするのには相当時間がかかる。}
+  \item 上記のファイルがダウンロードでき次第、3人のユーザーの\verb|public_html|ディレクトリーにコピーして共有したい。でもできれば\textbf{ぼんやりした画像の段階から見せられるように}したい。
+\end{itemize}
+
+このような要求があったとして、次のようなシェルスクリプト（2つ）を書けば解決してあげられるだろう。
+
+\paragraph{画像を読み込んでくるシェルスクリプト} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	[ -p /tmp/hogepipe ] || mkfifo /tmp/hogepipe # 名前付きパイプを作る
+
+	\section{30分ごとに最新画像をダウンロードする}
+	while [ 1 ]; do
+	  curl 'http://somewhere/beautiful_sight.jpg' > /tmp/hogepipe
+	  sleep 1800
+	done
+\end{verbatim}
+\end{frameboxit}
+\paragraph{名前付きパイプからデータが到来し次第、3人のディレクトリにコピーするシェルスクリプト} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# 名前付きパイプからデータが到来し次第、3人のディレクトリにコピー
+	while :; do
+	  cat /tmp/hogepipe                                      \
+	  | tee /home/user_a/public_html/img/beautiful_sight.jpg \
+	  | tee /home/user_b/public_html/img/beautiful_sight.jpg \
+	  > tee /home/user_c/public_html/img/beautiful_sight.jpg
+	done
+\end{verbatim}
+\end{frameboxit}
+
+先のシェルスクリプトは30分毎にループするのに対し、後のシェルスクリプトはsleepせずにループする。
+とはいえループの大半は、catコマンドのところで先のシェルスクリプトがデータを送り出してくるのを待っている。
+
+もしこの作業に名前付きパイプを使わず、テンポラリーファイルで同じことをしようとするのは大変である。
+なぜなら、テンポラリーファイルで行おうとする場合、後のシェルスクリプトは、
+画像ファイルが最後までダウンロードし終わったことを何らかの手段で確認しなければならないからだ。
+
+\section*{使用上の注意}
+
+気をつけなければならないこともある。
+
+1つは、書き込む側のシェルスクリプトが
+\begin{verbatim}
+	echo 1 >  /tmp/hogepipe
+	echo 2 >> /tmp/hogepipe
+	echo 3 >> /tmp/hogepipe
+\end{verbatim}
+\noindent
+のように、1つのデータを間欠的に（オープン・クローズを繰り返しながら）送ってくる場合には使えない。
+クローズされた段階で、読み取り側は読み取りを止めてしまうからだ。
+
+もう1つは、何らかのトラブルで読み書きを終える前にプロセスが終了してしまった時の問題だ。
+テンポラリーファイルで受け渡しをしていたのなら途中経過が残るが、
+名前付きパイプだと全て失われてしまうのだ。
+
+そういう注意点もあって、面白い仕組みではあるものの、使いどころが限られてしまうのだが。
