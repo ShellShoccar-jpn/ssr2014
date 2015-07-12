@@ -10,7 +10,7 @@ $\!\!\!\!\!$
 \end{grshfboxit}
 
 \subsection*{回答}
-CGI変数を読み出すのに便利な2つのコマンド（``cgi-name''及び``namread''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが321516氏によって提供されているので、まずこれらをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/cgi-name|、及び \\ \verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/nameread|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
+CGI変数を読み出すのに便利な2つのコマンド（``cgi-name''及び``namread''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが存在するので、まずこれらをダウンロード\footnote{\verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/cgi-name|、及び \\ \verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/nameread|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
 
 今、Webブラウザーが次のようなHTMLに基づいてCGI変数を送ってくるものとしよう。
 \paragraph{Webブラウザーが送信する元になるHTML} 　\\
@@ -36,7 +36,7 @@ GETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''）の場合、CGI�
 \begin{verbatim}
 	#! /bin/sh
 	
-	Tmp=/tmp/${0##*/}.$$  # 一時ファイルの元となる名称
+	Tmp=/tmp/${0##*/}.$$                            # 一時ファイルの元となる名称
 	
 	printf '%s' "${QUERY_STRING:-}" |
 	cgi-name                        > $Tmp-cgivars  # 正規化し、一時ファイルに格納
@@ -50,7 +50,7 @@ GETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''）の場合、CGI�
 \end{verbatim}
 \end{frameboxit}
 
-尚、元のデータには漢字や記号が含まれていて、URLエンコードされていてももちろん構わない。それらのデコードはcgi-nameコマンドが済ませてくれているのだ。
+なお、元のデータに漢字や記号が含まれていて、それがURLエンコードされたものでももちろん構わない。そういった文字列はcgi-nameコマンドがデコードについても済ませてくれる。
 
 \subsection*{解説}
 Webブラウザーから情報を受け取りたい場合によく用いられるのがCGI変数であるが、その送られ方にはいくつかの種類がある。「回答」で述べたように、GETメソッド（環境変数``REQUEST\_{}METHOD''が``GET''）の場合はCGI変数は環境変数``QUERY\_{}STRING''の中に入っている。そしてその中身は、
@@ -61,7 +61,7 @@ Webブラウザーから情報を受け取りたい場合によく用いられ�
 
 ここまでわかっていれば自力で読み解くコードを書いてもよい。trコマンドで``\verb|&|''を改行に、``\verb|=|''をスペースに代え、最初のスペースより右側～行末までの文字列を\ref{recipe:URL_decode}（URLデコードする）に記したやり方でデコードするのだ。しかし、それを既に済ませたコマンドがあるので使わせてもらえばよいというわけだ。
 
-「回答」で登場した2つのコマンドであるが、``cgi-name''はとりあえずCGI変数文字列を扱いやすい形式に変換して一時ファイルに格納するためのもので、``nameread''は好きなタイミングでシェル変数等に取り出すためのものである。よって、前者は通常最初に一度だけ使うが、後者は必要な個所でその一時ファイルと共に毎回使うものである。
+「回答」で登場した2つのコマンドであるが、``cgi-name''はとりあえずCGI変数文字列を扱いやすい形式に変換して一時ファイルに格納するためのもので、``nameread''は、そのファイルから好きなタイミングでシェル変数等に取り出すためのものである。よって、前者は通常最初に一度だけ使うが、後者は必要な個所でその一時ファイルと共に毎回使うものである。
 
 \subsubsection*{補足}
 

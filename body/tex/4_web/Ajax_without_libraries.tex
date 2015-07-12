@@ -26,6 +26,7 @@ POSIX原理主義を貫く意義を省みれば、クライアント上のJavaSc
 	    <title>Ajax Clock</title>
 	    <style type="text/css">
 	      #clock {border: 1px solid;width 20em}
+	    </style>
 	    <script type="text/javascript" src="CLOCK.JS"></script>
 	  </head>
 	  <body onload="update_clock()">
@@ -65,7 +66,7 @@ WebブラウザーからAjaxとして呼ばれた際、現在時刻を取得し�
 \end{verbatim}
 \end{frameboxit}
 
-そして最後に、Ajax通信を行うJavaScript(CLOCK.JS)の中身は次のとおりだ。
+そして最後に、Webブラウザー上でAjax処理を行うJavaScript(CLOCK.JS)は次のとおりだ。
 \paragraph{CLOCK.JS} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
@@ -82,10 +83,10 @@ WebブラウザーからAjaxとして呼ばれた際、現在時刻を取得し�
 	}
 
 	// 2.Ajax通信関数
-	// (このAjax通信をしたい時にはこの関数を呼び出す)
+	// (Ajax通信をしたい時にはこの関数を呼び出す)
 	function update_clock() {
 	  var url,xhr,to;
-	  url = '/PATH/TO/THE/CLOCK.CGI';
+	  url = 'http://somewhere/PATH/TO/THE/CLOCK.CGI';
 	  xhr = createXMLHttpRequest();
 	  if (! xhr) {return;}
 	  to =  window.setTimeout(function(){xhr.abort()}, 30000); // 30秒でタイムアウト
@@ -113,8 +114,18 @@ WebブラウザーからAjaxとして呼ばれた際、現在時刻を取得し�
 \end{frameboxit}
 このように、コメントを除けば40行足らずのJavaScriptコードで、Ajaxが実装できてしまう。
 
-この3つのコードを適宜Webサーバーにアップロード（CLOCK.JS内で指定しているURLは適切に記述すること)し、
+ほぼ同じ内容のファイルをGitHub上に公開\footnote{\verb|https://github.com/ShellShoccar-jpn/Ajax_demo|}してあるので、この3つのファイルを適宜Webサーバーにアップロード（CLOCK.JS内で指定しているURLは適切に記述すること)し、
 WebブラウザーでCLOCK.HTMLを開いてみるとよい。updateボタンを押すたびに現在時刻に更新されるはずだ。
+\begin{figure}[H]
+	\begin{center}
+		%\vspace{1cm}
+		\includegraphics*[scale=0.50]{tex/4_web/figs/Ajax_demo.eps}
+		\vspace{-2mm}
+		\caption{Ajaxデモプログラムの動作画面}
+		\label{fig:Ajax_demo}
+		\vspace{-5mm}
+	\end{center}
+\end{figure}
 
 \subsection*{解説}
 
@@ -133,7 +144,8 @@ IEでも最近のものは他と同様の方法で生成できるが、古いIE�
 
 これまたIE対策なのだが、IEは同じ内容でAjax通信を行うと2回目以降はキャッシュを見にいってしまい、実際のWebサーバーへはアクセスをしないという困ったクセがある。
 これを回避するテクニックが「キャッシュ対策」とコメントしてある行の記述だ。
-URLの後ろに、ダミーのCGI変数を置き、その値としてUNIX時間(のミリ秒単位を求めるDateオブジェクトの利用)とすることで、アクセスする度、リクエスト内容が変わるようにしている。これでIEもキャッシュを使わなくなる。
+
+URLの最後尾にUNIX時間（Dateオブジェクトでそれをミリ秒単位に求める）を値にとるダミーCGI変数を置くことで、アクセスする度、リクエスト内容が変わるようにしている。これでIEもキャッシュを使わなくなる。
 一応XMLHttpRequestにはキャッシュを使わせないためのメソッドが用意されているのだが、これまたバージョンによって使い方が微妙に異なるので、
 CGI変数を毎回替えるというこの原始的な方法が最も確実である。尚、POSTメソッドの場合のCGI変数は、その一つ後のsendメソッドの引数として指定することになっているので注意。
 
@@ -142,10 +154,11 @@ XMLHttpRequestオブジェクトやその各種メソッドやプロパティー
 \subsubsection*{ポイント3．無理にXMLやJSONを使おうとしない}
 
 このサンプルコードのもう一つの特徴は、\textbf{AjaxでありながらXMLをやりとりしていない}ことだ。だからといって、最近XMLの代わりに使われるようになってきたJSONも利用していない。
-サーバー側のCGIは時刻データをXMLやJSONで表現したものを返しているのではなく、ハメ込まれる\verb|<div>|タグの中身の部分HTMLごと作ってしまっている。
+サーバー側のCGIスクリプトは時刻データをXMLやJSONで表現したもので返しているのではなく、ハメ込まれる\verb|<div>|タグの中身の部分HTMLごと作ってしまっている。
 こうするとJavaScript側は受け取った文字列をinnerHTMLプロパティーに代入するだけで済んでしまう。
+
 このようにしてサーバー側に部分HTMLの生成を任せてしまえば、ライブラリー無しのJavaScript側で、苦労してHTMLのDOMツリーを操作するなどといった面倒な作業が要らなくなる。
-そのぶんサーバー側が大変になると思うかもしれないが、\ref{recipe:mojihame}（HTMLテーブルを簡単綺麗に生成する）で紹介している便利なmojihameコマンドを使えば、それほど大変なことにはならないのだ。
+その分サーバー側のプログラミングが大変になると思うかもしれないが、\ref{recipe:mojihame}（HTMLテーブルを簡単綺麗に生成する）で紹介している便利なmojihameコマンドを使えば、もっと複雑なHTMLでも簡単に生成できるのだ。
 
 ただし困ったことに\textbf{IE8は、\verb|<select>|タグにはinnerHTMLプロパティー代入ができない}というバグがある。
 これがやりたい場合は残念ながらXMLやJSONを使うしかない。

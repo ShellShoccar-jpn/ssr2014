@@ -25,7 +25,7 @@ SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join
 	#! /bin/sh
 
 	# 結合に使う列は予めソートしておかなければならない（ここでは「会員名」）
-	sort -k1,1 blacklist.txt   > blacklist1.tmp
+	sort -k1,1 blacklist.txt  > blacklist1.tmp
 
 	cat members.txt                                            |
 	sort -k2,2                                                 | #・「会員名」でソート
@@ -78,9 +78,10 @@ SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join
 	\verb!>  od -A n -t x2 -v                              |! \return \\
 	\verb!>  tr '  '  '\n'                                    |! \return \\
 	\verb!>  grep -v '^$'                                   >  blacklist.txt! \\
+	\verb|$ |
 \end{screen}
 
-できたら、データの中に16進数4桁があることを確認しておこう。これがダミーの名前である。
+両方のファイルができたら、データの中に16進数4桁があることを確認しておこう。これがダミーの名前である。
 ただし前者（members.txt）は、次のように名前の手前に会員IDが振られているはずだ。
 
 \begin{verbatim}
@@ -98,11 +99,11 @@ SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join
 結果をファイルに保存して、元のファイルと行数を比較してみよう。
 
 \begin{screen}
-	\verb!$ ./del_blmembers.sh >  cleanmembers.txt! \return \\
-	\verb!$ wc -l cleanmembers.txt! \return                \\
-	\verb!    9988 cleanmembers.txt!                       \\
-	\verb!$ wc -l members.txt! \return                     \\
-	\verb!   10000 members.txt!                            \\
+	\verb!$ ./del_blmembers.sh >  cleanedmembers.txt! \return \\
+	\verb!$ wc -l cleanedmembers.txt! \return                 \\
+	\verb!    9988 cleanedmembers.txt!                        \\
+	\verb!$ wc -l members.txt! \return                        \\
+	\verb!   10000 members.txt!                               \\
 	\verb!$ !
 \end{screen}
 
@@ -112,8 +113,7 @@ SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join
 
 チュートリアルも済んだところで、joinコマンドの解説に移る。
 
-
-元のコードのjoinの意味を説明していこう。
+元のコード（del\_{}blmembers.sh）で記したjoinの意味を説明していこう。
 \begin{verbatim}
 	join -1 1 -2 2 -a 2 -e '*' -o 1.1,2.1,2.2 blacklist1.tmp -
 \end{verbatim}
@@ -132,7 +132,7 @@ SQLのJOIN文と同様に考え、それに相当するUNIXコマンドの``join
 もし、完全外部結合（FULL OUTER JOIN）にしたければ\verb|-a 1 -a 2|と\verb|-a|オプションを2度記述する。
 
 \verb|-e|というオプションも外部結合のためのものである。JOINできずにNULLになった列に詰める文字列を指定する。
-テキスト表記の場合はNULLを表現できない\footnote{厳密にできないわけではない。\verb|-e|オプションを指定しなかった場合は何も詰めるものが無いので半角スペースが連続した箇所ができる。だがそれはわかりにくい。}ので、このオプションによってNULL相当の文字列を定義する。
+テキスト表記の場合はNULLを表現できない\footnote{厳密にはできないわけではない。\verb|-e|オプションを指定しなかった場合は何も詰めるものが無いので区切り文字である半角スペースが連続した箇所ができることになる。だがそれではわかりにくい。}ので、このオプションによってNULL相当の文字列を定義する。
 
 \verb|-o|というオプションは、出力する列の並びを指定するためのものである。
 SQLではSELECT句の直後で出力する列の並びを指定するが、あれと同じものだ。
@@ -177,10 +177,10 @@ FROM句→(RIGHT OUTER JOIN句)→WHERE句→ORDER BY句→(最初に戻って)S
 \subsection*{joinコマンド使用上の注意}
 
 利用する場合は一つ注意しなければならない点がある。
-日本語ロケールになっている場合は、\textbf{デフォルトで全角空白も列区切り文字として解釈}してしまう。
-例えば人名フィールドがあって姓名が全角スペースで区切られている場合には注意が必要だ。
+日本語ロケールになっている場合、joinコマンドは\textbf{デフォルトで全角空白も列区切り文字として解釈}してしまう。
+例えば人名列があって姓名が全角スペースで区切られている場合には注意が必要だ。
 
-そのような場合は、\verb|export LC_ALL=C|などとしてCロケールにしておくか、\verb|-t|オプションを使って区切り文字をしっかり定義しておかくこと。
+そのような場合は、\verb|export LC_ALL=C|などとしてCロケールにしておくか、\verb|-t|オプションを使って列区切り文字をしっかり定義しておかくこと。
 
 
 \subsection*{参照}

@@ -11,10 +11,10 @@ $\!\!\!\!\!$
 \end{grshfboxit}
 
 \subsection*{回答}
-POSIX標準のmailxコマンドを使って送れと言いたいところだが、Cc:で送ること、
-さらに日本語メールを送ることができない\footnote{任意のメールヘッダーを付けられず、マルチバイト文字を使っていることを示すヘッダーが付けられないため、受信先の環境によっては文字化けしてしまうから。}。
+POSIX標準のmailxコマンドを使って送れと言いたいところだが、Cc:ヘッダー付きで送ることも
+日本語メールを送ることもできない\footnote{任意のメールヘッダーを付けられず、マルチバイト文字を使っていることを示すヘッダーが付けられないため、受信先の環境によっては文字化けしてしまうから。}。
 
-POSIX原理主義を貫きたいところであるが、ここは涙を飲んでいくつかの非POSIX標準コマンドに頼る。詳細については次のチュートリアルを参照せよ。
+POSIX原理主義を貫きたいところであるが、ここは涙を飲んで非POSIX標準コマンドに頼る。詳細については次のチュートリアルを参照せよ。
 
 \subsection*{Step(0/3) ― 必要な非POSIXコマンド}
 
@@ -30,14 +30,14 @@ POSIX原理主義を貫きたいところであるが、ここは涙を飲んで
     \hline
         sendmail & Cc:や任意のヘッダー付、また日本語のメールを送るため & 多くのUNIX系OSに標準で入っていたり、Postfixやqmailを入れても互換コマンドが/usr/sbinに入る。 \\
     \hline
-        nkf      & 日本語文字エンコード（特にSubject:欄）のため & パッケージとして提供されているOSも多く、ソースからインストールすることも可能（ver.2.1.2以降推奨） \\
+        base64   & 日本語文字エンコード（本文やSubject:欄等）のため    & パフォーマンスでは及ばないが、POSIXの範囲で書いたbase64コマンドあり→\ref{recipe:Base64}    \\
     \HLINE
   \end{tabular}
   \label{tbl:command_for_sendjpmail}
   \end{center}
 \end{table}
 
-もし、Sujbect:ヘッダーやFrom:、Cc:、Bcc:ヘッダー等には日本語文字を使わないというのであればnkfコマンドについては、POSIX標準のiconvコマンドで代用することができる。
+もし、Sujbect:ヘッダーやFrom:、Cc:、Bcc:ヘッダー等には日本語文字を使わないというのであれば、メール本文をPOSIX標準のiconvコマンドでJISに変換して済ませるという手もあるが、ここでは割愛する。
 
 \subsection*{Step(1/3) ― 英数文字メールを送ってみる}
 
@@ -56,12 +56,11 @@ POSIX原理主義を貫きたいところであるが、ここは涙を飲んで
 	\verb|Hi, can you see me?|
 \end{frameboxit}
 
-メールテキストを作る時のお約束は、\textbf{ヘッダー部分のセクションと本文セクションの間に空行1つを挟むこと}だ。これを怠るとメールは送れない。
+メールテキストを作る時のお約束は、\textbf{ヘッダーセクションと本文セクションの間に空行1つを挟むこと}だ。これを怠るとメールは送れない。
 
-\textit{RECIEVER@example.com}にはあなた本物のメールアドレスを書くように。それから\textit{SENDER@example.com}にも、なるべく何か実際のメールアドレスを書いておいてもらいたい。あまりいい加減なものを入れると、届いた先でspam判定されるかもしれないからだ。
+\textit{RECIEVER@example.com}にはあなた本物のメールアドレスを書くように。それから\textit{SENDER@example.com}にも、なるべく何か実際のメールアドレスを書いておいてもらいたい。あまりいい加減なものを入れると、届いた先でspam判定されるかもしれないからだ。\textbf{「Cc:やBcc:も追記したら、Cc:やBcc:でも送れるのか」}と想像するかもしれないが、そのとおりである。実験してみるといい。
 
-\textbf{「Cc:やBcc:も追記したら、Cc:やBcc:でも送れるのか」}と想像するかもしれないが、そのとおりである。実験してみるといい。
-それができたら送信する。次のコマンド打つだけだ。
+メールテキストができたら送信する。次のコマンド打つだけだ。
 \begin{screen}
 	\verb!$ cat mail1.txt | sendmail -i -t! \return \\
 	\verb!$ !
@@ -71,7 +70,7 @@ POSIX原理主義を貫きたいところであるが、ここは涙を飲んで
 
 \subsection*{step(2/3) ― 本文が日本語のメールを送ってみる}
 
-このドキュメントを読んでいるのは日常的に日本語を使う人々のはずだから、次は本文が日本語のメールを送ってみることにする。
+このドキュメントを読んでいるのは日常的に日本語を使う人々のはずだから、次は本文が日本語（ただしUTF-8）のメールを送ってみることにする。
 
 まずは、日本語の本文を交えたメールテキストを作る。
 \paragraph{メールサンプル（mail2.txt）}　\\
@@ -79,21 +78,28 @@ POSIX原理主義を貫きたいところであるが、ここは涙を飲んで
 	\verb|From: <|\textit{SENDER@example.com}\verb|>| \\
 	\verb|To: <|\textit{RECIEVER@example.com}\verb|>| \\
 	\verb|Subject: Hello,  e-mail!| \\
-	\verb|Content-type: text/plain; charset=ISO-2022-JP| \\
+	\verb|Content-Type: text/plain;charset="UTF-8"| \\
+	\verb|Content-Transfer-Encoding: base64| \\
 	\verb|| \\
 	\verb|やぁ、これ読める?|
 \end{frameboxit}
 
-本文に日本語文字が入った他に、ヘッダー部に\verb|Content-type: text/plain; charset=ISO-2022-JP|を追加した。実際のところ、今となってはこれが無くても読める環境が多いのだが、本文が日本語文字コードを使っていることを示すための約束事であるので付けるべきである。
+本文に日本語文字が入った他に、ヘッダーセクションに\verb|Content-Type: text/plain;charset="UTF-8"|と\verb|Content-Transfer-Encoding: base64|を追加した。これは、本文がUTF-8エンコードされていること、さらにそれがBase64エンコードされているということを知らせるためだ。つまり、本文はこれからBase64エンコードをするのだ。その理由は、UTF-8は$<\mathrm{0x80}>$以上の文字を含んでおり、そのままではメールサーバーを通過できないためだ。
 
-「このテキストはUTF-8で書いてるんだけど」と心配するかもしれないが大丈夫、これからnkfコマンドを使ってJISコードに変換するのだ。
-
-今度は、途中に``\verb|nkf -j|''（JISコードに変換）を挿んでメール送信する。
-
+具体的には、次のようなコマンドを打てばよい。
 \begin{screen}
-	\verb!$ cat mail1.txt | nkf -j | sendmail -i -t! \return \\
+	\verb!$ cat mail2.txt | while read -r line; do! \return \\
+	\verb!>    case "$line" in! \return                     \\
+	\verb!>      '') echo! \return                          \\
+	\verb!>          cat | base64! \return                  \\
+	\verb!>          ;;! \return                            \\
+	\verb!>       *) printf '%s\n' "$line"! \return         \\
+	\verb!>          ;;! \return                            \\
+	\verb!>    esac! \return                                \\
+	\verb!>  done! \return                                  \\
 	\verb!$ !
 \end{screen}
+これはwhileループでヘッダーセクション（最初の改行が現れるまで）をそのまま通し、本文セクションをbase64コマンドでエンコードする\footnote{while readループ内でcat等により標準入力を受け取ると、以降はreadコマンドが標準入力データを受け取れなくなり、ループはその周で終わる。}というものだ。
 
 きちんと文字化けせずにメールが届いたことを確認してもらいたい。
 
@@ -103,34 +109,34 @@ From:やTo:はまぁ許せるとしても、Subject:(件名)には日本語を�
 
 まず、メールヘッダーには生のJISコード文字列が置けず、置いた場合の動作は保証されないということを知らなければならない。ヘッダーはメールに関する制御情報を置く場所なので、あまり変な文字を置いてはいけないのだ。だがBase64エンコードもしくはquoted-stringエンコードしたものであれば置いてもよいことになっている。そこで、Base64エンコードを使うやり方を説明する。現在殆どのメールではBase64エンコードが用いられている。
 
-\subsubsection*{メールで使えるBase64エンコード済JISコード文字列の作り方}
+\subsubsection*{メールで使えるBase64エンコード済UTF-8文字列の作り方}
 
-例として、送りたいメールの件名は「ハロー、e-mail!」、そして宛先は「あなた」ということにしてみる。
+例として、送りたいメールの件名は「ハロー、e-mail!」、そして宛先は「あなた」ということにしてみる。（ただし文字エンコードはどちらもUTF-8とする）
 
 冒頭で好きな文字列を書いたechoコマンドを入れて、xargsとnkfコマンドに流すだけだ。
 \paragraph{「ハロー、e-mail!」をエンコード}　\\
 \begin{screen}
-	\verb@$ echo -n 'ハロー、e-mail!'              |@ \return ←改行コードが入らぬように-nオプションを付ける \\
-	\verb!>  nkf -jMB                             |! \return ←オプションは``\verb|-jMB|'' \\
-	\verb!>  xargs printf '=?ISO-2022-JP?B?%s?=\n'! \return   ←文字列両端をエンコード済を意味する表記で挟む \\
-	\verb!=?ISO-2022-JP?B?GyRCJU8lbSE8ISIbKEJlLW1haWwh?=! \\
+	\verb@$ printf '%s\n' 'ハロー、e-mail!'  |@ \return ←改行コードが入らぬように-nオプションを付ける \\
+	\verb!>  base64                         |! \return ←Base64エンコードする \\
+	\verb!>  xargs printf '=?UTF-8?B?%s?=\n'! \return   ←文字列両端をエンコード済を意味する表記で挟む \\
+	\verb!=?UTF-8?B?44OP44Ot44O844CBZS1tYWlsIQ==?=! \\
 	\verb!$ !
 \end{screen}
 
 \paragraph{「あなた」をエンコード}　\\
 \begin{screen}
-	\verb@$ echo -n 'あなた'                       |@ \return \\
-	\verb!>  nkf -jMB                              |! \return \\
-	\verb!>  xargs printf '=?ISO-2022-JP?B?%s?=\n'! \return \\
-	\verb!=?ISO-2022-JP?B?GyRCJCIkSiQ/GyhC?=! \\
+	\verb@$ printf '%s\n' 'あなた'           |@ \return \\
+	\verb!>  base64                         |! \return \\
+	\verb!>  xargs printf '=?UTF-8?B?%s?=\n'! \return \\
+	\verb!=?UTF-8?B?44GC44Gq44Gf?=! \\
 	\verb!$ !
 \end{screen}
 
 コード中のコメントにも書いたが、ポイントは次の3つである。
 \begin{enumerate}
-  \item 最初に流す文字列には余計な改行をつけぬこと（echoの\verb|-n|オプションを使うなどして）
-  \item nkfコマンドを使うが、オプションは\verb|-jMB|とする（JIS化してさらにBase64エンコード）
-  \item 生成された文字列の左端に``\verb|=?ISO-2022-JP?B?|''を、右端に``\verb|?=|''を付加
+  \item 最初に流す文字列には余計な改行をつけぬこと（\verb|printf '%s\n'|を使うとよい）
+  \item Base64エンコード
+  \item 生成された文字列の左端に``\verb|=?UTF-8?B?|''を、右端に``\verb|?=|''を付加
 \end{enumerate}
 
 \subsubsection*{送信してみる}
@@ -140,41 +146,46 @@ From:やTo:はまぁ許せるとしても、Subject:(件名)には日本語を�
 \paragraph{メールサンプル（mail3.txt）}　\\
 \begin{frameboxit}{160.0mm}
 	\verb|From: <|\textit{SENDER@example.com}\verb|>| \\
-	\verb|To: =?ISO-2022-JP?B?GyRCJCIkSiQ/GyhC?= <|\textit{RECIEVER@example.com}\verb|>| \\
-	\verb|Subject: =?ISO-2022-JP?B?GyRCJU8lbSE8ISIbKEJlLW1haWwh?=| \\
-	\verb|Content-type: text/plain; charset=ISO-2022-JP| \\
+	\verb|To: =?UTF-8?B?44GC44Gq44Gf?= <|\textit{RECIEVER@example.com}\verb|>| \\
+	\verb|Subject: =?UTF-8?B?44OP44Ot44O844CBZS1tYWlsIQ==?=| \\
+	\verb|Content-Type: text/plain; charset="UTF-8"| \\
+	\verb|Content-Transfer-Encoding: base64| \\
 	\verb|| \\
 	\verb|やぁ、これ読める?|
 \end{frameboxit}
 
-しかし、これを先程のnkf+sendmailコマンドに送ると失敗してしまう。理由は、nkfコマンドがせっかく作ったBase64エンコードを解いてくれてしまうからなのだ。これを回避するため、テンポラリーファイルを介してシェルスクリプトで送る。
+これを先程のmail2.txtと全く同じように送ればよい。今度は宛名も件名もきちんと日本語文字列で届いたことを確認してもらいたい。
 
-\paragraph*{第一引数で指定されたファイルをメール送信するシェルスクリプト}　\\
-\begin{frameboxit}{160.0mm}
+\subsection*{step(3/3)の作業の完全自動化シェルスクリプトを公開}
+
+ここまでのチュートリアルを見て、やり方はわかったであろうがいちいち手作業で宛先や件名のエンコード文字列を貼る作業など面倒臭い。そこで、ヘッダー部分（From:、Cc:、Reply-To:、Subject:）も本文も日本語で書かれたメールを与えるだけで必要なエンコードをしながらsendmailコマンドで送信してくれる\textbf{sendjpmail}コマンドを作り、GitHubに公開した。
+
 \begin{verbatim}
-	#! /bin/sh
-	
-	# ヘッダーセクションはそのまま書き出す
-	awk '{print} length($0)==0{exit}' "$1" >  /tmp/${0##*/}.$$.txt
-	
-	# 本文部分はnkfでJISエンコードして、追記する
-	startofbody=$(awk 'END{print NR+1}' /tmp/${0##*/}.$$.txt)
-	cat "$1"                               |
-	tail -n +$startofbody                  |
-	nkf -j                                 >> /tmp/${0##*/}.$$.txt
-	
-	# メール送信
-	cat /tmp/${0##*/}.$$.txt |
-	nkf -j                   |
-	sendmail -i -t
-	
-	# 一時ファイル削除
-	rm /tmp/${0##*/}.$$.txt
+	https://github.com/ShellShoccar-jpn/misc-tools/blob/master/sendjpmail
 \end{verbatim}
+
+sendmailコマンドを除けば、POSIX準拠である。Base64エンコーディングも自力で行っているのでbase64コマンド無しでも動く（ホスト上にあればそちらを利用する）。
+
+さて例えば次のように、ヘッダーや本文に日本語の含まれたメールファイル（\verb|Content-Type:|や\verb|Content-Transfer-Encoding:|ヘッダーも省略可）があった時、
+
+\paragraph{メールサンプル（mail4.txt）}　\\
+\begin{frameboxit}{160.0mm}
+	\verb|From: わたし <|\textit{SENDER@example.com}\verb|>| \\
+	\verb|To: あなた <|\textit{RECIEVER@example.com}\verb|>| \\
+	\verb|Subject: ハロー、e-mail!| \\
+	\verb|| \\
+	\verb|やぁやぁ、これも読める?|
 \end{frameboxit}
 
-宛先、件名共に日本語文字列になったメールが届いたか確かめてもらいたい。
+次のようにして（標準入力から渡すのも可）sendjpmailコマンドを一発叩けば、必要なBase64エンコーディングや\verb|Content-Type:|ヘッダー等付加を行って正しいメールを送ってくれる。
+\begin{screen}
+	\verb!$ sendjpmail mail4.txt! \return \\
+	\verb!$ !
+\end{screen}
 
-　\\
 
-これで問題文にあった「Cc:付けて営業部長に日本語メール」もできるようになるだろう。
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:Base64}（Base64エンコード・デコードする）\\
+→\ref{recipe:han_zen}（全角・半角文字の相互変換）

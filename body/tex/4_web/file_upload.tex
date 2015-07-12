@@ -5,11 +5,11 @@
 \noindent
 $\!\!\!\!\!$
 \begin{grshfboxit}{160.0mm}
-	Webブラウザーからファイルをアップロードして、受け取れるようにしたい。
+	Webブラウザーからファイルをアップロードして、受け取るにはどうすればいいか？
 \end{grshfboxit}
 
 \subsection*{回答}
-CGI変数の受け取りと同様に、アップロードされてきたファイルを受け取るのに便利なコマンド（``mime-read''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが321516氏によって提供されているので、まずこれをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/mime-read|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
+CGI変数の受け取りと同様に、アップロードされてきたファイルを受け取るのに便利なコマンド（``mime-read''）がOpen usp Tukubaiで提供されており、これらをPOSIXの範囲で書き直したものが存在する。まずこれをダウンロード\footnote{\verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/mime-read|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
 
 GET、POSTのレシピと同様に例をあげて説明しよう。今、Webブラウザーが次のようなHTMLに基づいてCGI変数を送ってくるものとする。
 \paragraph{Webブラウザーが送信する元になるHTML} 　\\
@@ -27,8 +27,8 @@ GET、POSTのレシピと同様に例をあげて説明しよう。今、Webブ�
 \end{verbatim}
 \end{frameboxit}
 
-ファイルアップロード時は一般的に、POSTメソッドでmultipart/form-data形式を用いるが、
-これを取得するためのシェルスクリプトは次のようになる。
+ファイルアップロード時は一般的にPOSTメソッドでmultipart/form-data形式を用いるが、
+この形式のデータを取得するためのシェルスクリプトは次のようになる。
 \paragraph{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
@@ -42,7 +42,7 @@ GET、POSTのレシピと同様に例をあげて説明しよう。今、Webブ�
 
 	# アップロードされたファイル名を取り出すなら例えばこのようにする
 	filename=$(mime-read -v $Tmp-cgivars                                                |
-	           grep -i '^[0-9]\+[[:blank:]]*Content-Disposition:[[:blank:]]*form-data;' |
+	           grep -Ei '^[0-9]+[[:blank:]]*Content-Disposition:[[:blank:]]*form-data;' |
 	           grep '[[:blank:]]name="photo"'                                           |
 	           head -n 1                                                                |
 	           sed 's/.*[[:blank:]]filename="\([^"]*\)".*/\1/'                          |
@@ -92,12 +92,12 @@ multipart/form-dataというMIMEヘッダー付のフォーマットで到来す
 \end{frameboxit}
 
 ハイフンで始まる行は各々のCGI変数データセクションの境界を表しており、
-後ろのランダムな数字をもって、データの中身と重複しないようにしている。
+後ろのランダムな数字をもって、データの中身とは区別できるようにしている。
 1つのセクションはヘッダー部とボディー部からなり、セクション内の最初の空行で仕切られる。
 従って変数名やファイル名はヘッダー部から取り出し、値はボディー部をそのまま取り出せばよい。
 
 ボディー部分は、基本的に何のエンコードもされないためバイナリーデータである。
-これを取り出すのは一工夫必要だ、AWKはNULL（$<$0x00$>$）を含んでいるとそこを行末とみなして以降の行末までの文字列が取り出せない\footnote{GNU版AWKは取り出せるのだが。}ので、取り出すのには使えないからだ。
+これを取り出すのは一工夫必要だ、AWKはNULL（$<$0x00$>$）を含んでいるとそこを行末とみなして以降の行末までの文字列が取り出せない\footnote{GNU版AWKは取り出せるのだが。}ので、バイナリーデータの取り出しには使えないからだ。
 
 ではどうするかというと、目的のデータのボディー部分は何行目から始まって何行目まで終わるのかを先に数える。
 そしてその区間をheadコマンドとtailコマンドで抽出し、データ終端についている改行文字を消すのだ。
@@ -107,5 +107,5 @@ multipart/form-dataというMIMEヘッダー付のフォーマットで到来す
 
 \noindent
 →\ref{recipe:GETmethod}（CGI変数の取得(GETメソッド編)） \\
-→\ref{recipe:file_upload}（Webブラウザーからのファイルアップロード） \\
+→\ref{recipe:POSTmethod}（CGI変数の取得(POSTメソッド編)） \\
 →\ref{recipe:nonLFterminated}（改行無し終端テキストを扱う）

@@ -1,4 +1,7 @@
 \contentsline {chapter}{まえがき}{ii}
+\contentsline {paragraph}{POSIX原理主義と実利のトレードオフ}{v}
+\contentsline {paragraph}{何十万もの人々が路頭に迷わないために}{vii}
+\contentsline {paragraph}{依存ソフトの仕様変更はアンコントローラブル}{vii}
 \contentsline {chapter}{\numberline {第1章}ちょっとうれしいレシピ}{1}
 \contentsline {section}{\numberline {レシピ1.1}ヒストリーを残さずログアウト}{1}
 \contentsline {section}{\numberline {レシピ1.2}sedによる改行文字への置換を、綺麗に書く}{2}
@@ -11,173 +14,223 @@
 \contentsline {paragraph}{ターミナルA. \#3}{5}
 \contentsline {paragraph}{画像を読み込んでくるシェルスクリプト}{6}
 \contentsline {paragraph}{名前付きパイプからデータが到来し次第、3人のディレクトリにコピーするシェルスクリプト}{7}
-\contentsline {section}{\numberline {レシピ1.5}テキストデータの最後の行を消す}{7}
-\contentsline {section}{\numberline {レシピ1.6}改行無し終端テキストを扱う}{9}
-\contentsline {paragraph}{データの末端に余分な改行を付けないフィルター}{9}
-\contentsline {paragraph}{データの末端に余分な改行を付けないフィルター（sedの場合）}{10}
-\contentsline {section}{\numberline {レシピ1.7}IPアドレスを調べる（IPv6も）}{11}
-\contentsline {paragraph}{ifconfigからIPアドレスを抽出(v4)}{12}
-\contentsline {paragraph}{ifconfigからIPアドレスを抽出(v6)}{12}
-\contentsline {paragraph}{グローバルIPv4アドレスを取得後、変数に代入}{12}
-\contentsline {paragraph}{グローバルIPv4アドレス取得のためのシェル関数}{13}
-\contentsline {section}{\numberline {レシピ1.8}YYYYMMDDhhmmssの各単位を簡単に分離する}{13}
-\contentsline {section}{\numberline {レシピ1.9}祝日を取得する}{14}
-\contentsline {paragraph}{get\_{}holidays.sh}{15}
-\contentsline {paragraph}{実行結果}{15}
-\contentsline {section}{\numberline {レシピ1.10}ブラックリストの100件を1万件の名簿から除去する}{17}
-\contentsline {paragraph}{ブラックリスト会員を除去するシェルスクリプト（del\_{}blmembers.sh）}{17}
-\contentsline {paragraph}{ダミーの会員リスト（members.txt）を作る}{18}
-\contentsline {paragraph}{ダミーのブラック会員リスト（blacklist.txt）を作る}{18}
-\contentsline {chapter}{\numberline {第2章}利用者の陰に潜む、様々な落とし穴}{21}
-\contentsline {section}{\numberline {レシピ2.1}【緊急】falseコマンドの深刻な不具合}{21}
-\contentsline {section}{\numberline {レシピ2.2}名前付きパイプからリダイレクトする時のワナ}{22}
-\contentsline {section}{\numberline {レシピ2.3}全角文字に対する正規表現の扱い}{25}
-\contentsline {section}{\numberline {レシピ2.4}sortコマンドの基本と応用とワナ}{26}
-\contentsline {paragraph}{sample1.txt}{28}
-\contentsline {paragraph}{sample2.txt}{31}
-\contentsline {paragraph}{sample3.txt}{32}
-\contentsline {section}{\numberline {レシピ2.5}sedのNコマンドの動きが何かおかしい}{32}
-\contentsline {section}{\numberline {レシピ2.6}標準入力以外からAWKに正しく文字列を渡す}{34}
-\contentsline {section}{\numberline {レシピ2.7}AWKの連想配列が読むだけで変わるワナ}{36}
-\contentsline {paragraph}{awk\_{}test.sh}{37}
-\contentsline {section}{\numberline {レシピ2.8}while readで文字列が正しく渡せない}{37}
-\contentsline {section}{\numberline {レシピ2.9}あなたはいくつ問題点を見つけられるか!?}{38}
-\contentsline {paragraph}{環境変数PATHがヘンに弄られていた場合への対策}{39}
-\contentsline {paragraph}{ディレクトリーの実在性確認}{39}
-\contentsline {paragraph}{ディレクトリー名がハイフンで始まる場合への対策}{39}
-\contentsline {paragraph}{ディレクトリー名がスペースを含む場合への対策}{40}
-\contentsline {paragraph}{指定されたディレクリーに移動できなかった場合への対策}{40}
-\contentsline {paragraph}{lsコマンドに隠しファイルを列挙させるための対策}{40}
-\contentsline {paragraph}{ファイル名がスペースを含んでいる場合への対策}{40}
-\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{40}
-\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{41}
-\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{41}
-\contentsline {chapter}{\numberline {第3章}POSIX原理主義テクニック}{42}
-\contentsline {section}{\numberline {レシピ3.1}PIPESTATUSさようなら}{42}
-\contentsline {paragraph}{PIPESTAUTS相当の機能を実現するシェル関数``run()''}{43}
-\contentsline {paragraph}{run()関数のテスト用シェルスクリプト pipestatus\_{}test.sh}{44}
-\contentsline {section}{\numberline {レシピ3.2}Apacheのcombined形式ログを扱いやすくする}{46}
-\contentsline {paragraph}{Apacheログを正規化するシェルスクリプト apacomb\_{}norm.sh}{46}
-\contentsline {paragraph}{sed \#1}{47}
-\contentsline {paragraph}{sed \#2}{47}
-\contentsline {paragraph}{sed \#3}{47}
-\contentsline {paragraph}{sed \#4}{47}
-\contentsline {paragraph}{tr \#1}{47}
-\contentsline {paragraph}{tr \#2}{47}
-\contentsline {section}{\numberline {レシピ3.3}シェルスクリプトで時間計算を一人前にこなす}{48}
-\contentsline {paragraph}{日常の時間 → UNIX時間 変換シェルスクリプト}{49}
-\contentsline {paragraph}{UNIX時間 → 日常の時間 変換シェルスクリプト}{50}
-\contentsline {section}{\numberline {レシピ3.4}findコマンドで秒単位にタイムスタンプ比較をする}{51}
-\contentsline {paragraph}{1分30秒前より新しいファイルを抽出}{52}
-\contentsline {paragraph}{1分30秒前より古いファイルを抽出}{53}
-\contentsline {paragraph}{ぴったり1分30秒前のファイルを抽出}{53}
-\contentsline {section}{\numberline {レシピ3.5}CSVファイルを読み込む}{54}
-\contentsline {paragraph}{1)値としての改行の処理}{56}
-\contentsline {paragraph}{2)値としてのダブルクォーテーションの処理}{56}
-\contentsline {paragraph}{3)列と行の数を数えて番号を付ける}{56}
-\contentsline {section}{\numberline {レシピ3.6}JSONファイルを読み込む}{56}
-\contentsline {paragraph}{理由1. 一つのことをうまくやっていない}{58}
-\contentsline {paragraph}{理由2. フィルターとして振る舞うようになりきれてない}{59}
-\contentsline {section}{\numberline {レシピ3.7}XML、HTMLファイルを読み込む}{59}
-\contentsline {section}{\numberline {レシピ3.8}全角・半角文字の相互変換}{61}
-\contentsline {section}{\numberline {レシピ3.9}ひらがな・カタカナの相互変換}{64}
-\contentsline {chapter}{\numberline {第4章}POSIX原理主義テクニック -- Web編}{67}
-\contentsline {section}{\numberline {レシピ4.1}URLデコードする}{67}
-\contentsline {paragraph}{URLデコードするコード}{68}
-\contentsline {section}{\numberline {レシピ4.2}URLエンコードする}{69}
-\contentsline {paragraph}{URLエンコードするコード}{69}
-\contentsline {section}{\numberline {レシピ4.3}CGI変数の取得（GETメソッド編）}{70}
-\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{71}
-\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{71}
-\contentsline {paragraph}{環境変数をechoではなくprintfで受け取る理由}{72}
-\contentsline {paragraph}{値としての改行の扱い}{72}
-\contentsline {paragraph}{GETメソッドかPOSTメソッドかを判定する}{72}
-\contentsline {section}{\numberline {レシピ4.4}CGI変数の取得（POSTメソッド編）}{72}
-\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{73}
-\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{73}
-\contentsline {section}{\numberline {レシピ4.5}Webブラウザーからのファイルアップロード}{74}
-\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{74}
-\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{75}
-\contentsline {paragraph}{前述のHTMLから送られてくるデータの例}{75}
-\contentsline {section}{\numberline {レシピ4.6}Ajaxで画面更新したい}{76}
-\contentsline {paragraph}{CLOCK.HTML}{77}
-\contentsline {paragraph}{CLOCK.CGI}{77}
-\contentsline {paragraph}{CLOCK.JS}{78}
-\contentsline {section}{\numberline {レシピ4.7}シェルスクリプトでメール送信}{80}
-\contentsline {paragraph}{メールサンプル（mail1.txt）}{81}
-\contentsline {paragraph}{メールサンプル（mail2.txt）}{81}
-\contentsline {paragraph}{「ハロー、e-mail!」をエンコード}{82}
-\contentsline {paragraph}{「あなた」をエンコード}{82}
-\contentsline {paragraph}{メールサンプル（mail3.txt）}{83}
-\contentsline {section}{\numberline {レシピ4.8}HTMLテーブルを簡単綺麗に生成する}{83}
-\contentsline {section}{\numberline {レシピ4.9}シェルスクリプトおばさんの手づくりCookie（読み取り編）}{89}
-\contentsline {paragraph}{掲示板の投稿者名とe-mailをCookieから取り出す}{89}
-\contentsline {section}{\numberline {レシピ4.10}シェルスクリプトおばさんの手づくりCookie（書き込み編）}{90}
-\contentsline {paragraph}{掲示板で名前とメールアドレスをCookieに覚えさせるCGIスクリプト（bbs.cgi）}{91}
-\contentsline {section}{\numberline {レシピ4.11}シェルスクリプトによるHTTPセッション管理}{93}
-\contentsline {paragraph}{HTTPセッション管理デモスクリプト}{94}
-\contentsline {paragraph}{CentOS 5でmktempコマンドを実行すると……}{96}
-\contentsline {chapter}{\numberline {第5章}どの環境でも使えるシェルスクリプトを書く}{97}
-\contentsline {section}{\numberline {レシピ5.1}シェル変数}{98}
-\contentsline {section}{\numberline {レシピ5.2}スコープ}{98}
-\contentsline {section}{\numberline {レシピ5.3}正規表現}{98}
-\contentsline {section}{\numberline {レシピ5.4}文字クラス}{98}
-\contentsline {section}{\numberline {レシピ5.5}乱数}{99}
-\contentsline {section}{\numberline {レシピ5.6}ロケール}{99}
-\contentsline {paragraph}{envコマンドで全環境変数を無効化してコマンド実行}{100}
-\contentsline {section}{\numberline {レシピ5.7}\$((式))}{101}
-\contentsline {section}{\numberline {レシピ5.8}case文}{101}
-\contentsline {section}{\numberline {レシピ5.9}if文}{101}
-\contentsline {paragraph}{bashの場合、次のコードはエラーになる}{101}
-\contentsline {paragraph}{何もしたくなければnullコマンドを置くとよい（3行目に注目）}{102}
-\contentsline {section}{\numberline {レシピ5.10}local修飾子}{102}
-\contentsline {paragraph}{シェル関数内でローカルな変数を作る}{102}
-\contentsline {section}{\numberline {レシピ5.11}PIPESTATUS変数}{102}
-\contentsline {section}{\numberline {レシピ5.12}``[''コマンド}{102}
-\contentsline {section}{\numberline {レシピ5.13}AWKコマンド}{103}
-\contentsline {paragraph}{FreeBSD 9.1で$-1*0$を計算させてみると}{103}
-\contentsline {paragraph}{FreeBSDのAWKで即値の010を解釈させた場合}{103}
-\contentsline {paragraph}{GNU版AWKで即値の010を解釈させた場合}{103}
-\contentsline {paragraph}{GNU版AWKでも文字列として"010"を渡せば10進数扱いされる}{103}
-\contentsline {paragraph}{配列の要素数を数える関数を自作しておく}{104}
-\contentsline {paragraph}{lengthが使えるなら使いたいワガママなアナタへ}{104}
-\contentsline {section}{\numberline {レシピ5.14}dateコマンド}{105}
-\contentsline {section}{\numberline {レシピ5.15}duコマンド}{106}
-\contentsline {paragraph}{FreeBSDのduコマンド-hオプションの挙動}{106}
-\contentsline {paragraph}{Linuxのduコマンド-hオプションの挙動}{106}
-\contentsline {paragraph}{1行目の最後に"B"(単位)を付けたい場合}{107}
-\contentsline {section}{\numberline {レシピ5.16}echoコマンド}{107}
-\contentsline {paragraph}{引数を1つ1行で表示するシェルスクリプト echo\_{}test.sh}{107}
-\contentsline {paragraph}{FreeBSDのshで前述のシェルスクリプトを動かすと……}{107}
-\contentsline {paragraph}{Linuxのbashで前述のシェルスクリプトを動かすと……}{108}
-\contentsline {paragraph}{echoのオプション反応問題を回避する対策を講じたもの}{108}
-\contentsline {section}{\numberline {レシピ5.17}execコマンド}{108}
-\contentsline {section}{\numberline {レシピ5.18}grepコマンド}{109}
-\contentsline {paragraph}{アナタのgrepはホントにBSD版？}{109}
-\contentsline {section}{\numberline {レシピ5.19}headコマンド}{110}
-\contentsline {section}{\numberline {レシピ5.20}ifconfigコマンド}{110}
-\contentsline {section}{\numberline {レシピ5.21}killコマンド}{111}
-\contentsline {section}{\numberline {レシピ5.22}mktempコマンド}{112}
-\contentsline {paragraph}{mktempコマンドが無い環境で、その「簡易版」を用意するコード}{112}
-\contentsline {section}{\numberline {レシピ5.23}nlコマンド}{112}
-\contentsline {paragraph}{BSD版nlコマンドの場合}{113}
-\contentsline {paragraph}{GNU版nlコマンドの場合}{113}
-\contentsline {section}{\numberline {レシピ5.24}printfコマンド}{113}
-\contentsline {section}{\numberline {レシピ5.25}psコマンド}{114}
-\contentsline {section}{\numberline {レシピ5.26}sedコマンド}{115}
-\contentsline {paragraph}{BSD版sedの場合}{115}
-\contentsline {paragraph}{GNU版sedの場合}{115}
-\contentsline {section}{\numberline {レシピ5.27}sortコマンド}{116}
-\contentsline {section}{\numberline {レシピ5.28}tacコマンド・tailコマンド``-r''オプションによる逆順出力}{116}
-\contentsline {paragraph}{逆順出力するサンプルコード \#1}{116}
-\contentsline {paragraph}{逆順出力するサンプルコード \#2}{117}
-\contentsline {section}{\numberline {レシピ5.29}test（``[''）コマンド}{117}
-\contentsline {paragraph}{シェル変数\$strの内容が``!''ならば``Bikkuri!''を表示}{117}
-\contentsline {paragraph}{両辺にある文字列の先頭に無難な1文字を置けば、どこでも正しく動く}{117}
-\contentsline {paragraph}{case文で同等のことをする}{117}
-\contentsline {section}{\numberline {レシピ5.30}trコマンド}{118}
-\contentsline {section}{\numberline {レシピ5.31}trapコマンド}{118}
-\contentsline {chapter}{\numberline {第6章}レシピを駆使した調理例}{119}
-\contentsline {section}{郵便番号から住所欄を満たすアレをシェルスクリプトで}{119}
-\contentsline {paragraph}{住所欄補完アプリケーションのファイル構成}{120}
-\contentsline {chapter}{あとがき}{130}
+\contentsline {section}{\numberline {レシピ1.5}一時ファイルを作らずファイルを更新する}{7}
+\contentsline {paragraph}{readlink -f相当を、POSIXの範囲で実装する}{9}
+\contentsline {paragraph}{元のパーミッションとACLも維持しつつ上書き更新する}{10}
+\contentsline {section}{\numberline {レシピ1.6}テキストデータの最後の行を消す}{11}
+\contentsline {section}{\numberline {レシピ1.7}改行無し終端テキストを扱う}{12}
+\contentsline {paragraph}{データの末端に余分な改行を付けないフィルター}{13}
+\contentsline {paragraph}{データの末端に余分な改行を付けないフィルター（sedの場合）}{13}
+\contentsline {section}{\numberline {レシピ1.8}IPアドレスを調べる（IPv6も）}{15}
+\contentsline {paragraph}{ifconfigからIPアドレスを抽出(v4)}{15}
+\contentsline {paragraph}{ifconfigからIPアドレスを抽出(v6)}{15}
+\contentsline {paragraph}{グローバルIPv4アドレスを取得後、変数に代入}{16}
+\contentsline {paragraph}{グローバルIPv4アドレス取得のためのシェル関数}{16}
+\contentsline {section}{\numberline {レシピ1.9}YYYYMMDDhhmmssを年月日時分秒に簡単に分離する}{17}
+\contentsline {section}{\numberline {レシピ1.10}祝日を取得する}{18}
+\contentsline {paragraph}{get\_{}holidays.sh}{18}
+\contentsline {paragraph}{実行結果}{18}
+\contentsline {section}{\numberline {レシピ1.11}ブラックリストの100件を1万件の名簿から除去する}{20}
+\contentsline {paragraph}{ブラックリスト会員を除去するシェルスクリプト（del\_{}blmembers.sh）}{21}
+\contentsline {paragraph}{ダミーの会員リスト（members.txt）を作る}{21}
+\contentsline {paragraph}{ダミーのブラック会員リスト（blacklist.txt）を作る}{22}
+\contentsline {chapter}{\numberline {第2章}利用者の陰に潜む、様々な落とし穴}{25}
+\contentsline {section}{\numberline {レシピ2.1}【緊急】falseコマンドの深刻な不具合}{25}
+\contentsline {section}{\numberline {レシピ2.2}名前付きパイプからリダイレクトする時のワナ}{26}
+\contentsline {section}{\numberline {レシピ2.3}全角文字に対する正規表現の扱い}{29}
+\contentsline {section}{\numberline {レシピ2.4}sortコマンドの基本と応用とワナ}{30}
+\contentsline {paragraph}{sample1.txt}{32}
+\contentsline {paragraph}{sample2.txt}{35}
+\contentsline {paragraph}{どうすればいいのか}{36}
+\contentsline {paragraph}{sample3.txt}{36}
+\contentsline {section}{\numberline {レシピ2.5}sedのNコマンドの動きが何かおかしい}{37}
+\contentsline {section}{\numberline {レシピ2.6}標準入力以外からAWKに正しく文字列を渡す}{39}
+\contentsline {section}{\numberline {レシピ2.7}AWKの連想配列が読み込むだけで変わるワナ}{41}
+\contentsline {paragraph}{awk\_{}test.sh}{42}
+\contentsline {section}{\numberline {レシピ2.8}while readで文字列が正しく渡せない}{42}
+\contentsline {section}{\numberline {レシピ2.9}あなたはいくつ問題点を見つけられるか!?}{43}
+\contentsline {paragraph}{環境変数PATHがヘンに弄られていた場合への対策}{44}
+\contentsline {paragraph}{ディレクトリーの実在性確認}{44}
+\contentsline {paragraph}{ディレクトリー名がハイフンで始まる場合への対策}{44}
+\contentsline {paragraph}{ディレクトリー名がスペースを含む場合への対策}{45}
+\contentsline {paragraph}{指定されたディレクリーに移動できなかった場合への対策}{45}
+\contentsline {paragraph}{lsコマンドに隠しファイルを列挙させるための対策}{45}
+\contentsline {paragraph}{ファイル名がスペースを含んでいる場合への対策}{45}
+\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{45}
+\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{46}
+\contentsline {paragraph}{ファイル名がハイフンで始まる場合への対策}{46}
+\contentsline {chapter}{\numberline {第3章}POSIX原理主義テクニック}{47}
+\contentsline {section}{\numberline {レシピ3.1}PIPESTATUSさようなら}{47}
+\contentsline {paragraph}{PIPESTAUTS相当の機能を実現するシェル関数``run()''}{48}
+\contentsline {paragraph}{run()関数のテスト用シェルスクリプト pipestatus\_{}test.sh}{49}
+\contentsline {section}{\numberline {レシピ3.2}Apacheのcombined形式ログを扱いやすくする}{51}
+\contentsline {paragraph}{Apacheログを正規化するシェルスクリプト apacomb\_{}norm.sh}{51}
+\contentsline {paragraph}{sed \#1}{52}
+\contentsline {paragraph}{sed \#2}{52}
+\contentsline {paragraph}{sed \#3}{52}
+\contentsline {paragraph}{sed \#4}{52}
+\contentsline {paragraph}{tr \#1}{52}
+\contentsline {paragraph}{tr \#2}{52}
+\contentsline {section}{\numberline {レシピ3.3}シェルスクリプトで時間計算を一人前にこなす}{53}
+\contentsline {paragraph}{日常の時間 → UNIX時間 変換シェルスクリプト}{54}
+\contentsline {paragraph}{UNIX時間 → 日常の時間 変換シェルスクリプト}{55}
+\contentsline {section}{\numberline {レシピ3.4}findコマンドで秒単位にタイムスタンプ比較をする}{56}
+\contentsline {paragraph}{1分30秒前より新しいファイルを抽出}{57}
+\contentsline {paragraph}{1分30秒前より古いファイルを抽出}{58}
+\contentsline {paragraph}{ぴったり1分30秒前のファイルを抽出}{58}
+\contentsline {section}{\numberline {レシピ3.5}CSVファイルを読み込む}{59}
+\contentsline {paragraph}{1)値としての改行の処理}{61}
+\contentsline {paragraph}{2)値としてのダブルクォーテーションの処理}{61}
+\contentsline {paragraph}{3)列と行の数を数えて番号を付ける}{61}
+\contentsline {section}{\numberline {レシピ3.6}JSONファイルを読み込む}{61}
+\contentsline {paragraph}{理由1. 一つのことをうまくやっていない}{63}
+\contentsline {paragraph}{理由2. フィルターとして振る舞うようになりきれてない}{64}
+\contentsline {section}{\numberline {レシピ3.7}XML、HTMLファイルを読み込む}{64}
+\contentsline {section}{\numberline {レシピ3.8}全角・半角文字の相互変換}{66}
+\contentsline {section}{\numberline {レシピ3.9}ひらがな・カタカナの相互変換}{69}
+\contentsline {section}{\numberline {レシピ3.10}バイナリーデータを扱う}{71}
+\contentsline {paragraph}{AWK(非GNU版)変数にNULL文字を読ませると}{71}
+\contentsline {paragraph}{シェル変数(zsh以外)にNULL文字を読ませる}{71}
+\contentsline {paragraph}{バイナリーデータを読んでそのまま書き出すシェルスクリプト}{73}
+\contentsline {paragraph}{バイナリーデータの取り込み}{74}
+\contentsline {paragraph}{バイナリーデータの書き出し}{74}
+\contentsline {section}{\numberline {レシピ3.11}ロック（排他・共有）とセマフォ}{74}
+\contentsline {paragraph}{前記のロック・セマフォプログラムを実行しているユーザーのcrontabファイル}{77}
+\contentsline {paragraph}{pshlockが扱う共有ロックファイル（HOGEという名前とする）の構造}{79}
+\contentsline {paragraph}{同名で二重化されたディレクトリー}{79}
+\contentsline {paragraph}{中に\textit {$<$固有番号+ロック要求プロセスID$>$}のディレクトリーを作る}{79}
+\contentsline {paragraph}{共有数を増減・参照する際は、更に排他ロック}{80}
+\contentsline {paragraph}{共有ロックファイル新規作成}{80}
+\contentsline {paragraph}{共有ロックファイル（ディレクトリー）追加作成}{81}
+\contentsline {paragraph}{共有ロックファイル（ディレクトリー）削除}{82}
+\contentsline {section}{\numberline {レシピ3.12}デバッグってどうやってるの？}{83}
+\contentsline {paragraph}{数字のマジックを検証するプログラム magic.sh}{84}
+\contentsline {paragraph}{数字のマジックを検証するプログラム magic.sh のデバッグ版}{84}
+\contentsline {paragraph}{数字のマジックを検証するプログラム magic.sh のデバッグ版}{85}
+\contentsline {paragraph}{数字のマジックを検証するプログラム magic2.sh}{85}
+\contentsline {paragraph}{シェルスクリプトmagic2.shの実行ログ}{86}
+\contentsline {paragraph}{恒久的に残す利点}{87}
+\contentsline {paragraph}{恒久的に残す危険性}{87}
+\contentsline {paragraph}{あるセキュリティー専門家のアドバイス}{87}
+\contentsline {paragraph}{zpipeコマンドを使った圧縮実行ログ取得方法}{88}
+\contentsline {chapter}{\numberline {第4章}POSIX原理主義テクニック -- Web編}{89}
+\contentsline {section}{\numberline {レシピ4.1}URLデコードする}{89}
+\contentsline {paragraph}{URLデコードするコード}{90}
+\contentsline {section}{\numberline {レシピ4.2}URLエンコードする}{91}
+\contentsline {paragraph}{URLエンコードするコード}{91}
+\contentsline {section}{\numberline {レシピ4.3}Base64エンコード・デコードする}{92}
+\contentsline {section}{\numberline {レシピ4.4}CGI変数の取得（GETメソッド編）}{93}
+\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{94}
+\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{94}
+\contentsline {paragraph}{環境変数をechoではなくprintfで受け取る理由}{95}
+\contentsline {paragraph}{値としての改行の扱い}{95}
+\contentsline {paragraph}{GETメソッドかPOSTメソッドかを判定する}{95}
+\contentsline {section}{\numberline {レシピ4.5}CGI変数の取得（POSTメソッド編）}{95}
+\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{96}
+\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{96}
+\contentsline {section}{\numberline {レシピ4.6}Webブラウザーからのファイルアップロード}{97}
+\contentsline {paragraph}{Webブラウザーが送信する元になるHTML}{97}
+\contentsline {paragraph}{前述のフォームから送られてきたCGI変数を受け取るシェルスクリプト（form.cgi）}{98}
+\contentsline {paragraph}{前述のHTMLから送られてくるデータの例}{98}
+\contentsline {section}{\numberline {レシピ4.7}Ajaxで画面更新したい}{99}
+\contentsline {paragraph}{CLOCK.HTML}{100}
+\contentsline {paragraph}{CLOCK.CGI}{100}
+\contentsline {paragraph}{CLOCK.JS}{101}
+\contentsline {section}{\numberline {レシピ4.8}シェルスクリプトでメール送信}{103}
+\contentsline {paragraph}{メールサンプル（mail1.txt）}{104}
+\contentsline {paragraph}{メールサンプル（mail2.txt）}{105}
+\contentsline {paragraph}{「ハロー、e-mail!」をエンコード}{106}
+\contentsline {paragraph}{「あなた」をエンコード}{106}
+\contentsline {paragraph}{メールサンプル（mail3.txt）}{107}
+\contentsline {paragraph}{メールサンプル（mail4.txt）}{107}
+\contentsline {section}{\numberline {レシピ4.9}メールマガジンを送る}{108}
+\contentsline {paragraph}{送信メールテンプレート（mailmag201507.txt）}{109}
+\contentsline {paragraph}{メール一斉送信シェルスクリプト（sendmailmag.sh）}{109}
+\contentsline {paragraph}{成人男性限定配信用に改造してみる（sendmailmag2.sh）}{110}
+\contentsline {section}{\numberline {レシピ4.10}HTMLテーブルを簡単綺麗に生成する}{111}
+\contentsline {section}{\numberline {レシピ4.11}シェルスクリプトおばさんの手づくりCookie（読み取り編）}{117}
+\contentsline {paragraph}{掲示板の投稿者名とe-mailをCookieから取り出す}{117}
+\contentsline {section}{\numberline {レシピ4.12}シェルスクリプトおばさんの手づくりCookie（書き込み編）}{118}
+\contentsline {paragraph}{掲示板で名前とメールアドレスをCookieに覚えさせるCGIスクリプト（bbs.cgi）}{119}
+\contentsline {section}{\numberline {レシピ4.13}シェルスクリプトによるHTTPセッション管理}{121}
+\contentsline {paragraph}{HTTPセッション管理デモスクリプト}{122}
+\contentsline {paragraph}{CentOS 5でmktempコマンドを実行すると……}{124}
+\contentsline {chapter}{\numberline {第5章}どの環境でも使えるシェルスクリプトを書く}{126}
+\contentsline {section}{\numberline {レシピ5.1}環境変数等の初期化}{126}
+\contentsline {section}{\numberline {レシピ5.2}シェル変数}{127}
+\contentsline {section}{\numberline {レシピ5.3}スコープ}{128}
+\contentsline {section}{\numberline {レシピ5.4}正規表現}{128}
+\contentsline {section}{\numberline {レシピ5.5}文字クラス}{129}
+\contentsline {section}{\numberline {レシピ5.6}乱数}{129}
+\contentsline {section}{\numberline {レシピ5.7}ロケール}{130}
+\contentsline {paragraph}{envコマンドで全環境変数を無効化してコマンド実行}{131}
+\contentsline {section}{\numberline {レシピ5.8}\$((式))}{132}
+\contentsline {section}{\numberline {レシピ5.9}case文}{132}
+\contentsline {section}{\numberline {レシピ5.10}if文}{132}
+\contentsline {paragraph}{bashの場合、次のコードはエラーになる}{132}
+\contentsline {paragraph}{何もしたくなければnullコマンドを置くとよい（3行目に注目）}{133}
+\contentsline {section}{\numberline {レシピ5.11}local修飾子}{133}
+\contentsline {paragraph}{シェル関数内でローカルな変数を作る}{133}
+\contentsline {section}{\numberline {レシピ5.12}PIPESTATUS変数}{133}
+\contentsline {section}{\numberline {レシピ5.13}``[''コマンド}{140}
+\contentsline {section}{\numberline {レシピ5.14}AWKコマンド}{140}
+\contentsline {paragraph}{FreeBSD 9.1で$-1*0$を計算させてみると}{140}
+\contentsline {paragraph}{FreeBSDのAWKで即値の010を解釈させた場合}{140}
+\contentsline {paragraph}{GNU版AWKで即値の010を解釈させた場合}{141}
+\contentsline {paragraph}{GNU版AWKでも文字列として"010"を渡せば10進数扱いされる}{141}
+\contentsline {paragraph}{配列の要素数を数える関数を自作しておく}{141}
+\contentsline {paragraph}{length()が使えるなら使いたいワガママなアナタへ}{142}
+\contentsline {section}{\numberline {レシピ5.15}dateコマンド}{143}
+\contentsline {section}{\numberline {レシピ5.16}duコマンド}{143}
+\contentsline {paragraph}{FreeBSDのduコマンド-hオプションの挙動}{143}
+\contentsline {paragraph}{Linuxのduコマンド-hオプションの挙動}{144}
+\contentsline {paragraph}{1行目の最後に"B"(単位)を付けたい場合}{144}
+\contentsline {section}{\numberline {レシピ5.17}echoコマンド}{145}
+\contentsline {paragraph}{echoのオプション反応問題を回避する例（printfで代用）}{145}
+\contentsline {section}{\numberline {レシピ5.18}execコマンド}{145}
+\contentsline {section}{\numberline {レシピ5.19}foldコマンド}{146}
+\contentsline {section}{\numberline {レシピ5.20}grepコマンド}{146}
+\contentsline {paragraph}{アナタのgrepはホントにBSD版？}{146}
+\contentsline {section}{\numberline {レシピ5.21}headコマンド}{147}
+\contentsline {section}{\numberline {レシピ5.22}ifconfigコマンド}{148}
+\contentsline {section}{\numberline {レシピ5.23}killコマンド}{148}
+\contentsline {section}{\numberline {レシピ5.24}mktempコマンド}{149}
+\contentsline {paragraph}{mktempコマンドが無い環境で、その「簡易版」を用意するコード}{149}
+\contentsline {section}{\numberline {レシピ5.25}nlコマンド}{150}
+\contentsline {paragraph}{BSD版nlコマンドの場合}{150}
+\contentsline {paragraph}{GNU版nlコマンドの場合}{150}
+\contentsline {paragraph}{GNU版nlコマンドのデフォルトと同じ動作をする}{151}
+\contentsline {section}{\numberline {レシピ5.26}printfコマンド}{151}
+\contentsline {paragraph}{32ビット実装の場合}{151}
+\contentsline {paragraph}{64ビット実装の場合}{152}
+\contentsline {section}{\numberline {レシピ5.27}psコマンド}{152}
+\contentsline {section}{\numberline {レシピ5.28}readlinkコマンド}{153}
+\contentsline {section}{\numberline {レシピ5.29}sedコマンド}{153}
+\contentsline {paragraph}{BSD版sedの場合}{153}
+\contentsline {paragraph}{GNU版sedの場合}{153}
+\contentsline {section}{\numberline {レシピ5.30}sortコマンド}{154}
+\contentsline {section}{\numberline {レシピ5.31}tacコマンド・tailコマンド``-r''オプションによる逆順出力}{154}
+\contentsline {paragraph}{逆順出力するサンプルコード \#1}{155}
+\contentsline {paragraph}{逆順出力するサンプルコード \#2}{155}
+\contentsline {section}{\numberline {レシピ5.32}test（``[''）コマンド}{155}
+\contentsline {paragraph}{シェル変数\$strの内容が``!''ならば``Bikkuri!''を表示}{155}
+\contentsline {paragraph}{両辺にある文字列の先頭に無難な1文字を置けば、どこでも正しく動く}{156}
+\contentsline {paragraph}{case文で同等のことをする}{156}
+\contentsline {section}{\numberline {レシピ5.33}trコマンド}{156}
+\contentsline {section}{\numberline {レシピ5.34}trapコマンド}{157}
+\contentsline {section}{\numberline {レシピ5.35}whichコマンド}{157}
+\contentsline {paragraph}{whichコマンドが無ければ同等品を追加するコード}{157}
+\contentsline {section}{\numberline {レシピ5.36}xargsコマンド}{157}
+\contentsline {paragraph}{BSD版の場合}{158}
+\contentsline {paragraph}{GNU版(多くのLinux)の場合}{158}
+\contentsline {paragraph}{対処方法1の例「rmコマンドをいちいちエラーで騒がせないようにする」}{158}
+\contentsline {paragraph}{対処方法2の例「rmコマンドがエラーで騒いでも無視する」}{159}
+\contentsline {paragraph}{対処方法3の例「grepに無害なファイル/dev/nullを読み込ませる」}{159}
+\contentsline {paragraph}{対処方法4の例「grepに無害なファイル/dev/nullを読み込ませる（推奨）」}{159}
+\contentsline {paragraph}{FreeBSDの場合}{159}
+\contentsline {paragraph}{GNU版(多くのLinux)の場合}{159}
+\contentsline {section}{\numberline {レシピ5.37}zcatコマンド}{160}
+\contentsline {chapter}{\numberline {第6章}レシピを駆使した調理例}{161}
+\contentsline {section}{郵便番号から住所欄を満たすアレをシェルスクリプトで}{161}
+\contentsline {paragraph}{住所欄補完アプリケーションのファイル構成}{162}
+\contentsline {chapter}{あとがき}{172}

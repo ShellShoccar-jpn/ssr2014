@@ -15,11 +15,11 @@ AWKで頑張って実装する。
 
 \subsubsection*{日常の時間 → UNIX時間}
 
-UNIX時間への変換は、\textbf{フェアフィールドの公式}から導出される変換式にあてはめるだけなので簡単だ。
+日常使っている日時からUNIX時間への変換は、\textbf{フェアフィールドの公式}から導出される変換式にあてはめるだけなので簡単だ。
 \paragraph{日常の時間 → UNIX時間 変換シェルスクリプト} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	echo "ここにYYYYMMDDhhmmss" | # date '+%Y%m%d%H%M%S'などを流し込んでもよい
+	echo "ここにYYYYMMDDhhmmss" | # date '+%Y%m%d%H%M%S'の出力文字列などを流し込んでもよい
 	awk '{
 	  # 年月日時分秒を取得
 	  Y = substr($1, 1,4)*1;
@@ -39,27 +39,27 @@ UNIX時間への変換は、\textbf{フェアフィールドの公式}から導�
 
 \subsection*{UNIX時間 → 日常の時間}
 
-これは少し複雑だ。一発変換できる公式は無いようだ。そこでglibcのgmtime()関数を参考に作ったコードを記す。
+これは少し複雑だ。一発変換できる公式は無いようだ。そこでglibcのgmtime関数を参考に作ったコードを記す。
 \paragraph{UNIX時間 → 日常の時間 変換シェルスクリプト}　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	echo "ここにUNIXtime" |
+	echo "ここにUNIX時間" |
 	awk '{
 	  # 時分秒と、1970/1/1からの日数を求める
 	  s = $1%60;  t = int($1/60);  m =  t%60;  t = int(t/60);  h = t%24;
 	  days_from_epoch = int( t/24);
 
 	  # 年を求める
-	  max_calced_year = 1970;              # To remember every days on 01/01 from
-	  days_on_Jan1st_from_epoch[1970] = 0; # the Epoch which was calculated once
+	  max_calculated_year = 1970;          #   各年の元日は1970/01/01から何日後なのかを
+	  days_on_Jan1st_from_epoch[1970] = 0; # ←記憶しておくための変数
 	  Y = int(days_from_epoch/365.2425)+1970+1;
-	  if (Y > max_calced_year) {
-	     i = days_on_Jan1st_from_epoch[max_calced_year];
-	     for (j=max_calced_year; j<Y; j++) {
+	  if (Y > max_calculated_year) {
+	     i = days_on_Jan1st_from_epoch[max_calculated_year];
+	     for (j=max_calculated_year; j<Y; j++) {
 	       i += (j%4!=0)?365:(j%100!=0)?366:(j%400!=0)?365:366;
 	       days_on_Jan1st_from_epoch[j+1] = i;
 	     }
-	     max_calced_year = Y;
+	     max_calculated_year = Y;
 	  }
 	  for (;;Y--) {
 	    if (days_from_epoch >= days_on_Jan1st_from_epoch[Y]) {
@@ -111,7 +111,7 @@ UNIX時間への変換は、\textbf{フェアフィールドの公式}から導�
 
 \subsection*{参照}
 
-ちなみに、この時間計算ができるようになると、findコマンドだけでは不十分だったタイムスタンプ比較も自在にできるようになり、シェルスクリプトでも\textbf{自力でCookieが焼けるようになり}、そしてさらに\textbf{HTTPのセッション管理ができるようになる。}詳しくはそれぞれのレシピを参照してもたいらい。\\
+ちなみに、この時間計算ができるようになると、findコマンドだけでは不十分だったタイムスタンプ比較も自在にできるようになり、シェルスクリプトでも\textbf{自力でCookieが焼けるようになり}、そしてさらに\textbf{HTTPのセッション管理ができるようになる。}詳しくは以下のそれぞれのレシピを参照してもたいらい。\\
 
 \noindent
 →\ref{recipe:timestamp}（findコマンドで秒単位にタイムスタンプ比較をする）\\

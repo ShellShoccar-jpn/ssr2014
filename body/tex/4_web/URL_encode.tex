@@ -5,7 +5,7 @@
 \noindent
 $\!\!\!\!\!$
 \begin{grshfboxit}{160.0mm}
-	WebAPIを叩きたいのだが、パラメーターにはURLエンコーディングされた文字列を渡さなければならない。
+	Web APIを叩きたいのだが、パラメーターにはURLエンコーディングされた文字列を渡さなければならない。
 	どうすればいいか？
 \end{grshfboxit}
 
@@ -22,7 +22,6 @@ URLデコードよりも多少面倒だが、やはりそんなに難しい仕�
 	env -i awk '
 	BEGIN {
 	  # --- prepare
-	  LF = sprintf("\n");
 	  OFS = "";
 	  ORS = "";
 	  # --- prepare encoding
@@ -37,13 +36,16 @@ URLデコードよりも多少面倒だが、やはりそんなに難しい仕�
 	    for (i=1; i<=length(line); i++) {
 	      print c2p[substr(line,i,1)];
 	    }
-	    print LF;
+	    print "\n";
 	  }
 	}'
 \end{verbatim}
 \end{frameboxit}
 
 1文字ではなく1バイトずつ処理する必要があるので``\verb|env -i|''をAWKの手前に付けて、ロケール環境変数の影響を受けないようにするのはデコードの時と同じである。
+
+こちらのコードもいちいち書くのも面倒であると思うので、コマンド化したものをGitHubで公開\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/urlencode|}した。そちらを使ってもいい。
+
 
 \subsection*{解説}
 URLエンコーディングとは何かについては\ref{recipe:URL_decode}（URLデコードする）で説明したので省略する。そこで不足していた説明としては、エンコーディングする必要のある文字が何かということだが、逆に必要の無い文字は次のとおりである。

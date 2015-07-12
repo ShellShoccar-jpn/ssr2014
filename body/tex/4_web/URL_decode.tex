@@ -15,10 +15,9 @@ $\!\!\!\!\!$
 \paragraph{URLデコードするコード} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	env i- awk '
+	env -i awk '
 	BEGIN {
 	  # --- prepare
-	  LF  = sprintf("\n");
 	  OFS = "";
 	  ORS = "";
 	  # --- prepare decoding
@@ -42,7 +41,7 @@ $\!\!\!\!\!$
 	        break;
 	      }
 	    }
-	    print LF;
+	    print "\n";
 	  }
 	}'
 \end{verbatim}
@@ -50,13 +49,15 @@ $\!\!\!\!\!$
 
 1文字ではなく1バイトずつ処理する必要があるので``\verb|env -i|''をAWKの手前に付けて、ロケール環境変数の影響を受けないようにする。
 
+このコードをいちいち書くのも面倒であると思うので、コマンド化したものをGitHubで公開\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/urldecode|}した。そちらを使ってもいい。
+
 \subsection*{解説}
 文字を1バイト毎に、16進数2桁表現でアスキーコード化し、その先頭に``\verb|%|''文字を付けるエンコード方式を\textbf{パーセントエンコーディング}と呼ぶ。ただしURLに用いる文字のうち特殊な意味を持つものだけをパーセントエンコーディングするとともに半角スペースは``\verb|%20|''ではなく``\verb|+|''にエンコードする場合を、「URLエンコーディング」とか「URLエンコード」などと呼んだりする。これは、RFC 3986のSection2.1で定義されている。
 
 このエンコーディングのルールさえ理解できれば、デコーダーを作ることなど大したことではない。
 例えばWeb検索するとurlendecというパッケージ\footnote{\verb|http://www.whizkidtech.redprince.net/urlendec/|}が見つかる。
 しかしPOSIX原理主義者たるものそういったものに安易に頼ってはいけない。
-なんとこのツールは2014/12現在32bit専用らしい。
+このツールはx86(32bit)向けのアセンブリで書かれており、なんと64bit環境非対応なのだ。
 もしこのソフトを愛用している人が32bit環境から64bit環境に移行しようとしたら痛い目を見る。（かつての筆者）
 
 \subsection*{参照}

@@ -1,0 +1,172 @@
+\section{バイナリーデータを扱う}
+\label{recipe:binary}
+
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	バイナリーデータをAWKやreadコマンドで読み込むとデータが壊れてしまう。
+	バイナリデータをシェルスクリプトで扱うことはできないのか？
+\end{grshfboxit}
+
+\subsection*{回答}
+
+頑張ればできないことはないが、基本的には\textbf{シェルスクリプトではバイナリデータを扱えない。}
+AWK（GNU版除く）の変数や、シェル変数（zsh除く）には、NULL文字$<\mathrm{0x00}>$を格納することができないからだ。
+
+\paragraph{AWK(非GNU版)変数にNULL文字を読ませると}　\\
+\begin{screen}
+	\verb!$ printf 'This is \000 a pen.\n' | awk '{print $0;}'! \return    \\
+	\verb|This is | 　　　　　←NULL終端扱いされて、a pen.が無かったことに \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{シェル変数(zsh以外)にNULL文字を読ませる}　\\
+\begin{screen}
+	\verb!$ str=$(printf 'abc\000def')! \return                                      \\
+	\verb|$ echo "$str"| \return                                                     \\
+	\verb|abcdef  | 　　　　　←NULL文字以降が切れていないので成功したように見えるが \\
+	\verb|$ echo ${#str}| \return                                                    \\
+	\verb|6       | 　　　　　←NULL文字が無視されて6文字になっていた                \\
+	\verb|$ |
+\end{screen}
+
+しかし「できない」終わらせてしまうとレシピにならないので、頑張って扱う方法を解説する。
+
+
+\subsection*{解説}
+
+まず現状を整理しなければならない。「基本的には扱えない」とは言うものの、
+厳密には扱えるコマンドと扱えないコマンドがある。主なものを列挙すると次のとおりだ。
+
+\begin{table}[htb]
+  \caption{主要コマンドのバイナリデータ取り扱い可否}
+  \begin{center}
+  \begin{tabular}{l|l}
+    \HLINE
+      バイナリデータ取り扱い不可               & バイナリデータ取り扱い可         \\
+    \hline
+      awk bash cut echo grep sed sh sort xargs & cat dd head od printf tail tr wc \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:binarable_commands}
+  \end{center}
+\end{table}
+
+取り扱い可能なコマンドの中にodとprintfがあることに注目してもらいたい。
+odはバイナリーをテキストに変換するコマンドであり、
+printfはテキストからバイナリデータを出力するのに使えるコマンドである。
+よって、バイナリデータをどうしてもシェルスクリプトで扱いたければ、
+\textbf{odコマンドでテキスト化し、テキストデータで処理し、printfでバイナリーに戻す}
+という方針をとればよい。
+
+\subsubsection*{バイナリーデータ扱うシェルスクリプト}
+
+前述の方針に基づいて作った、バイナリーデータを扱うシェルスクリプトを記す。
+
+データ加工パートと記した箇所には、標準入力から1行ずつ、
+16進数表現された1バイト分のアスキーコードが到来する。
+これを加工して、16進数表現された1バイト分のアスキーコードを標準出力に送ればよい。
+
+\paragraph{バイナリーデータを読んでそのまま書き出すシェルスクリプト} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	# === バイナリ→テキスト変換パート ===================================
+	LF=$(printf '\\\n_'); LF=${LF%_}    # 0) 準備
+	od -A n -t x1 -v -                | # 1) 16進ダンプ(アドレス無し)
+	tr -Cd '0123456789abcdefABCDEF\n' | # 2) 空白はトル(でも改行コードは残すべし)
+	sed "s/../&$LF/g"                 | # 3) 1バイト1行に(しなくてもよいけど)
+	grep -v '^$'                      | # 4) sedで出来た空行をトル
+	#
+	# === データ加工パート ===============================================
+	# (1行毎に16進数表現された1バイト分のアスキーコードが得られるので
+	#  ここで煮るなり焼くなりいろいろやる)
+	#
+	# === テキスト→バイナリ変換パート ===================================
+	awk -v ARGMAX=$(getconf ARG_MAX) '                                        #
+	  BEGIN{                                                                  #
+	    # 0) --- 定義 ------------------------------------------              #
+	    ORS    = "";                                #   引数の                 #
+	    LF     = sprintf("\n");                     #   最大許容文字列長は      #
+	    maxlen = int(ARGMAX/2) - length("printf "); # ←ARG_MAXの約半分とする  #
+	    arglen = 0;                                                           #
+	    # 1) --- バイナリ変換用のハッシュテーブルを作る --------                   #
+	    # 1-1) 全ての文字が素直に変換できるものとして一旦作る                       #
+	    for (i=1; i<256; i++) {                                               #
+	      hex = sprintf("%02x",i);                                            #
+	      fmt[hex]  = sprintf("%c",i);                                        #
+	      fmtl[hex] = 1;                                                      #
+	    }                                                                     #
+	    # 1-2) printfで素直には変換できない文字をエスケープ表現で上書きする         #
+	    fmt["25"]="%%"      ; fmtl["25"]=2; # "%"                             #
+	    fmt["5c"]="\\\\\\\\"; fmtl["5c"]=4; # (back slash)                    #
+	    fmt["00"]="\\\\000" ; fmtl["00"]=5; # (null)                          #
+	    fmt["0a"]="\\\\n"   ; fmtl["0a"]=3; # (Line Feed)                     #
+	    fmt["0d"]="\\\\r"   ; fmtl["0d"]=3; # (Carriage Return)               #
+	    fmt["09"]="\\\\t"   ; fmtl["09"]=3; # (tab)                           #
+	    fmt["0b"]="\\\\v"   ; fmtl["0b"]=3; # (Vertical Tab)                  #
+	    fmt["0c"]="\\\\f"   ; fmtl["0c"]=3; # (Form Feed)                     #
+	    fmt["20"]="\\\\040" ; fmtl["20"]=5; # (space)                         #
+	    fmt["22"]="\\\""    ; fmtl["22"]=2; # (double quot)                   #
+	    fmt["27"]="\\'"'"'" ; fmtl["27"]=2; # (single quot)                   #
+	    fmt["2d"]="\\\\055" ; fmtl["2d"]=5; # "-"                             #
+	  }                                                                       #
+	  {                                                                       #
+	    # 2) --- 出力文字列をprintfフォーマット形式で生成 ------                 #
+	    linelen = length($0);                                                 #
+	    for (i=1; i<=linelen; i+=2) {                                         #
+	      if (arglen+4>maxlen) {print LF; arglen=0;}                          #
+	      hex = substr($0, i, 2);                                             #
+	      print      fmt[hex];                                                #
+	      arglen += fmtl[hex];                                                #
+	    }                                                                     #
+	  }                                                                       #
+	  END {                                                                   #
+	    # 3) --- 一部のxargs実装への配慮で、最後に改行を付ける -                  #
+\end{verbatim}
+\end{frameboxit}
+
+\noindent
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	    if (NR>0) {print LF;}                                                 #
+	  }                                                                       #
+	'                                                                         |
+	xargs -n 1 printf
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{コードの概要}
+
+たかがバイナリーデータの入出力だけでこれだけの行数になったのは、
+それなりにノウハウが詰まっているからであるが、それぞれを大ざっぱに解説する。
+
+\paragraph{バイナリーデータの取り込み} こちらは比較的簡単である。
+odコマンドでダンプし、テキスト化すれば大方の作業は終わる。
+
+ダンプすると通常アドレスが付くが、取り込みという作業では不要なので付けない。
+するとデータ本体である16進数文字と位置取りのスペース等が来るので、
+これを2文字ずつ改行すれば、1行1バイト分の16進数アスキーコード列になる。
+
+\paragraph{バイナリーデータの書き出し} こちらは大変である。
+printfのフォーマット文字列部分に書き出したい文字列を指定すれば
+制御文字も含めて全ての文字を出力することができる。
+
+とはいえ、1バイト毎にprintfコマンドを起動するのはあまりにも非効率なので起動回数を抑えたい。
+そこで、printfに渡す前にアスキーコードから元の文字に変換しても差し支えないものをAWKで変換してしまう。
+ただしAWKやprintfやシェル、それぞれで特殊な意味を持つ文字が多数あるので注意が必要だ。
+書き出し部分のコードが長い原因は主にこのせいである。
+
+そしてARG\_{}MAX（コマンド1行の最大文字列長）を見ながらprintfのフォーマット文字列をできるだけ長く作り、
+これをxargsでループさせるというわけである。
+しかしARG\_{}MAXは、ギリギリまで使おうとするとなぜかエラーを起こすxargs実装があるため、
+半分だけ使うようにしている。
+
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:Base64}（Base64エンコード・デコードする）

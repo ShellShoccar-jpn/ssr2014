@@ -14,11 +14,11 @@ $\!\!\!\!\!$
 \subsection*{回答}
 シェルスクリプト開発者向けコマンドセットOpen usp Tukubaiに収録されている``mojihame''というコマンドを使うとその悩みは綺麗に解消できる。このコマンドを使えば、HTMLの一部分（例えば$<$tr$>$～$<$/tr$>$）をレコードの数だけ繰り返すという指示を、プログラム本体ではなくHTMLテンプレートの中で指定することができるようになるからだ。
 
-利用を検討している人は、mojihameコマンドをダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/han|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}し、次のチュートリアルを参考にしてもらいたい。
+利用を検討している人は、mojihameコマンドをダウンロード\footnote{\verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/|にアクセスし、そこにあるmojihame、mojihame-h、mojihame-l、mojihame-pの4つのソースコードをダウンロードする。}し、次のチュートリアルをやってみてもらいたい。
 
 \subsection*{mojihameコマンドチュートリアル}
 
-筆者が制作した、東京メトロのオープンデータに基づく列車在線情報表示アプリケーション「メトロパイパー」\footnote{\verb|http://metropiper.com/|}を例にしたチュートリアルを記す。
+序章でも紹介した、東京メトロのオープンデータに基づく列車在線情報表示アプリケーション「メトロパイパー」\footnote{\verb|http://metropiper.com/|}を例にしたチュートリアルを記す。
 
 このアプリケーションは、「知りたい駅」と「行きたい方面駅」の2つの駅を指定すると、前者の駅周辺のリアルタイム列車の在線状況を表示するというものである。
 
@@ -43,7 +43,7 @@ $\!\!\!\!\!$
 \end{verbatim}
 \end{frameboxit}
 
-色々HTMLコメントが付いているが、``\verb|FROM_SELECT_BOX|''という区間と、``\verb|FROM_SELECT_BOX|''という区間があるのに注目してもらいたい。``\verb|FROM_SELECT_BOX|''は、テンプレートファイル``MAIN.HTML''から、mojihameによる処理を行うために$<$select$>$タグの内側を抽出するために付けた文字列である。具体的にはsedコマンドで行う（後述）。一方``\verb|FROM_SELECT_BOX|''は、mojihameコマンドに対して繰り返し区間の始まりと終わりを示すためのものである。先程の``\verb|FROM_SELECT_BOX|''で取り出した区間には、デフォルト選択肢``\verb|<option value="-">―</option>|''が含まれているがこれは繰り返し区間には含めさせないために用意してある。
+色々HTMLコメントが付いているが、``\verb|FROM_SELECT_BOX|''という区間と、``\verb|FROM_SNUM_LIST|''という区間があるのに注目してもらいたい。``\verb|FROM_SELECT_BOX|''は、テンプレートファイル``MAIN.HTML''から、mojihameによる処理を行うために$<$select$>$タグの内側を抽出するために付けた文字列である。具体的にはsedコマンドで行う（後述）。一方``\verb|FROM_SNUM_LIST|''は、mojihameコマンドに対して繰り返し区間の始まりと終わりを示すためのものである。先程の``\verb|FROM_SELECT_BOX|''で取り出した区間には、デフォルト選択肢``\verb|<option value="-">―</option>|''が含まれているがこれは繰り返し区間には含めさせないために用意してある。
 
 そして注目すべきは、中にある``\verb|%1|''、``\verb|%2|''といったマクロ文字列だ。これらが実際の駅ナンバーや路線名、駅名に置換されていく。
 
@@ -59,9 +59,9 @@ $\!\!\!\!\!$
 	Z14 半蔵門 押上〈スカイツリー前〉
 \end{verbatim}
 \end{frameboxit}
-左の列から、駅ナンバー、路線名、駅名という構成になっているが、これが先程の``\verb|%1|''、``\verb|%2|''、``\verb|%3|''をそれぞれ置き換えていくことになる。
+左の列から順に、駅ナンバー、路線名、駅名という構成になっているが、これが先程の``\verb|%1|''、``\verb|%2|''、``\verb|%3|''をそれぞれ置き換えていくことになる。
 
-そして実際に置き換えを実施しているプログラム\footnote{HTML全体を見たいという人は、\\ \verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/CGI/GET_SNUM_HTMLPART.AJAX.CGI|を参照されたい。}がこれだ。
+そして実際に置き換えを実施しているプログラム\footnote{プログラム全体を見たいという人は、\\ \verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/CGI/GET_SNUM_HTMLPART.AJAX.CGI|を参照されたい。}がこれだ。
 
 \paragraph*{選択肢生成プログラム GET\_{}SNUM\_{}HTMLPART.AJAX.CGI（抜粋）} 　\\
 \begin{frameboxit}{160.0mm}
@@ -85,7 +85,7 @@ $\!\!\!\!\!$
 \end{verbatim}
 \end{frameboxit}
 
-先程述べたように、まずコメント``\verb|FROM_SELECT_BOX|''の区間をテンプレートファイルからsedコマンドで抽出し、一時ファイル``\verb|$Tmp-htmltmpl|''に格納している。そして2番目のcatコマンドからuniqコマンドまでの間に、先程の3列構成のデータを生成し、mojihameコマンドに渡しているのである。mojihameコマンドでは、\verb|-l|オプションが単純繰り返しの際に用いるものであり、そのオプションの直後（スペース無し）に繰り返し区間を示す文字列を指定する。mojihameコマンドの詳しい使い方はmanページ\footnote{\verb|https://uec.usp-lab.com/TUKUBAI_MAN/CGI/TUKUBAI_MAN.CGI?POMPA=MAN1_mojihame|}を参照してもらいたい。
+先程述べたように、まずコメント``\verb|FROM_SELECT_BOX|''の区間をテンプレートファイルからsedコマンドで抽出し、一時ファイル``\verb|$Tmp-htmltmpl|''に格納している。そして2番目のcatコマンドからuniqコマンドまでの間で、先程の3列構成のデータを生成し、mojihameコマンドに渡しているのである。mojihameコマンドでは、\verb|-l|オプションが単純繰り返しの際に用いるものであり、そのオプションの直後（スペース無し）に繰り返し区間を示す文字列を指定する。mojihameコマンドの詳しい使い方はmanページ\footnote{\verb|https://uec.usp-lab.com/TUKUBAI_MAN/CGI/TUKUBAI_MAN.CGI?POMPA=MAN1_mojihame|}を参照してもらいたい。
 
 結果としてこのmojihameコマンドは次のようなコードを出力する。\\
 \begin{frameboxit}{160.0mm}
@@ -121,7 +121,7 @@ $\!\!\!\!\!$
 	\end{center}
 \end{figure}
 
-この時押上駅には列車が3本在線しており、押上駅の欄が他の駅や駅間よりも広がっている。この画面を作成するにあたっては、押上駅、駅間（押上―錦糸町）、錦糸町駅、駅間（錦糸町―住吉）、……という繰り返しをしているが、さらに各駅の中では列車が複数いればそこでも複数回の繰り返しをするというようにして階層化された繰り返しを行っているのだ。
+この時押上駅には列車が3編成在線しており、押上駅の欄が他の駅や駅間よりも広がっている。この画面を作成するにあたっては、押上駅、駅間（押上―錦糸町）、錦糸町駅、駅間（錦糸町―住吉）、……という繰り返しをしているが、さらに各駅の中では列車が複数いればそこでも複数回の繰り返しをするというようにして階層化された繰り返しを行っているのだ。
 
 具体的には、プログラム内部で、一旦次のようなデータが生成される。
 \paragraph*{生成される在線情報データ（抜粋）} 　\\
@@ -163,13 +163,13 @@ $\!\!\!\!\!$
 \end{verbatim}
 \end{frameboxit}
 
-これを先程のシェルスクリプト``GET\_{}LOCINFO.AJAX.CGI''\footnote{\verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/TEMPLATE.HTML/LOCTABLE_PART.HTML|参照}の次の行で、同様にしてハメんでいる。\\
+これを先程のシェルスクリプト``GET\_{}LOCINFO.AJAX.CGI''\footnote{\verb|https://github.com/ShellShoccar-jpn/metropiper/blob/master/CGI/GET_LOCINFO.AJAX.CGI|参照}の中の次の行で、同様にしてハメんでいる。\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
 	mojihame -hLC_ITERATION $Homedir/TEMPLATE.HTML/LOCTABLE_PART.HTML > $Tmp-loctblhtml0
 \end{verbatim}
 \end{frameboxit}
-階層化された繰り返し対応させるため、今度は``\verb|-h|''というオプションを用いている。これも詳細はmanページを参照してもらいたい。
+階層化された繰り返し対応させるため、今度は``\verb|-h|''というオプションを用いている。これも詳細はmojihameコマンドのmanページを参照してもらいたい。
 
 結果、生成されたHTMLテキストが次のものである。
 \paragraph*{列車在線情報をハメ込んで生成されたHTMLコード（抜粋、右端にループの範囲を記している）} 　\\

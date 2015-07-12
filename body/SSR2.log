@@ -1,4 +1,4 @@
-This is e-pTeX, Version 3.1415926-p3.4-110825-2.6 (utf8.sjis) (TeX Live 2013/W32TeX) (format=platex 2013.12.6)  17 DEC 2014 04:00
+This is e-pTeX, Version 3.1415926-p3.4-110825-2.6 (utf8.sjis) (TeX Live 2013/W32TeX) (format=platex 2013.12.6)  13 JUL 2015 02:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -188,6 +188,39 @@ LaTeX Info: Redefining \PiCTeX on input line 866.
 \@totalpage=\count107
  (./SSR2.aux (./tex/0_introduction/introduction.aux)
 
+LaTeX Warning: Label `tbl:command_for_sendjpmail' multiply defined.
+
+
+LaTeX Warning: Label `tbl:command_for_sendjpmail' multiply defined.
+
+
+LaTeX Warning: Label `tbl:command_for_sendjpmail' multiply defined.
+
+
+LaTeX Warning: Label `tbl:command_for_sendjpmail' multiply defined.
+
+
+LaTeX Warning: Label `tbl:signal_no' multiply defined.
+
+
+LaTeX Warning: Label `tbl:BRE_a1' multiply defined.
+
+
+LaTeX Warning: Label `tbl:BRE_a1' multiply defined.
+
+
+LaTeX Warning: Label `tbl:BRE_a1' multiply defined.
+
+
+LaTeX Warning: Label `tbl:BRE_a1' multiply defined.
+
+
+LaTeX Warning: Label `tbl:signal_no' multiply defined.
+
+
+LaTeX Warning: Label `allenvs:xargs' multiply defined.
+
+
 LaTeX Warning: Label `fig:metropiper_hanzomon' multiply defined.
 
 (./tex/e_afterword/afterword.aux))
@@ -253,68 +286,84 @@ LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 55.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 55.
-LaTeX Font Info:    Font shape `JT1/mc/bx/n' in size <10> not available
-(Font)              Font shape `JT1/gt/m/n' tried instead on input line 59.
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 11.53198pt on input line 59.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 11.53198pt on input line 59.
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 9.60999pt on input line 59.
-LaTeX Font Info:    Font shape `JY1/mc/bx/n' in size <10> not available
-(Font)              Font shape `JY1/gt/m/n' tried instead on input line 59.
+(Font)              scaled to size 11.53198pt on input line 59.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 9.60999pt on input line 59.
+(Font)              scaled to size 11.53198pt on input line 59.
+LaTeX Font Info:    Font shape `JT1/mc/bx/n' in size <10> not available
+(Font)              Font shape `JT1/gt/m/n' tried instead on input line 76.
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 76.
+LaTeX Font Info:    Font shape `JY1/mc/bx/n' in size <10> not available
+(Font)              Font shape `JY1/gt/m/n' tried instead on input line 76.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 76.
  [2
 
 
 ]
-LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 71.
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 71.
-LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 71.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 71.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 98.
+(Font)              <7> on input line 95.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 98.
+(Font)              <5> on input line 95.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 6.72699pt on input line 98.
+(Font)              scaled to size 6.72699pt on input line 95.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 4.805pt on input line 98.
-LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 6.72699pt on input line 98.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 98.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 98.
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 5.76599pt on input line 98.
-LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 5.76599pt on input line 98.
+(Font)              scaled to size 4.805pt on input line 95.
  [3]
-LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 7.68799pt on input line 111.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 7.68799pt on input line 111.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 108.
+
+
+(c:/texlive/2013/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 108.
+ [4]
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 120.
+(Font)              scaled to size 6.72699pt on input line 126.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 126.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 126.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 120.
+(Font)              scaled to size 5.76599pt on input line 126.
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 5.76599pt on input line 126.
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 120.
+(Font)              scaled to size 7.68799pt on input line 126.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 120.
-) [4]
-(./SSR2.toc [5
+(Font)              scaled to size 7.68799pt on input line 126.
+File: tex/0_introduction/figs/ShellShoccar1_web.eps Graphic file (type eps)
+
+<tex/0_introduction/figs/ShellShoccar1_web.eps> [5]
+File: tex/0_introduction/figs/metropiper_web.eps Graphic file (type eps)
+
+<tex/0_introduction/figs/metropiper_web.eps> [6] [7] [8]
+File: tex/0_introduction/figs/POSIX_web.eps Graphic file (type eps)
+
+<tex/0_introduction/figs/POSIX_web.eps> [9] [10]
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 283.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 283.
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 283.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 283.
+) [11] (./SSR2.toc [12
 
 
-] [6])
+]
+[13])
 \tf@toc=\write3
 \openout3 = `SSR2.toc'.
 
- [7] [8
-
-]
+ [14]
 第1章
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
 (Font)              scaled to size 19.9311pt on input line 192.
@@ -344,219 +393,346 @@ $     $   []
 
 [1
 
+
 ] [2]) (./tex/1_pretty_good_techs/fsed.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--11
 $     $   [] 
  []
 
-[3]) (./tex/1_pretty_good_techs/mkfifo.tex
+[3]
+LaTeX Font Info:    Font shape `JT1/mc/bx/n' in size <8> not available
+(Font)              Font shape `JT1/gt/m/n' tried instead on input line 66.
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 7.68799pt on input line 66.
+LaTeX Font Info:    Font shape `JY1/mc/bx/n' in size <8> not available
+(Font)              Font shape `JY1/gt/m/n' tried instead on input line 66.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 7.68799pt on input line 66.
+
+
+LaTeX Warning: Reference `第cap:allenvs' on page 4 undefined on input line 66.
+
+) (./tex/1_pretty_good_techs/mkfifo.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--10
 $     $   [] 
  []
 
-[4] [5]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 77.
- (c:/texlive/2013/texmf-dist/tex/latex/base/omscmr.fd
-File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
-)
-LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 77.
- [6])
-(./tex/1_pretty_good_techs/ctail1.tex
+[4] [5] [6]) (./tex/1_pretty_good_techs/fileoverwriting.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
+$     $   [] 
+ []
+
+[7]
+Underfull \hbox (badness 10000) in paragraph at lines 42--85
+[][]
+ []
+
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 90--121
+[][]
+ []
+
+[9] [10]) (./tex/1_pretty_good_techs/ctail1.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--10
 $     $   [] 
  []
 
-[7]) (./tex/1_pretty_good_techs/nonLFterminated.tex
+[11]) (./tex/1_pretty_good_techs/nonLFterminated.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--22
 $     $   [] 
  []
 
-[8] [9] [10]) (./tex/1_pretty_good_techs/ifconfig.tex
+[12] [13]) (./tex/1_pretty_good_techs/ifconfig.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[11] [12]) (./tex/1_pretty_good_techs/YYYYMMDDhhmmss.tex
+[14] [15]) (./tex/1_pretty_good_techs/YYYYMMDDhhmmss.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--11
 $     $   [] 
  []
 
-[13]) (./tex/1_pretty_good_techs/holidays.tex
+[16]) (./tex/1_pretty_good_techs/holidays.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--9
 $     $   [] 
  []
 
-[14] [15]) (./tex/1_pretty_good_techs/blacklist.tex [16]
+[17] [18] [19]) (./tex/1_pretty_good_techs/blacklist.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--16
 $     $   [] 
  []
 
-[17] [18] [19]) [20]
+[20] [21] [22] [23]) [24]
 第2章
 (./tex/2_traps/false.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--9
 $     $   [] 
  []
 
-[21
+[25
 
 ]) (./tex/2_traps/mkfifo_redirection.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--14
 $     $   [] 
  []
 
-[22] [23]) (./tex/2_traps/zen_characters.tex
-Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--10
+[26] [27]) (./tex/2_traps/zen_characters.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[24]) (./tex/2_traps/sort.tex
+[28]) (./tex/2_traps/sort.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--10
 $     $   [] 
  []
 
-[25] [26] [27] [28] [29] [30] [31]) (./tex/2_traps/sed.tex
+[29] [30] [31] [32] [33] [34] [35] [36]) (./tex/2_traps/sed.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--13
 $     $   [] 
  []
 
-[32] [33]) (./tex/2_traps/awk_environ.tex
+[37] [38]) (./tex/2_traps/awk_environ.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--17
 $     $   [] 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 19--38
-[][]
- []
-
-[34]) (./tex/2_traps/AWK_array.tex
+[39]) (./tex/2_traps/AWK_array.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--26
 $     $   [] 
  []
 
-[35] [36]) (./tex/2_traps/while_read.tex
+[40] [41]) (./tex/2_traps/while_read.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--14
 $     $   [] 
  []
 
-[37]) (./tex/2_traps/many_traps.tex
+[42]) (./tex/2_traps/many_traps.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--34
 $     $   [] 
  []
 
-[38] [39] [40]) [41]
+[43] [44] [45]) [46]
 第3章
 (./tex/3_POSIX_techs/Sayonara_PIPESTATUS.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[42
+[47
 
-] [43] [44] [45]) (./tex/3_POSIX_techs/Apache_combined_log.tex
+] [48] [49] [50]) (./tex/3_POSIX_techs/Apache_combined_log.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--13
 $     $   [] 
  []
 
-[46]
+[51]
 Underfull \hbox (badness 10000) in paragraph at lines 94--107
 [][]
  []
 
-[47]) (./tex/3_POSIX_techs/utconv.tex
+[52]) (./tex/3_POSIX_techs/utconv.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[48] [49] [50]) (./tex/3_POSIX_techs/timestamp.tex
+[53] [54] [55]) (./tex/3_POSIX_techs/timestamp.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--17
 $     $   [] 
  []
 
-[51] [52]) (./tex/3_POSIX_techs/CSV_parser.tex
+[56] [57]) (./tex/3_POSIX_techs/CSV_parser.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--14
 $     $   [] 
  []
 
-[53] [54] [55]) (./tex/3_POSIX_techs/JSON_parser.tex
+[58] [59] [60]) (./tex/3_POSIX_techs/JSON_parser.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[56] [57] [58]) (./tex/3_POSIX_techs/XML_parser.tex
+[61] [62] [63]) (./tex/3_POSIX_techs/XML_parser.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[59] [60]) (./tex/3_POSIX_techs/han_zen.tex
+[64] [65]) (./tex/3_POSIX_techs/han_zen.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[61] [62]) (./tex/3_POSIX_techs/hira_kata.tex
+[66] [67]) (./tex/3_POSIX_techs/hira_kata.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[63] [64]) [65] [66]
+[68] [69]) (./tex/3_POSIX_techs/binary.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 6--12
+$     $   [] 
+ []
+
+[70] [71] [72] [73]) (./tex/3_POSIX_techs/lock.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--16
+$     $   [] 
+ []
+
+[74]
+Overfull \hbox (4.36272pt too wide) in paragraph at lines 29--30
+[]|\OT1/cmtt/m/n/10 https://github.com/ShellShoccar-jpn/misc-tools/blob/master/
+pexlock|  
+ []
+
+
+Overfull \hbox (4.36272pt too wide) in paragraph at lines 31--32
+[]|\OT1/cmtt/m/n/10 https://github.com/ShellShoccar-jpn/misc-tools/blob/master/
+pshlock|  
+ []
+
+
+Overfull \hbox (4.36272pt too wide) in paragraph at lines 35--36
+[]|\OT1/cmtt/m/n/10 https://github.com/ShellShoccar-jpn/misc-tools/blob/master/
+punlock|  
+ []
+
+
+Overfull \hbox (4.36272pt too wide) in paragraph at lines 37--38
+[]|\OT1/cmtt/m/n/10 https://github.com/ShellShoccar-jpn/misc-tools/blob/master/
+pcllock|  
+ []
+
+
+Overfull \hbox (6.50627pt too wide) in paragraph at lines 24--41
+ [] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 48--72
+[][]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--98
+[][]
+ []
+
+[75] [76] [77]
+Underfull \hbox (badness 10000) in paragraph at lines 186--205
+[][]
+ []
+
+[78]
+LaTeX Font Info:    Font shape `JT1/gt/m/it' in size <10> not available
+(Font)              Font shape `JT1/gt/m/n' tried instead on input line 212.
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 212.
+LaTeX Font Info:    Font shape `JY1/gt/m/it' in size <10> not available
+(Font)              Font shape `JY1/gt/m/n' tried instead on input line 212.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 212.
+
+
+LaTeX Font Warning: Font shape `OT1/cmss/m/it' in size <10> not available
+(Font)              Font shape `OT1/cmss/m/sl' tried instead on input line 212.
+
+
+[79] [80] [81]) (./tex/3_POSIX_techs/debug.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
+$     $   [] 
+ []
+
+[82]
+Underfull \hbox (badness 10000) in paragraph at lines 43--62
+[][]
+ []
+
+[83]
+Underfull \hbox (badness 10000) in paragraph at lines 69--88
+[][]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 93--113
+[][]
+ []
+
+[84]
+Underfull \hbox (badness 10000) in paragraph at lines 126--144
+[][]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 144--172
+[][]
+ []
+
+[85] [86] [87])
+Underfull \hbox (badness 10000) in paragraph at lines 254--248
+[][]
+ []
+
+[88]
 第4章
 (./tex/4_web/URL_decode.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--10
 $     $   [] 
  []
 
-[67
+[89
 
-]) (./tex/4_web/URL_encode.tex [68]
+] [90]) (./tex/4_web/URL_encode.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[69]
-Underfull \hbox (badness 10000) in paragraph at lines 59--68
+[91]
+Underfull \hbox (badness 10000) in paragraph at lines 61--70
 [][]
  []
 
-) (./tex/4_web/GETmethod.tex
+) (./tex/4_web/Base64.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[70]
+[92]) (./tex/4_web/GETmethod.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
+$     $   [] 
+ []
+
+[93]
 Underfull \hbox (badness 1577) in paragraph at lines 31--32
 []\OT1/cmr/m/n/10 GET \JY1/mc/m/n/10 メソ ッド （ 環境変数 \OT1/cmr/m/n/10 ``RE
 -QUEST[]METHOD'' \JY1/mc/m/n/10 が \OT1/cmr/m/n/10 ``GET''\JY1/mc/m/n/10 ） の
 場合 、 \OT1/cmr/m/n/10 CGI \JY1/mc/m/n/10 変数は環境変数
  []
 
-[71]) (./tex/4_web/POSTmethod.tex
+[94]) (./tex/4_web/POSTmethod.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[72]) (./tex/4_web/file_upload.tex
+[95] [96]) (./tex/4_web/file_upload.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--10
 $     $   [] 
  []
 
-[73] [74] [75]) (./tex/4_web/Ajax_without_libraries.tex
+[97] [98]) (./tex/4_web/Ajax_without_libraries.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[76]
-Underfull \hbox (badness 10000) in paragraph at lines 69--115
+[99]
+Underfull \hbox (badness 10000) in paragraph at lines 70--116
 [][]
  []
 
-[77] [78]) (./tex/4_web/sendjpmail.tex
+[100]
+File: tex/4_web/figs/Ajax_demo.eps Graphic file (type eps)
+ <tex/4_web/figs/Ajax_demo.eps> [101] [102]) (./tex/4_web/sendjpmail.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--12
 $     $   [] 
  []
 
-[79]
+
 Underfull \hbox (badness 2961) in paragraph at lines 45--45
  [][]\JY1/mc/m/n/8 どうしても意味を知 っておきたいという人は 、 \OT1/cmr/m/n/8 
 send-mail \JY1/mc/m/n/8 コマンドの \OT1/cmr/m/n/8 man \JY1/mc/m/n/8 を参照のこ
@@ -569,107 +745,109 @@ Underfull \hbox (badness 10000) in paragraph at lines 45--45
 an=sendmail&dir=jpman-10.1.2%2Fman&sect=0
  []
 
-[80]
+[103]
 Overfull \hbox (10.3311pt too wide) in paragraph at lines 61--62
 []\OT1/cmr/m/it/10 RECIEVER@example.com \JY1/mc/m/n/10 にはあなた本物のメ ール
 アドレスを書くように 。 それから \OT1/cmr/m/it/10 SENDER@example.com
  []
 
-[81] [82]) (./tex/4_web/mojihame.tex
+[104] [105] [106]) (./tex/4_web/mailmagazine.tex
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 6--23
+$     $   [] 
+ []
+
+[107] [108] [109]) (./tex/4_web/mojihame.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--13
 $     $   [] 
  []
 
-[83] [84]
+[110] [111]
 Underfull \hbox (badness 10000) in paragraph at lines 51--63
 [][]
  []
 
-[85]
+[112]
 File: tex/4_web/figs/metropiper_hanzomon.eps Graphic file (type eps)
- <tex/4_web/figs/metropiper_hanzomon.eps> [86]
+ <tex/4_web/figs/metropiper_hanzomon.eps> [113]
 Underfull \hbox (badness 10000) in paragraph at lines 127--142
 [][]
  []
 
-
+[114]
 Underfull \hbox (badness 10000) in paragraph at lines 166--173
 [][]
  []
 
-[87] [88]) (./tex/4_web/read_cookie.tex
+[115] [116]) (./tex/4_web/read_cookie.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--10
 $     $   [] 
  []
 
-[89]) (./tex/4_web/make_cookie.tex
+[117]) (./tex/4_web/make_cookie.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[90] [91]) (./tex/4_web/HTTP_session.tex [92]
+[118] [119]) (./tex/4_web/HTTP_session.tex [120]
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 5--11
 $     $   [] 
  []
 
-[93] [94]
-Underfull \hbox (badness 10000) in paragraph at lines 127--137
+[121] [122]
+File: tex/4_web/figs/session_manager_demo.eps Graphic file (type eps)
+ <tex/4_web/figs/session_manager_demo.eps> [123]
+Underfull \hbox (badness 10000) in paragraph at lines 144--154
 [][]
  []
 
-[95]) [96]
+[124]) [125]
 第5章
-(./tex/5_allenvs/allenvs.tex
-Overfull \hbox (0.91386pt too wide) in paragraph at lines 1--6
-$     $   [] 
+(./tex/5_allenvs/allenvs.tex [126
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 30--41
+[]
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 31--31
- [][]\OT1/cmr/m/n/8 ``ieee'' \JY1/mc/m/n/8 と \OT1/cmr/m/n/8 ``POSIX'' \JY1/mc/
-m/n/8 という単語で検索すれば辿り着く 。 執筆時は \OT1/cmr/m/n/8 2013 \JY1/mc/m/
-n/8 年版が最新で \OT1/cmr/m/n/8 URL \JY1/mc/m/n/8 は
+[127] [128] [129] [130] [131] [132] [133] [134] [135] [136] [137]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 564.
+ [138]
+Overfull \hbox (1.04028pt too wide) in paragraph at lines 574--605
+ [] 
  []
 
-[97
-
-] [98] [99] [100] [101] [102] [103] [104]
-Overfull \hbox (31.91306pt too wide) in paragraph at lines 395--395
- [][]\OT1/cmr/m/n/8 POSIX \JY1/mc/m/n/8 ドキ ュメントの \OT1/cmr/m/n/8 ``9.3 BR
-E'' \JY1/mc/m/n/8 （\OT1/cmtt/m/n/8 http://pubs.opengroup.org/onlinepubs/969991
-9799/basedefs/V1_chap09.html#tag_09_03\JY1/mc/m/n/8 ）
- []
-
-[105] [106] [107] [108]
-Overfull \hbox (0.91386pt too wide) in paragraph at lines 580--586
+[139] [140] [141] [142] [143] [144] [145]
+Overfull \hbox (0.91386pt too wide) in paragraph at lines 922--928
 $     $   []
  []
 
-[109] [110] [111] [112] [113] [114] [115] [116] [117]) [118]
+[146] [147] [148] [149] [150] [151] [152] [153] [154] [155] [156] [157]
+[158] [159]) [160]
 第6章
 (./tex/6_cookingexample/zip2addr.tex
 Overfull \hbox (0.91386pt too wide) in paragraph at lines 4--10
 $     $   [] 
  []
 
-[119
+[161
 
-] [120] [121] [122] [123] [124] [125] [126] [127]
+] [162] [163] [164] [165] [166] [167] [168] [169]
 File: tex/6_cookingexample/figs/zip2addr_screenshot.eps Graphic file (type eps)
 
 
-<tex/6_cookingexample/figs/zip2addr_screenshot.eps> [128]) [129]
+<tex/6_cookingexample/figs/zip2addr_screenshot.eps> [170]) [171]
 \openout2 = `tex/e_afterword/afterword.aux'.
 
 
 (./tex/e_afterword/afterword.tex
 File: tex/e_afterword/figs/yurikamome.eps Graphic file (type eps)
- <tex/e_afterword/figs/yurikamome.eps> [130
+ <tex/e_afterword/figs/yurikamome.eps> [172
 
 
 
 ]
-[131
+[173
 
 ]
 LaTeX Font Info:    Font shape `JT1/mc/bx/n' in size <14.4> not available
@@ -680,21 +858,24 @@ LaTeX Font Info:    Font shape `JY1/mc/bx/n' in size <14.4> not available
 (Font)              Font shape `JY1/gt/m/n' tried instead on input line 70.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 70.
-) [132
+) [174
 
 ] (./SSR2.aux (./tex/0_introduction/introduction.aux)
 (./tex/e_afterword/afterword.aux))
+
+LaTeX Warning: There were undefined references.
+
 
 LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 1702 strings out of 494004
- 21907 string characters out of 6157311
- 102081 words of memory out of 5000000
- 4992 multiletter control sequences out of 15000+600000
- 20005 words of font info for 92 fonts, out of 8000000 for 9000
+ 1770 strings out of 494004
+ 23201 string characters out of 6157311
+ 112395 words of memory out of 5000000
+ 5034 multiletter control sequences out of 15000+600000
+ 21285 words of font info for 96 fonts, out of 8000000 for 9000
  750 hyphenation exceptions out of 8191
- 31i,12n,24p,967b,468s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 31i,16n,24p,967b,468s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on SSR2.dvi (140 pages, 651348 bytes).
+Output written on SSR2.dvi (188 pages, 877808 bytes).

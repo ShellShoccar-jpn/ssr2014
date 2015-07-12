@@ -63,7 +63,7 @@ catを起動する子シェルの段階で処理が止まっており、catコ�
 そして、psコマンドで関連プロセスを確認してみる。
 
 \begin{screen}
-	\verb!$ ps -Ao pid,ppid,comm | egrep $$'|'cat | egrep -v grep'|'ps! \return \\
+	\verb!$ ps -Ao pid,ppid,comm | grep -E $$'|'cat | grep -Ev grep'|'ps! \return \\
 	\verb|$ 13510 12883 sh| \\
 	\verb|$ 13839 13510 cat| \\
 	\verb|$ 13840 13510 yes| \\

@@ -1,0 +1,159 @@
+\section{メールマガジンを送る}
+\label{recipe:mailmagazine}
+
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	会員番号、性別、生年、姓、名、メアドの記されたテキスト会員名簿（members.txt）がある。\\
+\begin{frameboxit}{150.0mm}
+	\verb|0001 f 1927 町田   芹菜   serina@oda.odaq      | \\
+	\verb|0002 m 1941 海老名 歩     namihei@oda.odaq     | \\
+	\verb|0003 f 1929 大和   桜     sakura@enos.odaq     | \\
+	\verb|0004 f 1927 和泉   玉緒   tamao@oda.odaq       | \\
+	\verb|0005 m 1952 蛍田   蓮正   rensho@odawara.odaq  | \\
+	\verb|0006 m 1927 千歳   繁     shigeru@odawara.odaq | \\
+	\verb|0007 f 1974 黒川   若葉   wakaba@tam.odaq      | \\
+	\verb|0008 ? ?    豪徳寺 タマ   tama@oda.odaq        |
+\end{frameboxit}
+
+この人々にメールマガジンを送るにはどうすればよいか。ただし宛先にはBcc:フィールドを用い、会員同士では互いにアドレスが知られないようにしなければならない。
+\end{grshfboxit}
+
+
+\subsection*{回答}
+先程の\ref{recipe:sendjpmail}で紹介したsendjpmailコマンドを活用すれば送れる。具体的な手順は次のとおりである。
+
+\subsubsection*{0) 必要なコマンド}
+
+まず、次のコマンドを用意する。sendjpmailの中でsendmailコマンドを呼び出している以外は全てPOSIXの範囲で書かれたシェルスクリプトである。
+\begin{table}[htb]
+  \caption{本件のメールマガジンを送るために用いるコマンド}
+  \begin{center}
+  \begin{tabular}{c!{\VLINE}>{\PBS\raggedright}m{18zw}|>{\PBS\raggedright}m{22zw}}
+    \HLINE
+        コマンド名 & 目的 & 備考 \\
+    \hline
+    \hline
+        sendjpmail & シェルスクリプトからメールを送るため & 詳細および入手方法は\ref{recipe:sendjpmail}のStep(3/3)参照 \\
+    \hline
+        filehame   & メールテンプレートにアドレス文字列をハメ込むため & Open usp Tukubaiに存在する同名コマンドのシェルスクリプト版クローンである。 \\
+    \hline
+        self       & 列の抽出を簡単に記述するため                     & Open usp Tukubaiに存在する同名コマンドのシェルスクリプト版クローンである。 \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:command_for_sendjpmail}
+  \end{center}
+\end{table}
+下の2つのコマンドに関しては、使わなくても本件の問題をこなすことはできる。しかし、利用するとシェルスクリプトを簡潔に書くことができるため、使うことにした。それぞれのコマンドは下記のURLから入手可能だ。
+
+\begin{verbatim}
+	https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/filehame
+	https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/self
+\end{verbatim}
+
+\subsubsection*{1) メールのテンプレートを用意}
+
+一番肝心なメールマガジンの文面を作る。注意すべき点は次の3つ。
+\begin{itemize}
+  \item ヘッダーセクションと本文セクションの間に必ず空行を挿むこと。
+  \item マルチバイト文字を使う場合はUTF-8にすること。
+  \item 実際の宛名を書き込むBCCフィードは、\verb|###BCCFIELD###|というマクロ文字列にしておくこと。
+\end{itemize}
+以上の点に気をつけながら例えば次のようなテンプレートを作る。
+
+\paragraph{送信メールテンプレート（mailmag201507.txt）}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	From: 山谷 <sanya@staff.odaq>
+	To: <no-reply@staff.odaq>
+	###BCCFIELD###
+	Subject: 沿線だより2015年7月号
+
+	みなさんこんにちは、スタッフの山谷でございます。
+	今月は沿線で開催される花火大会情報を特集します。
+
+	■■■ 花火大会情報 ■■■
+
+	7/11 ○○花火大会
+	7/12 △△花火まつり
+	         ：
+	         ：
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{2) 一斉送信シェルスクリプトを作成}
+
+テンプレートが書けたら、続いて送信用のシェルスクリプトを作成する。
+
+\paragraph{メール一斉送信シェルスクリプト（sendmailmag.sh）}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	[ -f "${1:-}" ] || {
+	  echo "Usage: ${0##*/} <mail_template>" 2>&1
+	  exit 1
+	}
+
+	cat members.txt          |
+	self 5                   | # メアド列だけ取り出す(awk '{print $5}'などと書き換え可)
+	sed 's/^.*$/ <&>/'       | # メアド文字列をインデントしつつ"<>"で囲む
+	sed '1s/^/Bcc:/'         | # 最初の行にだけ、行頭に"Bcc:"を付ける
+	sed '$!s/$/,/'           | # 最後の行以外にだけ、行末にカンマを付ける
+	filehame -lBCCFIELD "$1" | # テンプレートにメアドをハメる
+	sendjpmail                 # UTF-8を7bit化してメールを一括送信
+\end{verbatim}
+\end{frameboxit}
+
+\subsubsection*{3) 送信}
+
+あとは、filemaheコマンドと、sendjpmailコマンドに実行権限とパスを通した状態で、
+
+\begin{screen}
+	\verb!$ ./send_mailmag.sh mailmag201507.txt! \return
+\end{screen}
+
+\subsection*{解説}
+
+この問題は\ref{recipe:sendjpmail}で紹介したsendjpmailコマンドの応用例である。
+
+sendjpmailコマンド、もといそこから呼び出されるsendmailコマンドは、メールテンプレートファイルに宛先をまとめて書き込んでおけば一回実行するだけでその全員にメールを送る。そこで、sedコマンドやOpen usp Tukubaiコマンドを駆使し、会員名簿ファイルから対象者全員分のBcc:フィールドを生成し、テンプレートにハメ込んで送信しているわけである。
+
+回答で示したシェルスクリプトには一つ注目すべき特徴がある。それは、このコードの中ではテンポラリーファイルもループ構文も一切使っていないという点だ。確かに呼び出し先のコマンド内にはループ処理が存在するが、そこに隠蔽したおかげで、このシェルスクリプト自体は非常に可読性の高いものになった。上から下へ読むだけで済むので可読性が非常に高いし、\textbf{コメントだけ残せばそれが処理の手順書}になってしまう。敢えてOpen usp Tukubaiのfilehameやselfコマンドを併用した理由は、それらを積極的に活用すれば可読性の高いコードが書けるということを示したかったからだ。
+
+\subsubsection*{性別と年齢で宛先を絞り込む}
+
+元の会員情報テキストには、性別と年代の情報もあるのでこれで絞り込み、成人男性のみをターゲットにしたメールマガジンを送信する、といった応用も可能だ。
+
+\paragraph{成人男性限定配信用に改造してみる（sendmailmag2.sh）}　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	#! /bin/sh
+
+	[ -f "${1:-}" ] || {
+	  echo "Usage: ${0##*/} <mail_template>" 2>&1
+	  exit 1
+	}
+
+	cat members.txt                 |
+	awk '$3<='"$(($(date +%Y)-20))" | # 成人(20歳以上)だけに絞り込む
+	awk '$2=="m"'                   | # 男性だけに絞り込む
+	self 5                          |
+	sed 's/^.*$/ <&>/'              |
+	sed '1s/^/Bcc:/'                |
+	sed '$!s/$/,/'                  |
+	filehame -lBCCFIELD "$1"        |
+	sendjpmail
+\end{verbatim}
+\end{frameboxit}
+
+最初のcatとAWKコマンド2つ、またその後ろのsedコマンド3つをそれぞれ1行にまとめろという声が聞こえてきそうだが、それはすべきではない。可読性が低下するし、最後にメール送信という桁違いにコストの高い処理が待ち構えているのに、ここでパフォーマンスに凌ぎを削る必要性を感じないからだ。
+
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:Base64}（シェルスクリプトでメール送信）\\
+→\ref{recipe:han_zen}（全角・半角文字の相互変換）

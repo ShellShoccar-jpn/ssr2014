@@ -11,7 +11,7 @@ $\!\!\!\!\!$
 
 \subsection*{回答}
 基本的には\ref{recipe:GETmethod}（CGI変数の取得(GETメソッド編)）と同じである。
-よってまず2つのコマンド（``cgi-name''及び``namread''）をダウンロード\footnote{\verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/cgi-name|、及び \\ \verb|https://github.com/321516/Open-usp-Tukubai/blob/master/COMMANDS.SH/nameread|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
+よってそちらで出てきた2つのコマンド（``cgi-name''及び``namread''）をダウンロード\footnote{\verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/cgi-name|、及び \\ \verb|https://github.com/ShellShoccar-jpn/Open-usp-Tukubai/blob/master/COMMANDS.SH/nameread|にアクセスし、そこにあるソースコードをコピー\&{}ペーストしてもよいし、あるいは``RAW''と書かれているリンク先を「名前を付けて保存」してもよい。}する。
 
 ここでも例をあげて説明しよう。今、Webブラウザーが次のようなHTMLに基づいてCGI変数を送ってくるものとする。
 \paragraph{Webブラウザーが送信する元になるHTML} 　\\
@@ -35,7 +35,7 @@ $\!\!\!\!\!$
 \begin{verbatim}
 	#! /bin/sh
 	
-	Tmp=/tmp/${0##*/}.$$  # 一時ファイルの元となる名称
+	Tmp=/tmp/${0##*/}.$$                               # 一時ファイルの元となる名称
 	
 	dd bs=${CONTENT_LENGTH:-0} count=1 |
 	cgi-name                           > $Tmp-cgivars  # 正規化し、一時ファイルに格納

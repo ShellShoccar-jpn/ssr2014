@@ -4,7 +4,7 @@
 \noindent
 $\!\!\!\!\!$
 \begin{grshfboxit}{160.0mm}
-	郵便番号を入れ、ボタンを押すと……、都道府県欄から市区町村名欄、町名欄まで満たされ、
+	郵便番号を入れ、ボタンを押すと……、都道府県名欄から市区町村名欄、町名欄まで満たされ、
 	あとはせいぜい番地を入力すれば住所欄は入力完了。
 \end{grshfboxit}
 
@@ -23,8 +23,8 @@ $\!\!\!\!\!$
 	|   |
 	|   |-- mkzipdic_kenall.sh ... 郵便番号辞書を作成するシェルスクリプト(地域名用)
 	|   |-- mkzipdic_jigyosyo.sh . 郵便番号辞書を作成するシェルスクリプト(事業所用)
-	|   |                          ・要 zipコマンド、curlコマンド、及び iconv または nkf コマンド
-	|   |                          ・crontabなどから実行させるとよい
+	|   |                          ・要 unzipコマンド、curlコマンド、及び iconv または nkf コマンド
+	|   |                          ・cronなどから実行させるとよい
 	|   |
 	|   +-- kenall.txt ........... 辞書ファイル(地域名用、mkzipdic_kenall.shによって生成される)
 	|   +-- jigyosyo.txt ......... 辞書ファイル(事業所用、mkzipdic_jigyosyo.shによって生成される)
@@ -51,21 +51,21 @@ $\!\!\!\!\!$
 
 1つ目の作業は、辞書づくりである。
 
-郵便番号に対応する住所の情報は、日本郵政のサイトで公開されているが、
+郵便番号に対応する住所の情報は、日本郵便のサイトで公開されているが、
 クライアント（Webブラウザー）から郵便番号を与えられる度にそれを見にいくのは効率が悪い。
 そこで、その情報を手元にダウンロードしておくのだ。
 
 しかし単にダウンロードするだけではない。圧縮ファイルになっているので回答するのはもちろんだが、Shift\_{}JISエンコードされたCSVファイルとしてやってくるうえに、よみがな等の今回の変換に必要の無いデータもあるためそのままの状態では扱いづらい。そこで、UTF-8へエンコードし、CSVファイルをパースし、郵便番号と住所（都道府県名、市区町村名、町名）という情報だけにした状態で辞書ファイルにしておく。こうすることで、毎回の住所検索が低負荷で高速にこなせるようになる。
 
-この作業を担うのが、dataディレクトリーの中にある``mkzipdic\_{}kenall.sh''、``mkzipdic\_{}jigyosyo.sh''という2つのシェルスクリプトだ。2つあるのは、日本郵政サイトにある辞書データが、一般地域名用と大口事業所名用という2つのファイルに分かれているからである。
+この作業を担うのが、dataディレクトリーの中にある``mkzipdic\_{}kenall.sh''、``mkzipdic\_{}jigyosyo.sh''という2つのシェルスクリプトだ。2つあるのは、日本郵政サイトにある辞書データが、一般地域名用と大口事業所名用で2種類のデータに分かれているからである。
 
 \subsubsection*{public\_{}htmlディレクトリー -- 住所補完処理}
 
 前述の作業で作成された辞書ファイルを用い、クライアントから与えられた郵便番号に基づいた住所を住所欄に埋めるのがこのディレクトリーの中にあるプログラムの作業である。
 
-``index.html''は住所欄を提供するHTMLで、``zip2addr.js''は入力された郵便番号のサーバーへの送信・結果の住所欄への入力を担当するJavaScriptだ。そして、受け取った7桁の郵便番号から辞書を引き、得られた住所文字列を返すシェルスクリプトが``zip2addr.ajax.cgi''である。
+``index.html''は住所欄を提供するHTMLで、``zip2addr.js''は入力された郵便番号のサーバーへの送信・結果の住所欄への入力を担当するJavaScriptだ。そして、受け取った7桁の郵便番号から辞書を引き、該当する住所等の文字列を返すシェルスクリプトが``zip2addr.ajax.cgi''である。
 
-名前を見ればわかるがこのシェルスクリプトもAjaxとして動作するので、\ref{recipe:Ajax_without_libraries}（Ajaxで画面更新したい）に従って部分HTMLを返してもよいのだが、ここでは敢えてJSON形式で返すことにした。「もちろんJSONで返すこともできる」ということを示すためだ。JSONで返せば、例えばクライアント側で何らかの汎用JavaScriptライブラリーを利用していて、それと繋ぎ込むといったことも可能というわけだ。
+名前を見ればわかるがこのシェルスクリプトもAjaxとして動作するので、\ref{recipe:Ajax_without_libraries}（Ajaxで画面更新したい）に従って部分HTMLを返してもよいのだが、ここでは敢えてJSON形式で返すことにした。「もちろんJSON形式で返すこともできる」ということを示すためだ。JSON形式で返せば、例えばクライアント側で何らかの汎用JavaScriptライブラリーを利用していて、それと繋ぎ込むといったことも可能というわけだ。
 
 \subsection*{ソースコード}
 
@@ -146,7 +146,7 @@ flg_FORCE=0
 [ \( $# -gt 0 \) -a \( "_$1" = '_-f' \) ] && flg_FORCE=1
 
 # --- cURLコマンド存在チェック ---------------------------------------
-which curl >/dev/null
+type curl >/dev/null 2>&1
 [ $? -eq 0 ] || error_exit 3 'curl command not found'
 
 # --- サイト上のファイルのタイムスタンプを取得 -----------------------
@@ -194,17 +194,17 @@ curl -s $url_ZIPCSVZIP > $tmpf_zipcsvzip
 
 # --- 郵便番号辞書ファイル作成 ---------------------------------------
 unzip -p $tmpf_zipcsvzip                                          |
-# 日本郵便 郵便番号-住所 CSVデータ(Shift_JIS)                     #
-if   which iconv >/dev/null; then                                 #
+# 日本郵便 郵便番号-住所 CSVデータ(Shift_JIS)                       #
+if   type iconv >/dev/null 2>&1; then                             #
   iconv -c -f SHIFT_JIS -t UTF-8                                  #
-elif which nkf   >/dev/null; then                                 #
+elif type nkf   >/dev/null 2>&1; then                             #
   nkf -Sw80                                                       #
 else                                                              #
   error_exit 6 'No KANJI convertors found (iconv or nkf)'         #
 fi                                                                |
-# 日本郵便 郵便番号-住所 CSVデータ(UTF-8変換済)                   #
+# 日本郵便 郵便番号-住所 CSVデータ(UTF-8変換済)                     #
 $dir_MINE/../commands/parsrc.sh                                   | # CSVパーサー(自作コマンド)
-# 1:行番号 2:列番号 3:CSVデータセルデータ                         #
+# 1:行番号 2:列番号 3:CSVデータセルデータ                            #
 awk '$2~/^3|7|8|9$/'                                              |
 # 1:行番号 2:列番号(3=郵便番号,7=都道府県,8=市区町村,9=町) 3:データ
 awk 'BEGIN{z="#"; p="generated"; c="at"; t="'$timestamp_web'"; }  #
@@ -461,19 +461,19 @@ PATH='/usr/local/bin:/usr/bin:/bin'
 # --- エラー終了関数定義 ---------------------------------------------
 error500_exit() {
   cat <<-__HTTP_HEADER
-  Status: 500 Internal Server Error
-  Content-Type: text/plain
-  500 Internal Server Error
-  ($@)
+    Status: 500 Internal Server Error
+    Content-Type: text/plain
+    500 Internal Server Error
+    ($@)
 __HTTP_HEADER
   exit 1
 }
 error400_exit() {
   cat <<-__HTTP_HEADER
-  Status: 400 Bad Request
-  Content-Type: text/plain
-  400 Bad Request
-  ($@)
+    Status: 400 Bad Request
+    Content-Type: text/plain
+    400 Bad Request
+    ($@)
 __HTTP_HEADER
   exit 1
 }
@@ -500,14 +500,14 @@ zipcode=$(echo "_${QUERY_STRING:-}" | # 環境変数で渡ってきたCGI変数�
 
 # --- JSON形式文字列を生成して返す -----------------------------------
 cat "$file_ZIPDIC_KENALL" "$file_ZIPDIC_JIGYOSYO"                  | # 辞書ファイルを開く
-#  1:郵便番号 2～:各種住所データ                                   #
+#  1:郵便番号 2～:各種住所データ                                      #
 awk '$1=="'$zipcode'"{hit=1;print;exit} END{if(hit==0){print ""}}' | # 該当行を取出し(1行のみ)
 while read zip pref city town; do # HTTPヘッダーと共に、JSON文字列化した住所データを出力する
   cat <<-__HTTP_RESPONSE
-  Content-Type: application/json; charset=utf-8
-  Cache-Control: private, no-store, no-cache, must-revalidate
-  Pragma: no-cache
-  {"zip":"$zip","pref":"$pref","city":"$city","town":"$town"}
+    Content-Type: application/json; charset=utf-8
+    Cache-Control: private, no-store, no-cache, must-revalidate
+    Pragma: no-cache
+    {"zip":"$zip","pref":"$pref","city":"$city","town":"$town"}
 __HTTP_RESPONSE
   break
 done
@@ -520,7 +520,7 @@ exit 0
 \subsection*{動作画面}
 
 実際の動作画面を掲載する。
-尚、デモページ\footnote{\verb|http://lab-sakura.richlab.org/ZIP2ADDR/public_html/|}も用意している。
+尚、デモページ\footnote{\verb|http://lab-sakura.richlab.org/ZIP2ADDR/public_html/|}も用意しているので見てもらいたい。
 
 \begin{figure}[htb]
 	\begin{center}

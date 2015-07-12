@@ -65,7 +65,7 @@ mkcookieコマンドのオプションについては、``\verb|--help|''オプ�
 \begin{itemize}
   \item 投稿者の名前（name）は、「6号さん」
   \item 投稿者のメールアドレス（email）は、``\verb|6go3@example.com|''
-  \item 有効期限は、現在（2014/12/30日 10:20:30とする）から1週間後
+  \item 有効期限は、現在（2015/06/01 10:20:30とする）から1週間後
   \item サイトの``/bbs''ディレクトリー以下で有効
   \item ``example.com''というドメインでのみ有効
   \item Secureフラグ（SSLでアクセスしている時のみ）有効
@@ -91,7 +91,7 @@ mkcookieコマンドのオプションについては、``\verb|--help|''オプ�
   \item \verb|Secure|（省略可）
   \item \verb|HttpOnly|（省略可）
 \end{itemize}
-という各種プロパティーを、カンマ区切りで付けていく。もし送りたいCookie変数が複数ある場合は、1つ1つに``Set-Cookie:''行をつけ、expires以降のプロパティーは同じものを使えばよい。
+という各種プロパティーを、セミコロン区切りで付けていく。もし送りたいCookie変数が複数ある場合は、1つ1つに``Set-Cookie:''行をつけ、expires以降のプロパティーは同じものを使えばよい。
 
 このようなCookie文字列を生成するにあたっては、ここまで紹介してきたレシピのうちの2つを活用する。値をURLエンコードするには\ref{recipe:URL_encode}（URLエンコードする）、有効日時の計算には\ref{recipe:utconv}（シェルスクリプトで時間計算を一人前にこなす）だ。有効日時は、``RFC 2616 Sec3.3.1形式''ということになっているが、その形式を作るには次のコードで可能だ。\\
 \begin{frameboxit}{160.0mm}
@@ -113,7 +113,7 @@ mkcookieコマンドのオプションについては、``\verb|--help|''オプ�
 \end{verbatim}
 \end{frameboxit}
 
-Cookieを手づくりするのも、本書のレシピをもってすれば十分可能だ。
+このように、Cookieを手づくりするのも本書のレシピをもってすれば十分可能だ。
 
 
 \subsection*{参照}

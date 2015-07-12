@@ -6,13 +6,13 @@ $\!\!\!\!\!$
 \begin{grshfboxit}{160.0mm}
 	Apacheのログファイル（combined形式）がある。
 	しかしこれ、単純なスペース区切りのファイルではなく、
-	大括弧（\verb|[～]|）やダブルクォーテーションで囲まれている区間は、1つのフィールドとされている。
-	それゆえ、アクセス日時の列、User-Agentの列など、任意のフィールドを抽出することがとても面倒だ。
+	大括弧（\verb|[～]|）やダブルクォーテーションで囲まれている区間は、1つの列とされている。
+	それゆえ、アクセス日時の列、User-Agentの列など、任意の列を抽出することがとても面倒だ。
 	簡単に取り出せるようにならないものか。
 \end{grshfboxit}
 
 \subsection*{回答}
-sedコマンドを4回、trコマンドを2回通せばできる。通すと、各フィールド内の空白文字がアンダースコアに置換され、フィールド区切りとしての空白だけが残るので、以後AWKなどで簡単に列を抽出することができるようになる。
+sedコマンドを4回、trコマンドを2回通せばできる。これらを通すと、各列内の空白文字がアンダースコアに置換され、列区切りとしての空白だけが残るので、以後AWKなどで簡単に列を抽出することができるようになる。
 
 \paragraph{Apacheログを正規化するシェルスクリプト apacomb\_{}norm.sh} 　\\
 \begin{frameboxit}{160.0mm}
@@ -35,7 +35,7 @@ sedコマンドを4回、trコマンドを2回通せばできる。通すと、�
 \end{verbatim}
 \end{frameboxit}
 
-このシェルスクリプトを通した後、日時フィールドが欲しければ\verb|awk '{print $4}'|、同様にHTTPリクエストパラメーターフィールドなら\verb|awk '{print $5}'|、User-Agentフィールドなら\verb|awk '{print $9}'|をパイプ越しに書き足せばよいわけだ。
+このシェルスクリプトを通した後、日時列が欲しければ\verb|awk '{print $4}'|、同様にHTTPリクエストパラメーター列なら\verb|awk '{print $5}'|、User-Agent列なら\verb|awk '{print $9}'|をパイプ越しに書き足せばよいわけだ。
 
 \subsection*{解説}
 
@@ -48,7 +48,7 @@ sedコマンドを4回、trコマンドを2回通せばできる。通すと、�
 \end{verbatim}
 \end{frameboxit}
 
-User-Agentフィールド（\verb|"mozilla/5.0 (Windows NT 6.1 ……  Safari/537.36"|の部分）が欲しいと思って、AWKで抽出しようとしても
+この中のUser-Agent列（\verb|"mozilla/5.0 (Windows NT 6.1 ……  Safari/537.36"|の部分）が欲しいと思って、AWKで抽出しようとしても
 \begin{screen}
 	\verb|$ awk '{print $12}' httpd-access.log| \return \\
 	\verb|"Mozilla/5.0| \\
@@ -67,7 +67,7 @@ User-Agentフィールド（\verb|"mozilla/5.0 (Windows NT 6.1 ……  Safari/53
 	\verb|$ |
 \end{screen}
 
-\subsubsection*{各々のsedとtrは何をやってるのか？}
+\subsubsection*{apacomb\_{}norm.shのsedとtrは何をやってるのか？}
 
 1つ1つ説明していこう。
 
@@ -81,7 +81,7 @@ User-Agentフィールド（\verb|"mozilla/5.0 (Windows NT 6.1 ……  Safari/53
 ブラケットで囲まれている区間\verb|[～]|も同様に、前後に改行を挿んで、この区間を単独の行にする。
 
 \paragraph{sed \#4}
-ダブルクォーテーション、またはブラケットで始まる行は、先程行を独立させた区間なので、これらの行にある空白をそうでない文字列に置換する。
+ダブルクォーテーション、またはブラケットで始まる行は、先ほど行を独立させた区間なので、これらの行にある空白を空白でない文字列（今回の例では``\verb|_|''）に置換する。
 
 \paragraph{tr \#1}
 改行を全部取り除く。

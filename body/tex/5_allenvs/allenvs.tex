@@ -1,48 +1,90 @@
+他の章では冒頭で「問題」を提示し、それに対する「回答」という形で役立つレシピを様々紹介しているが、この章ではそういった具体的な問題に取り組むのではなく、どのUNIX系OS上でも動くコードを記述するために都度確かめてておきたい事項を辞典形式でまとめた。
+
+次の3項目から構成される。
+\begin{quotation}
 \noindent
-$\!\!\!\!\!$
-\begin{grshfboxit}{160.0mm}
-	シェルスクリプトは環境依存が激しいから……
-\end{grshfboxit}
+\begin{description}
+  \item[1 .文法・変数] シェル（Bourne Shell）自身が解釈する構文や変数について、どの環境でも使える書き方を記しているす。
+  \item[2. 正規表現]   コマンドやその実装によって通用する正規表現のメタ文字の範囲が異なるため、それを体系的にまとめている。
+  \item[3. コマンド]   POSIXの範囲で使えるコマンド、オプションはどの範囲かということをコマンドのアルファベット順にまとめている。
+\end{description}
+\end{quotation}
+どの環境でも使えるシェルスクリプトを記述する際には本書を作業机に置いておき、確認したい項目をこまめに引くようにするとよいだろう。
 
-\noindent
-などとよく言われ、敬遠される。それなら共通しているものだけ使えばいいのだが、それについてまとめているところがなかなかないので書いてみることにした。
+尚、基本的にはPOSIX（``IEEE Std 1003.1''）に準拠させるという観点でまとめているが、一部例外もある。POSIXは様々なUNIX系OSが持つ仕様の共通部分を元に規定された経緯をもつが、OS間で相反するために採用できなかった仕様というものが一部存在し、現存するOSにもこれを残しているものがある。従ってPOSIXに準拠していれば、UNIX系OSで100\%{}通用するとは言えないため、そのような例外については個別に解説している。
 
-\subsection*{「どの環境でも使える」ようにするには？}
+またPOSIX文書には記されていない、現場で得た実戦的なノウハウも記してある。
 
-\subsubsection*{まずは定義から}
-
-まずは、何をもって「どの環境でも使える」とするのかについて定義する。じつはこれがなかなか難しい。
-あまりこだわりすぎると「古いものも含め、既存のUNIX全てで使えるものでなければダメ」ということになってしまう。しかし、私個人としては\textbf{今も現役（=メンテナンスされている）のUNIX系OSで使いまわせること}にこだわりたい。そこで
-
-\begin{quote}
-  「どの環境でも使える」$=$「POSIXで規定されている」
-\end{quote}
-
-\noindent
-と定義することにした。
-
-とはいっても全てのOSやディストリビューションについて調べられるわけではないので、この記事では基本的に最新のPOSIX\footnote{執筆時点の最新は``IEEE Std 1003.1, 2013 Edition''である}で定義されていることをもって、どの環境でも使えると判断するようにした。従って、互換性確保のため、シェルの中で使ってよい機能は\textbf{Bourneシェルの範囲}ということにし、bash,ksh,zsh,あるいはcsh等の拡張機能は使わないようにする。
-
-ただし、いくらPOSIXで規定されているといっても実際の環境でそれを採用しているものが稀であるとか、POSIXの範囲ではどうしても不足していてるものの殆どの環境で同じように使える、といったものに関しては書くことにする。つまり「基本的にはPOSIXに準拠する」ということとし、実用性と乖離したドキュメントにするつもりはない。
-
-\subsubsection*{結局どうすればいいのか}
-
-というわけで、「どの環境でも使える」シェルスクリプトを書くのであれば基本的にPOSIXの範囲で書くように気を付けることだ。
-具体的には``IEEE Std 1003.1''を記したWebページ\footnote{``ieee''と``POSIX''という単語で検索すれば辿り着く。執筆時は2013年版が最新でURLは\verb|http://pubs.opengroup.org/onlinepubs/9699919799/|である。}を確認、
-特に``Shell \& Utilities''というメニューに書いてある文法やコマンド仕様を読み、今から使おうとしている文法・コマンド・コマンド引数がそこで規定されているかどうかを確認する。
-
-併せて、本章に記したレシピを頭に入れておくといいだろう。
-POSIXドキュメントに基づく解説のみならず、現場で得た実戦的なノウハウも記してある。
 
 \section*{■第一部 文法・変数など}
 
 まずはシェル自身の文法や変数、多くのUNIXコマンドに共通する仕様などについて、どの環境でも動くようにするための注意点を記す。
 
+\section{環境変数等の初期化}
+\label{allenvs:initenv}
+
+シェルスクリプトが起動した時、現時点で設定されている環境変数等に影響されて意図しない動作をするようでは、「どの環境でも動く」いう趣旨を満たしているとは言えない。従って環境変数等は一般的な内容に初期化しておくべきである。
+
+次のコードをシェルスクリプトの冒頭に書いておくことをお勧めする。
+
+\noindent
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	set -u
+	umask 0022
+	PATH='/usr/bin:/bin'
+	IFS=$(printf ' \t\n_'); IFS=${IFS%_}
+	export IFS LC_ALL=C LANG=C PATH
+\end{verbatim}
+\end{frameboxit}
+最初の行の\verb|set -u|は、環境変数等の初期化とは若干趣旨が異なるが、未定義の変数を読み出そうとした場合にエラー終了させるための宣言であり、strictなコードを記述したい場合に役立つだろう。
+
 \section{シェル変数}
 
-まず配列は使えない。従ってbashに存在する組込変数である\verb|PIPESTATUS|も使えない。\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUSさようなら）を参照してもらいたい。
+まず配列は使えない。従ってbashに存在する組込変数である\verb|PIPESTATUS|も使えない。同じことをがやりたいのなら\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUSさようなら）を参照してもらいたい。
 
-変数の中身を部分的に取り出す記述に関して使っても大丈夫なものに関しては、POSIXの第2.6.2項\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_06_02|}を見るとまとまっている。
+変数の中身を部分的に取り出す記述に関して使っても大丈夫なものは、次のとおりである。
+
+\begin{table}[H]
+  \caption{POSIXで対応しているシェル変数の展開書式}
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{38zw}}
+    \HLINE
+    書式 & 条件と動作 \\
+    \hline
+    \hline
+      \verb|${var:-word}| & 変数\verb|$var|が未定義か空文字の場合は、文字列``\verb|word|''が読み出される。 \\
+    \hline
+      \verb|${var-word}|  & 変数\verb|$var|が未定義の場合は、文字列``\verb|word|''が読み出される。 \\
+    \hline
+      \verb|${var:=word}| & 変数\verb|$var|が未定義か空文字の場合は、文字列``\verb|word|''が読み出されると共に変数\verb|$var|にも代入する。 \\
+    \hline
+      \verb|${var=word}|  & 変数\verb|$var|が未定義の場合は、文字列``\verb|word|''が読み出されると共に変数\verb|$var|にも代入する。 \\
+    \hline
+      \verb|${var:?word}| & 変数\verb|$var|が未定義か空文字の場合は、文字列``\verb|word|''が読み出されると共に、エラー扱い（戻り値\verb|$?|が非ゼロ）にする。 \\
+    \hline
+      \verb|${var?word}|  & 変数\verb|$var|が未定義の場合は、文字列``\verb|word|''が読み出されると共に、エラー扱い（戻り値\verb|$?|が非ゼロ）にする。 \\
+    \hline
+      \verb|${var:+word}| & 変数\verb|$var|が未定義でも空文字でもなければ、文字列``\verb|word|''が読み出される。 \\
+    \hline
+      \verb|${var+word}|  & 変数\verb|$var|が未定義でなければ、文字列``\verb|word|''が読み出される。 \\
+    \hline
+      \verb|${#var}|      & 変数\verb|$var|の文字数（現在のロケールに応じた文字数）が読み出される。 \\
+    \hline
+      \verb|${var#pattern}|  & 変数\verb|$var|に格納されている文字列の左端に、パターン``\verb|pattern|''があれば、それが最小マッチングで切り落とされて読み出される。例えば\verb|var="/a/b/c"; echo "${var#*/}"|の場合、``\verb|a/b/c|''が読み出される。 \\
+    \hline
+      \verb|${var##pattern}| & 変数\verb|$var|に格納されている文字列の左端に、パターン``\verb|pattern|''があれば、それが最大マッチングで切り落とされて読み出される。例えば\verb|var="/a/b/c"; echo "${var##*/}"|の場合、``\verb|c|''が読み出される。 \\
+    \hline
+      \verb|${var%pattern}| & 変数\verb|$var|に格納されている文字列の右端に、パターン``\verb|pattern|''があれば、それが、最小マッチングで切り落とされて読み出される。例えば\verb|var="/a/b/c"; echo "${var%/*}"|の場合、``\verb|/a/b|''が読み出される。 \\
+    \hline
+      \verb|${var%%pattern}| & 変数\verb|$var|に格納されている文字列の右端に、パターン``\verb|pattern|''があれば、それが、最大マッチングで切り落とされて読み出される。例えば\verb|var="/a/b/c"; echo "${var%%/*}"|の場合、``\verb||''（空文字）が読み出される。 \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:signal_no}
+  \end{center}
+\end{table}
+
+いずれも、条件に該当しない場合は元のシェル変数に格納されている文字列が読み出される。
 
 \section{スコープ}
 
@@ -52,11 +94,9 @@ POSIXドキュメントに基づく解説のみならず、現場で得た実戦
 \section{正規表現}
 \label{allenvs:regexp}
 
-これはAWK、grep、sed等、コマンドによっても使えるメタキャラは違うし、\verb|grep|なら`-E`オプションを付けるかどうかでも違うし、さらにGNU版でしか使えないものもあるので注意が必要。\verb|grep|コマンド*BSD上でもGNU版が採用されている場合がある。→\ref{allenvs:grep}（grepコマンド）参照
+正規表現に関して注意しなければならないことは、コマンドの種類（AWK、grep、sedなど）や、また同じコマンドでも環境によって使えるメタ文字の範囲が異なるということだ。詳細に関しては本章\textbf{第二部（正規表現）}を参照してもらいたい。
 
-しかし、 \textbf{正規表現メモ}\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html|}というスバラシいまとめページがあるのでここを見れば、使っても互換性が維持できるメタキャラがすぐわかる。
-
-え、シェル変数の正規表現？それは一部シェルの独自拡張機能なので使えない。
+ちなみに、「シェル変数の正規表現は？」と質問する人がいるかもしればいが、それは一部シェルの独自拡張機能なのでどの環境でも使えるものではない。
 
 \noindent
 →\ref{allenvs:locale}（ロケール）、\ref{allenvs:letterclass}（文字クラス）も参照
@@ -69,6 +109,9 @@ POSIXドキュメントに基づく解説のみならず、現場で得た実戦
 これの正式名称は「POSIX文字クラス」\footnote{使えるもの一覧は、\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03_05|参照}という。その名のとおりPOSIX準拠であるのだが、Raspberry PiのAWKなど、一部の実装ではうまく動いてくれない。
 
 まぁ、POSIXに準拠してないそっちの実装が悪いといってしまえばそれまでなのだが、そもそも設定されているロケールによって全角を受け付けたり受け付けなかったりして環境の影響を受けやすいので使わない方がよいだろう。
+
+\noindent
+→\ref{recipe:zenkaku_regexp}（全角文字に対する正規表現の扱い）も参照
 
 \section{乱数}
 \label{allenvs:random_number}
@@ -91,13 +134,36 @@ POSIXドキュメントに基づく解説のみならず、現場で得た実戦
 
 \subsection*{/dev/urandomを使うのが現実的}
 
-ではどうすればいいか。POSIXで定義されているものではないが、\verb|/dev/urandom|を乱数源に使うのが現実的だと思う。例えば次のようにしてdd、od、sedコマンドを組み合わせれば0$\sim$4294967295の範囲の乱数が得られる。
+ではどうすればいいか。POSIXで定義されているものではないが、\verb|/dev/urandom|を乱数源に使うのが現実的だと思う。例えば次のようにしてod、sedコマンドを組み合わせれば0$\sim$4294967295の範囲の乱数が得られる。
 
 \begin{screen}
-	\verb!$ dd if=/dev/urandom bs=1 count=4 2>/dev/null | od -A n -t u4 | sed 's/[^0-9]//g'! \return
+	\verb!$ od -A n -t u4 -N 4 /dev/urandom | sed 's/[^0-9]//g'! \return
 \end{screen}
 
 最後の段でtrコマンドではなくsedコマンドを使っている理由については、\ref{allenvs:tr}（trコマンド）を参照。
+
+\subsection*{/dev/urandomをどうしても使いたくない場合}
+
+乱数の品質は\verb|/dev/urandom|ほど高くないものの、代替手段はある。psコマンドの結果は実行するたびに必ず変化するのでこれを種として取り入れる。
+
+具体的には、プロセスID、実行時間、CPU使用率、メモリ使用量の各一覧あたりが刻々と変化するのでこれらを取得するとよいだろう。更に、現在日時も加え、これらに基づいて$2^32$未満の範囲でAWKのsrand()に渡す乱数の種を生成しているのが次のコードだ。
+
+\noindent
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	LF=$(printf '\\\n_');LF=${LF%_}     # sedで改行を扱うための定義
+	(ps -Ao pid,etime,pcpu,vsz; date) | # 乱数源(プロセス情報一覧+日時) 
+	od -t d4 -A n -v                  | # 数値化する
+	sed 's/[^0-9]\{1,\}/'"$LF"'/g'    |
+	grep '[0-9]'                      |
+	tail -n 42                        | # 100000000未満の数字を
+	sed 's/.*\(.\{8\}\)$/\1/g'        | # 42個まで用意(2^32未満にするため)
+	awk 'BEGIN{a=-2147483648;}        # # 上の値を足してsigned long値を作る
+	     {a+=$1;}                     #
+	     END{srand(a);print rand();}'
+\end{verbatim}
+\end{frameboxit}
+
 
 \section{ロケール}
 \label{allenvs:locale}
@@ -166,28 +232,34 @@ POSIXドキュメントに基づく解説のみならず、現場で得た実戦
 \end{verbatim}
 \end{frameboxit}
 
-\paragraph*{\verb|LC\_{}ALL=C|を設定し、Cロケールにしてコマンド実行} 　\\
+\paragraph*{\verb|LC\_{}ALL=C|及び\verb|LANG=C|を設定し、Cロケールにしてコマンド実行} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	echo 'ほげHOGE' | LC_ALL=C awk '{print length($0)}'
+	echo 'ほげHOGE' | LC_ALL=C LANG=C awk '{print length($0)}'
 \end{verbatim}
 \end{frameboxit}
 
-\paragraph*{予め\verb|LC\_{}ALL=C|を設定しておく} 　\\
+\paragraph*{予め\verb|LC\_{}ALL=C|及び\verb|LANG=C|を設定しておく} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	export LC_ALL=C                            # シェルスクリプトの冒頭でこれを実行
+	export LC_ALL=C LANG=C                     # シェルスクリプトの冒頭でこれを実行
 	   :
 	   :
 	echo 'ほげHOGE' | awk '{print length($0)}' # そして目的のコマンドを実行
 \end{verbatim}
 \end{frameboxit}
 
-ちなみに、いにしえの\verb|export|は、\verb|=|を使って変数の定義とexport化を同時に行えないということだが、今どきのPOSIXのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#export|}によれば使えることになっている。
+ロケール系環境変数には現在、\verb|LANGUAGE|と\verb|LC_*|と\verb|LANG|がある。このうち各種\verb|LC_*|については\verb|LC_ALL|の設定によって全て上書きされるが、\verb|LANG|には効かないので\verb|LC_ALL|と\verb|LANG|を両方とも``\verb|C|''にする。最初に列挙した\verb|LANGUAGE|は最も強い効力を持つようだが、\verb|LANG|や\verb|LC_ALL|に``\verb|C|''が設定されている場合は無視されるということである\footnote{GNU gettextドキュメント2.3.3項 \\ \verb|http://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html#The-LANGUAGE-variable|}。
+
+ちなみに、いにしえの\verb|export|は、\verb|=|を使って変数の定義とexport化を同時に行えなかったということだが、今どきのPOSIXのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#export|}によれば使えることになっている。
+　 \\
+
+\noindent
+→\ref{allenvs:initenv}（環境変数等の初期化）、\ref{recipe:sort}（sortコマンドの基本と応用とワナ）も参照
 
 \section{\$((式))}
 
-よく「exprコマンドを使え」というが、今どきは\verb|$((式))|もPOSIXで規定されており、使っても問題無い。
+よく「計算をさせたければexprコマンドを使え」というが、今どきは\verb|$((式))|もPOSIXで規定されており、使っても問題無い。
 
 ただ、数字の頭に``\verb|0|''や``\verb|0x|''を付けると、それぞれ8進数、16進数扱いされるのでexprコマンドとの間で移植をする場合は気を付けなければならない。（exprコマンドは、数字の先頭に``\verb|0|''が付いていても常に10進数と解釈される）
 
@@ -251,7 +323,7 @@ elifの後もelseの後も同様であるし、case文でも条件分岐した�
 
 シェル関数の中で用いる変数を、その関数内だけで有効なローカル変数にする場合に用いる修飾子だが、これはPOSIXでは規定されていない。しかし、関数内ローカルな変数は簡単に用意できる。小括弧で囲ってサブシェルを作ればその中で代入した値は外へは影響しないからだ。
 
-次のシェル関数``localvar\_{}sample()''を見てもらいたい。中身を丸ごと小括弧で囲ったシェル関数で定義した次のシェル変数\verb|$a|、\verb|$b|、\verb|$c|は、関数終了後に消滅するし、外部に同名の変数があってもその値を壊すことはない。（だだし初期値はそちらの値になっている）
+次のシェル関数``localvar\_{}sample()''を見てもらいたい。中身を丸ごと小括弧で囲ったシェル関数で定義した次のシェル変数\verb|$a|、\verb|$b|、\verb|$c|は、関数終了後に消滅するし、外部に同名の変数があってもその値を壊すことはない。（だだし初期値はそれら外部変数の値になっている）
 
 \paragraph{シェル関数内でローカルな変数を作る} 　\\
 \begin{frameboxit}{160.0mm}
@@ -271,9 +343,285 @@ elifの後もelseの後も同様であるし、case文でも条件分岐した�
 
 例えば組込変数\verb|PIPESTATUS|に依存したシェルスクリプトが既にあって、それをどの環境でも使えるように書き直したいと思った場合、実は可能だ。詳しいやり方については、\ref{recipe:Sayonara_PIPESTATUS}（PIPESTATUSさようなら）を参照してもらいたい。
 
-\section*{■第二部 コマンド}
+\section*{■第二部 正規表現}
 
-いくらシェルスクリプトの文法に気をつけても、呼び出すコマンドが一部の環境でしか通用しないような使い方では意味をなさない。次に、どの環境でも使えるシェルスクリプトを書くために気をつけるべきコマンドの各論を紹介する。
+正規表現は、コマンドによって使えるメタ文字の範囲が異なるうえ、実装によってはPOSIXの範囲で使えるメタ文字の他に独自のメタ文字を追加していることもある。おかげで、結局どのコマンドでどのメタ文字が使えるのか（使ってもよいのか）わからず混乱しがちだ。そこで、POSIXの範囲を意識しながら「どのUNIXコマンドでも使える正規表現」をまとめた。
+
+\subsection*{知っておくべきメタ文字セットは3つ}
+
+知っておくべきメタ文字セットは、次に示す2種類+1サブセットの3つだけである。
+\begin{description}
+  \item[1.] BRE（基本正規表現）メタ文字セット\footnote{原文はPOSIXの9.3節``Basic Regular Expression''参照。\\（\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03|）}
+  \item[2.] ERE（拡張正規表現）メタ文字セット\footnote{原文はPOSIXの9.4節``Extended Regular Expression''参照。\\（\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04|）}
+    \begin{description}
+      \item[$2\prime$.] AWKのサブセット
+     \end{description}
+\end{description}
+もちろん、これ以外にもGNU拡張正規表現メタ文字セットやPerl拡張正規表現メタ文字セット、JavaScript拡張正規表現メタ文字セットなどいくつかあるのだが、UNIXにおける「どの環境でも（=POSIXで）使える」という特長を持たせたいのであれば、それらを意識する必要はなく、この3つさえおさえておけばよい\footnote{例えPOSIXにこだわらないとしても、他のものは大抵EREの拡張になっているので、一旦EREを覚えておくと整理しやすいだろう。}。
+
+\subsubsection*{各コマンドは、どのメタ文字セットに対応しているか}
+
+知っておくべきメタ文字セットが3つあることがわかったところで、各コマンドがそれら3つのうちどれに対応しているかをまとめたのが次の表だ。この表を見て、対応しているメタ文字セットがわかったら、次項のメタ文字セット各一覧を見ればよい。
+\begin{table}[htb]
+  \caption{各コマンドが対応しているメタ文字セット}
+  \begin{center}
+  \begin{tabular}{ll}
+    \HLINE
+    コマンド   & 対応しているメタ文字セット \\
+    \hline
+    AWK                 & EREのAWKサブセット \\
+    ed                  & BREメタ文字セット  \\
+    egrep               & BREメタ文字セット  \\
+    ex                  & BREメタ文字セット  \\
+    grep(\verb|-E|なし) & BREメタ文字セット  \\
+    grep(\verb|-E|あり) & EREメタ文字セット  \\
+    more                & BREメタ文字セット  \\
+    sed                 & BREメタ文字セット  \\
+    vi                  & BREメタ文字セット  \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:signal_no}
+  \end{center}
+\end{table}
+
+参考までに述べておくと、\textbf{GNU拡張やPerl拡張、JavaScript拡張は、いずれもEREのスーパーセット}である。ということはすなわち、EREメタ文字セットを覚えておけばそれらの上でも動くということだ。
+
+また、多くのgrep（\verb|-E|オプションなし）では、一部のEREメタ文字がバックスラッシュ付きで使えたりする（例えば``\verb|\+|''や``\verb!\|!''）が、それらはGNU拡張であってgrep本来のものではない。
+
+目的のコマンドがどのメタ文字セットに対応しているかわかったところで、次項より各メタ文字セットを紹介する。
+
+\subsection*{1. BRE（基本正規表現）メタ文字セット}
+
+（BREに限らないが）メタ文字セットの中は、メタ文字を使う場所に応じてさらに3つのグループに分類される。それを踏まえて読んでもらいたい。
+
+\subsubsection*{a-1. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット外部）}
+まずはブラケット（\verb![!〜\verb!]!）の外部についてのみまとめる。ブラケット内部ではここで記す多くのメタ文字が意味を失ったり、あるいは意味が変わったり、ブラケット内部でのみ意味を持つメタ文字が新たに登場するため、次の表でまとめることにする。
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        メタ文字 & 意味 \\
+    \hline
+    \hline
+        \verb!^! & 文字列（通常は行）の先頭にマッチ（先頭以外では通常文字と見なされる） \\
+    \hline
+        \verb!$! & 文字列（通常は行）の末尾にマッチ（末尾以外では通常文字と見なされる） \\
+    \hline
+        \verb![!…\verb!]! & \verb![!と\verb!]!で囲まれた中で列挙した文字のいずれか1文字にマッチ \\
+    \hline
+        \verb![^!…\verb!]! & \verb![^!と\verb!]!で囲まれた中で列挙した文字\textbf{以外}の任意の1文字にマッチ \\
+    \hline
+        \verb!*! & \textbf{【繰返し指定子】} 直前に記述した文字が0文字以上連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!\{!$n$\verb!\}! & \textbf{【繰返し指定子】} 直前に記述した文字が$n$文字連続していることを指定する。 \\
+    \hline
+        \verb!\{!$n$\verb!,\}! & \textbf{【繰返し指定子】} 直前に記述した文字が$n$文字以上連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!\{!$m$\verb!,!$n$\verb!\}! & \textbf{【繰返し指定子】} 直前に記述した文字が$m$文字以上、$n$文字以下連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!\(!…\verb!\)! & \textbf{【包括指定子】} \verb!\(!と\verb!\)!で囲まれた範囲の文字列を、上記の繰返し指定子の1文字として扱わせたい場合、もしくはsed等で置換後に再利用したい文字列範囲を指定したい場合に用いる。 \\
+    \hline
+        \verb!\!$n$ & \textbf{【後方参照子】} $n$番目に記した包括指定子でマッチした文字列にマッチする。例えば、\verb!ABC123ABCABC!という文字列を\verb!^\([A-Z]*\)123\1*$!という正規表現文字列に掛ければ、\verb!\1!は\verb!ABC!という文字列と見なされるため、この場合\verb!\1*!は末尾にある2つの\verb!ABC!にマッチする。 \\
+    \hline
+        \verb!\!$x$ & 上記のうちでバックスラッシュで始まらないメタ文字自身、あるいはAWKやsedなどで正規表現の始まりを示すために用いた文字自身を指定したい場合に、$x$の部分にその文字を記述すればそれにマッチ \\
+    \hline
+        \verb!\\! & バックスラッシュ（\verb!\!）自身にマッチ \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:BRE_a1}
+  \end{center}
+\end{table}
+
+\subsubsection*{a-2. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット内部）}
+既に述べたように、ブラケット（\verb![!〜\verb!]!）で囲まれた区間は外側とは使えるメタ文字が異なり、次の表のとおりである。
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        メタ文字 & 意味 \\
+    \hline
+    \hline
+        \verb!^! & 開きブラケットの直後（``\verb!-!''-や``\verb!]!''自身を指定したい場合でもそれらより手前）に記述すると、否定の意味になる。 \\
+    \hline
+        \verb!-! & 文字を列挙する代わりに範囲で指定できる。例えば\verb!A-Z!ならば文字\verb!A!から\verb!Z!を全て列挙したことと等価。もし``\verb!-!''自身を指定したい場合は、閉じブラケットの直前（閉じブラケット``\verb![!''自身も指定したい場合はそちらよりも後ろ）に記述する。 \\
+    \hline
+        \verb![! & 閉じブラケット（\verb!]!）の直前（だだし``\verb!-!''自身も指定する場合はそちらの方が後ろ）に記述すると``\verb![!''自身を指定することができる。 \\
+    \hline
+        \verb!]! & 開きブラケット（\verb![!）の直後に記述すると``\verb!]!''自身を指定することができる。 \\
+    \hline
+        \verb!\!$x$ & 上記のうちでバックスラッシュで始まらないメタ文字自身、あるいはAWKやsedなどで正規表現の始まりを示すために用いた文字自身を指定したい場合に、$x$の部分にその文字を記述すればそれにマッチ \\
+    \hline
+        \verb!\\! & バックスラッシュ（\verb!\!）自身にマッチ \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:BRE_a1}
+  \end{center}
+\end{table}
+
+実はBRE（後述のEREも含む）では、上記に加えて次の表に示すメタ文字列が定義されているのだが、間違った実装がされていたり、使える実装にお目にかかったことがなかったり、といったものであるため、使うことはお勧めできない。
+
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        メタ文字 & 意味 \\
+    \hline
+    \hline
+        \verb![:!\textit{word}\verb!:]! & \textbf{【POSIX文字クラス】} \textit{word}の部分には\verb!alnum!（アルファベットと数字全部）、\verb!cntrl!（制御文字全部）、\verb!lower!（アルファベット小文字全部）、\verb!space!（スペースとタブと改ページ）、\verb!alpha!（アルファベット全部）、\verb!!digit!（数字全部）、\verb!print!（制御文字以外の文字全部）、\verb!upper!（アルファベット大文字全部）、\verb!blank!（スペースとタブ）、\verb!graph!（制御文字とスペース、タブ以外全部）、\verb!punct!（句読点全部）、\verb!xdigit!（16進数文字全部）が指定できる。実際に使うときは\verb![[:lower:][:blank:]]!などのように使う。しかし、一部の実装ではブラケット記号が一重でないと動かないといった間違った実装になっているものがある。 \\
+    \hline
+        \verb![.!\textit{word}\verb!.]! & 例えば\verb![[.hoge.]]!と記述したら、\verb!\(hoge\)\{1,\}!と等価な意味を持つようだ。しかし、使える実装を見たことがない。後者の記述で事足りるからだろうか？ \\
+    \hline
+        \verb![=!$x$\verb!=]! & 例えば\verb![=a=]!と記述したら、``\verb!a!''にも``$\grave{a}$''にも``$\hat{a}$''にもマッチするもので、実際に使う時は\verb![[=a=]bc]!のように記述する。だがこれも、使える実装を見たことがない。アクセント記号付の文字を素直に書き並べれば済むので無くても事足りるからだろうか？ \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:BRE_a1}
+  \end{center}
+\end{table}
+
+\subsubsection*{b. 置換後の文字列指定（sed等の``\verb!s/!\textit{A}\verb!/!\textit{B}\verb!/!''における\textit{B}の部分）で使えるメタ文字一覧}
+
+正規表現は、マッチする文字列を検索するためだけでなく、マッチしたその文字列を加工（置換）するためにも用いられる。sedコマンドにおける``\verb|s/|\textit{A}\verb|/|\textit{B}\verb|/|''はそのための代表的な書式であるが、この\textit{B}の部分で使えるメタ文字を次の表に示す。
+
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        メタ文字 & 意味 \\
+    \hline
+    \hline
+        \verb!\!$n$ & $n$番目に記した包括指定子（\verb!\(!…\verb!\)!）で囲まれた範囲にマッチした文字列に置き換えられる。 \\
+    \hline
+        \verb!&! & マッチした文字列全体に置き換えられる。 \\
+    \hline
+        \verb!\!$x$ & 上記のメタ文字（\verb!&!）、またsed等で正規表現の始まりを示すために用いた文字自身を指定したい場合、$x$の部分に記せばその文字自身を指定することができる。 \\
+    \hline
+        \verb!\\! & バックスラッシュ（\verb!\!）自身を指定したい場合に用いる。 \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:BRE_a1}
+  \end{center}
+\end{table}
+
+\subsection*{2. ERE（拡張正規表現）メタ文字セット}
+
+EREはほぼBREを拡張したものになっているが、純粋の上位互換ではないので注意。EREのメタ文字一覧も表で示すが、予め違いを簡単に列挙すると次のとおりである。
+\begin{itemize}
+  \item 使えるメタ文字を追加。（``\verb!+!''、``\verb!?!''、``\verb!|!''））
+  \item \textbf{【非互換】} バックスラッシュでエスケープしていた括弧類（``\verb!\(!''、``\verb!\)!''、``\verb!\{!''、``\verb!\}!''）がバックスラッシュ不要に。
+  \item \textbf{【非互換】} 後方参照（``\verb!\!$n$''）が無保証に。（実際に使えない実装がある）
+\end{itemize}
+
+使えるメタ文字が増えている（+、?、|）が、純粋な上位互換ではないので注意。具体的には、バックスラッシュでエスケープしていた括弧類のメタ文字（\(、\)、\{、\}）がバックスラッシュ不要になっている点、そして後方参照が保証されていない（実際に使えない実装がある）点である。
+
+\subsubsection*{a-1. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット外部）}
+BREと同様に、まずマッチを掛ける文字列（置換前文字列）として指定できるメタ文字をまとめると、次の表のとおりになる。
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        メタ文字 & 意味 \\
+    \hline
+    \hline
+        \verb!^! & 文字列（通常は行）の先頭にマッチ（先頭以外では通常文字と見なされる） \\
+    \hline
+        \verb!$! & 文字列（通常は行）の末尾にマッチ（末尾以外では通常文字と見なされる） \\
+    \hline
+        \verb![!…\verb!]! & \verb![!と\verb!]!で囲まれた中で列挙した文字のいずれか1文字にマッチ \\
+    \hline
+        \verb![^!…\verb!]! & \verb![^!と\verb!]!で囲まれた中で列挙した文字\textbf{以外}の任意の1文字にマッチ \\
+    \hline
+        \verb!*! & \textbf{【繰返し指定子】} 直前に記述した文字が0文字以上連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!+! & \textbf{【繰返し指定子】} 直前に記述した文字が1文字以上連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!{!$n$\verb!}! & \textbf{【繰返し指定子】} 直前に記述した文字が$n$文字連続していることを指定する。 \\
+    \hline
+        \verb!{!$n$\verb!,}! & \textbf{【繰返し指定子】} 直前に記述した文字が$n$文字以上連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!{!$m$\verb!,!$n$\verb!}! & \textbf{【繰返し指定子】} 直前に記述した文字が$m$文字以上、$n$文字以下連続していることを指定し、後続の繰返し指定子よりも優先して可能な限り最大数マッチさせようとする。 \\
+    \hline
+        \verb!?! & \textbf{【繰返し指定子】} 直前に記述した文字が0文字以上1文字以下連続していることを指定する。 \\
+    \hline
+        \verb!(!…\verb!)! & \textbf{【包括指定子】} \verb!(!と\verb!)!で囲まれた範囲の文字列を、上記の繰返し指定子の1文字として扱わせたい場合、もしくはsed等で置換後に再利用したい文字列範囲を指定したい場合に用いる。または、後述の論理和指定子の範囲を限定したい場合に用いる。 \\
+    \hline
+        \verb!|! & \textbf{【論理和指定子】} この指定子の左の文字列または右の文字列でマッチさせることを指定する。左右の範囲は、前述の包括指定子の中であればその始端または終端まで、無ければ正規表現文字列全体の始端または終端まで（``\verb!^!''や``\verb!$!''をも内包させる）と見なされる。例えば\verb!^ABC|DEF$!は、\verb!^(ABC|DEF)$!ではなく\verb!(^ABC)|(DEF$)!の意味に解釈される。 \\
+    \hline
+        \verb!\!$x$ & 上記のうちでバックスラッシュで始まらないメタ文字自身、あるいはAWKやsedなどで正規表現の始まりを示すために用いた文字自身を指定したい場合に、$x$の部分にその文字を記述すればそれにマッチ \\
+    \hline
+        \verb!\\! & バックスラッシュ（\verb!\!）自身にマッチ \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:BRE_a1}
+  \end{center}
+\end{table}
+
+\subsubsection*{a-2. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット内部）}
+これはBREと同じ。
+
+\subsubsection*{b. 置換後の文字列指定で使えるメタ文字一覧}
+これもBREと同じ。たが置換後文字列を指定できるコマンドでEREに対応しているものは、POSIXの範囲では存在しない。（AWKは後述するのでここでは除く）
+
+\subsection*{$2\prime$. AWKで使えるメタ文字セット}
+
+AWKは基本的にはEREのメタ文字セットに対応しているが、残念なことにブレース（``\verb!{!''、``\verb!}!''）には対応していない。従って\textbf{ブレースによる繰返し指定はできず、大きな弱点}になっている。
+
+一応2008年版のPOSIXではこれも含めてEREに完全対応するように勧告されたようだが、まだ年数が浅いために現存するAWK実装で対応しているものは少なく、実質的に完全なEREは通用しない。
+
+またAWKでは、正規表現を制御する各構文や関数に正規表現文字列が渡される前に、AWK言語としてのエスケープ処理がなされるので注意が必要だ。具体的には、次のとおりである。
+
+\begin{table}[H]
+  \begin{center}
+  \begin{tabular}{l!{\VLINE}>{\PBS\raggedright}m{42zw}}
+    \HLINE
+        文字 & 何の文字に置換されるか \\
+    \hline
+    \hline
+        \verb!\\! & バックスラッシュ\verb|\|に置換される。 \\
+    \hline
+        \verb!\/! & スラッシュ\verb|/|に置換される。 \\
+    \hline
+        \verb!\"! & ダブルクォーテーション\verb|"|に置換される。 \\
+    \hline
+        \verb!\!\textit{ddd} & \textit{ddd}が3桁の8進数である時、その値の文字コードに該当する文字に置換される。 \\
+    \hline
+        \verb!\a! & ビープ音（BEL:文字コード0x07）に置換される。 \\
+    \hline
+        \verb!\b! & バックスペース（BS:文字コード0x08）に置換される。 \\
+    \hline
+        \verb!\f! & 改ページ（FF:文字コード0x0c）に置換される。 \\
+    \hline
+        \verb!\n! & 改行（LF:文字コード0x0a）に置換される。 \\
+    \hline
+        \verb!\r! & 行頭復帰（CR:文字コード0x0d）に置換される。 \\
+    \hline
+        \verb!\t! & 水平タブ（HT:文字コード0x09）に置換される。 \\
+    \hline
+        \verb!\v! & 垂直タブ（VT:文字コード0x0b）に置換される。 \\
+    \hline
+        \verb!\!(上記以外) & 未定義（通常は単にバックスラッシュを除いた文字に置換される） \\
+    \HLINE
+  \end{tabular}
+  \label{tbl:AWK_escape}
+  \end{center}
+\end{table}
+
+\subsubsection*{a-1. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット外部）}
+ブレースを用いた繰返し指定子（``\verb!{!''、``\verb!}!''）以外の全てのEREメタ文字セットに対応している。ただし、バックスラッシュで始まる文字列を与えると先程の表のとおりのエスケープ処理を受ける。
+
+\subsubsection*{a-2. マッチを掛ける文字列（置換前文字列）のメタ文字一覧（ブラケット内部）}
+BREと同じ。ただし、バックスラッシュで始まる文字列を与えると先程の表のとおりのエスケープ処理を受ける。
+
+\subsubsection*{b. 置換後の文字列指定（sub,gsub関数の第2引数）で使えるメタ文字一覧}
+これも基本的にはBREと同じなのだが、次の2点に注意しなければならない。
+\begin{itemize}
+  \item ``\verb|\|$n$''（$n$は自然数）というメタ文字には対応していない（これに対応しているのはGNU AWKで追加されたgensubという関数である）。
+  \item 先程の表のとおりのエスケープ処理を受ける。このため、特に注意が必要なのは、\textbf{メタ文字として予約されている}``\verb|&|''\textbf{自身を指定したい場合}である。具体的には、ダブルクォーテーションの内側で``\verb|\&|''と書きたいのであれば、バックスラッシュ``\verb|\|''がエスケープされないように``\verb|\\&|''と記されなければならない。
+\end{itemize}
+
+
+\section*{■第三部 コマンド}
+
+いくらシェルスクリプトの文法、また正規表現に気をつけても、呼び出すコマンドが一部の環境でしか通用しないような使い方では意味をなさない。次に、POSIXの範囲で使用可能なオプションや、同じ使い方をしているにも関わらず生じる動作の違い、そして対策、といったことを中心に、どの環境でも通用するコマンド使用法の各論を紹介する。
 
 \section{``[''コマンド}
 
@@ -299,6 +647,15 @@ FreeBSD 9.xに標準で入っているAWKでは、\verb|-1*0|を計算すると`
 ところがこの挙動は同じFreeBSDでも10.xでは確認されないし、GNU版AWKでも起こらないようだ。
 
 このようにして、同じ0であっても``\verb|-0|''という二文字で返してくる場合のある実装もあるので注意してもらいたい。
+
+\subsubsection*{マイナスを取り去るには}
+
+計算で得られた結果に0を足せばよいようだ。
+\begin{screen}
+	\verb|$ awk 'BEGIN{print -1*0+0}'| \return \\
+	\verb|0| \\
+	\verb|$ |
+\end{screen}
 
 \subsection*{0始まり即値の解釈の違い}
 
@@ -339,7 +696,7 @@ FreeBSD 9.xに標準で入っているAWKでは、\verb|-1*0|を計算すると`
 	\verb|$ |
 \end{screen}
 
-とやると、きちんと要素数を返すだろう。しかし実装によってはこれに対応しておらず、エラー終了してしまうものがある。このため、例えば次ようにユーザー関数\verb|arlen()|を作り、配列の要素数はその関数で数えるようにすべきだ。
+とやると、きちんと要素数を返すだろう。しかし実装によってはこれに対応しておらず、エラー終了してしまうものがある。このため、例えば次ようにユーザー関数\verb|arlen()|を作り、配列の要素数はその\verb|arlen()|で数えるようにすべきだ。
 
 \paragraph{配列の要素数を数える関数を自作しておく} 　\\
 \begin{frameboxit}{160.0mm}
@@ -355,14 +712,14 @@ FreeBSD 9.xに標準で入っているAWKでは、\verb|-1*0|を計算すると`
 
 \subsubsection*{length()が使えるなら使いたい}
 
-「length関数が使えるなら使いたい！」というワガママなアナタは、こうすればいい。
+「length()が使えるなら使いたい！」というワガママなアナタは、こうすればいい。
 
-\paragraph{lengthが使えるなら使いたいワガママなアナタへ} 　\\
+\paragraph{length()が使えるなら使いたいワガママなアナタへ} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
 	# シェルスクリプトの冒頭で、配列に対してlength()を使ってもエラーにならないことを確認
 	if awk 'BEGIN{a[1]=1;b=length(a)}' 2>/dev/null; then
-	  arlen='length'  # ←エラーにならないならlength
+	  arlen='length'  # ←エラーにならないならlength()
 	else
 	  arlen='arlen'   # ←エラーになるなら独自関数"arlen"
 	fi
@@ -386,13 +743,13 @@ FreeBSD 9.xに標準で入っているAWKでは、\verb|-1*0|を計算すると`
 
 \subsection*{gensub関数は使えない}
 
-GNU版AWKには独自拡張がいくつかあるが、中でも注意すべき点はgensub関数がそれであること。互換性を優先するなら、多少不便かもしれないがsub関数やgsub関数を使こと。その他、こまごまと気を付けるべきことについては「GNU AWKの`--posix`オプションに関するまとめ@kbkさんのWebページ\footnote{\verb|http://www.kt.rim.or.jp/~kbk/gawk-30/gawk_15.html#SEC135|}が大変参考になる。
+GNU版AWKには独自拡張がいくつかあるが、中でも注意すべき点はgensub関数がその一つであることだ。互換性を優先するなら、多少不便かもしれないがsub関数やgsub関数を使こと。その他、こまごまと気を付けるべきことについては、GNU AWKマニュアル``\verb|--posix|''オプションに関する記述\footnote{\verb|http://www.gnu.org/software/gawk/manual/gawk.html#index-gawk_002c-extensions_002c-disabling|}が参考になる。
 
 \subsection*{正規表現では有限複数個の繰り返し指定ができない}
 
-AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち、``\verb|?|''（0$\sim$1個）と``\verb|*|''（0個以上）と``\verb|+|''（1個以上）は使えるが、2個以上の任意の数を指定するための``\verb|{数}|''には対応していない。GNU版AWKでは独自拡張して使えるようになっているのだが。
+AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち、``\verb|?|''（0$\sim$1個）と``\verb|*|''（0個以上）と``\verb|+|''（1個以上）は使えるが、2個以上の任意の数を指定するための``\verb|{数}|''には対応していない。GNU版AWKでは独自拡張して使えるようになっているのだが……。
 
-その他の基本正規表現\footnote{POSIXドキュメントの``9.3 BRE''（\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03|）において規定されているメタ文字}については全部使えるのだが、正規表現メモさんWebサイトのAWKの記述に\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#AWK|}に詳しくまとまっているので、そちらを見るのが便利だろう。
+AWKで使える正規表現のメタ文字に関しては、本章第二部（正規表現）で詳しく紹介しているので参照してもらいたい。
 
 \subsection*{整数の範囲}
 
@@ -403,7 +760,7 @@ AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち�
 	\verb|2.14748e+09| 
 \end{screen}
 
-上記の例は、$\mathrm{0x7FFFFFFF}(=2^{32}-1)$より大きい整数を扱えないAWK実装である。このようなことがあるので、桁数の大きな数字を扱わせようとする時は注意が必要だ。計算をせず、単に表示させたいだけなら文字列として扱えばよい。
+上記の例は、$\mathrm{0x7FFFFFFF}$（符号付き4バイト整数の最大値）より大きい整数を扱えないAWK実装である。このようなことがあるので、桁数の大きな数字を扱わせようとする時は注意が必要だ。計算をせず、単に表示させたいだけなら文字列として扱えばよい。
 
 \subsection*{ロケール}
 
@@ -483,47 +840,29 @@ AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち�
 
 \section{echoコマンド}
 
-例えば次のシェルスクリプト``\verb|echo_test.sh|''を見てもらいたい。これは引数で与えられた文字列を1行ずつ表示するという動きをするように作ってある。
+結論から言うと、どこでも動くよううにしたい場合、次の項目に1つでも当てはまるものには\textbf{echoコマンドは使うべきではない。}
+\begin{itemize}
+  \item 先頭がハイフンで始まる可能性がある文字列
+  \item エスケープシーケンスを含む可能性のある文字列
+\end{itemize}
 
-\paragraph{引数を1つ1行で表示するシェルスクリプト echo\_{}test.sh} 　\\
-\begin{frameboxit}{160.0mm}
-\begin{verbatim}
-	#! /bin/sh
-	for arg in "$@"; do
-	  echo "$arg"
-	done
-\end{verbatim}
-\end{frameboxit}
+理由は次のとおりである。
 
-このシェルスクリプトで、引数の一つに``\verb|-e|''を付けて実行してみる。FreeBSDでは\verb|-e|もちゃんと表示される一方で、例えば\verb|/bin/sh|の正体がbashになっているLinuxの場合は``\verb|-e|''がうまく表示されない。理由は、bashのechoコマンドが``\verb|-e|''を、表示すべき文字列ではなくてオプションとして解釈するからだ。
+\subsection*{対応しているオプションが異なる}
 
-\paragraph{FreeBSDのshで前述のシェルスクリプトを動かすと……} 　\\
-\begin{screen}
-	\verb|$ ./echo_test.sh -s -e -d| \return \\
-	\verb|-s| \\
-	\verb|-e| \\
-	\verb|-d| \\
-	\verb|$ |
-\end{screen}
+例えば、Linuxのechoコマンドは\verb|-e|、\verb|-n|オプションに対応しており、第一引数に指定すれば、それを表示はせずにオプション文字列として解釈する。一方、FreeBSDのechoコマンド（外部コマンド版）は\verb|-n|オプションのみに対応しており、第一引数に``\verb|-e|''を与えれば表示する。また一方、AIXのechoコマンドはどちらにも対応していないため、第一引数に``\verb|-e|''や``\verb|-n|''を与えるとどちらも表示する。このように対応がバラバラだからだ。
 
-\paragraph{Linuxのbashで前述のシェルスクリプトを動かすと……} 　\\
-\begin{screen}
-	\verb|$ ./echo_test.sh -s -e -d| \return \\
-	\verb|-s| \\
-	\verb|| \\
-	\verb|-d| \\
-	\verb|$ |
-\end{screen}
+\subsection*{エスケープシーケンスに反応する実装がある}
 
-これはbashで実装されているechoコマンドは、``\verb|-e|''を文字列ではなくオプションとして解釈するためだ。つまり上記のコードは環境によって挙動が変わっているわけで、互換性に問題があるということになる。
+例えば\verb|\n|は改行を意味するエスケープシーケンスであるが、FreeBSDのechoはそのまま``\verb|\n|''と表示する。一方、Linuxのechoは\verb|-e|オプションが付けられた時のみ改行に置換される。また一方、AIXのechoは常に改行に置換する。
 
-ちなみにPOSIXにおけるshのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/echo.html|}によれば、\textbf{echoにはオプションが全く規定されていない}\footnote{詳しく読むと「System Vなど\verb|-n|オプションが効かない環境があるのでそれがやりたい時はprintfコマンドを使え」と書いてある。}。従って、どの環境でも動くシェルスクリプトを目指すなら、FreeBSDのshでも使える\verb|-n|オプションすら使うべきではないのだ。
+\textbf{AIXのechoはデフォルトでエスケープシーケンスを解釈する}のだ。「それPOSIX的にどうなの？」と困惑するかもしれないが、POSIXのechoのman\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/echo.html|}にはちゃんとエスケープシーケンスの記述がある。
 
 \subsection*{対策}
 
-このように、環境によっては与えられた文字列がオプションとみなされて意図せぬ動作をするので、\textbf{どんな文字列が入っているかわからない変数を扱いたければprintfコマンド}を使うようにすべきだ。
+\textbf{どんな文字列が入っているかわからない変数を扱う場合}（ハイフンで始まらないとかエスケープシーケンスを含まないとわかっているならそのままでよい）、例えば次のようにprintfコマンドを使うなどして回避すること。
 
-\paragraph{echoのオプション反応問題を回避する対策を講じたもの} 　\\
+\paragraph{echoのオプション反応問題を回避する例（printfで代用）} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
 	#! /bin/sh
@@ -532,8 +871,6 @@ AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち�
 	done
 \end{verbatim}
 \end{frameboxit}
-
-もちろん、ハイフンで始まらないとわかっているならそのままでよいのだが。
 
 \section{execコマンド}
 
@@ -561,7 +898,7 @@ AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち�
 
 \begin{screen}
 	\verb|$ export name=val| \return \\
-	\verb|$ awk 'BEGIN{print ENVIRON["name"];}'| \return \\
+	\verb|$ exec awk 'BEGIN{print ENVIRON["name"];}'| \return \\
 	\verb|val| \\
 	\verb|$ |
 \end{screen}
@@ -573,6 +910,11 @@ AWKの正規表現は繰り返し指定が苦手。文字数指定子のうち�
 	\verb|val| \\
 	\verb|$ |
 \end{screen}
+
+\section{foldコマンド}
+\label{allenvs:fold}
+
+一般的に、ファイル名として``\verb|-|''を指定すると標準入力の意味と解釈されるが、本コマンドに対しては使わない方がよい。POSIXにはfoldコマンドでも、``\verb|-|''は標準入力だと解釈されると確かに書いてあるのだが、BSDの実装では真面目に``\verb|-|''というファイルを開こうとしてエラーになってしまう。
 
 \section{grepコマンド}
 \label{allenvs:grep}
@@ -598,7 +940,7 @@ $\!\!\!\!\!$
 
 なんと、GPLソフトウェア排除に力を入れているFreeBSDでも、grepコマンドはGNU版だ。関係者によれば、主に速さが理由で、grepだけは当面GNU版を提供するのだという。よって、POSIX標準だと思っていたメタ文字が実はGNU拡張だったということがある。代表的なものは``\verb|\+|''や``\verb|?|''や``\verb!\|!''である。
 
-POSIX標準grepで使える正規表現は、\verb|-E|オプション無しの場合にはPOSIXの9.3節``Basic Regular Expression''\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_03|}で規定されているものだけ。\verb|-E|オプション付きの場合には同9.4節``Extended Regular Expression''\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html#tag_09_04|}で規定されているものだけだ。詳しくは、「正規表現メモ」さんによる日本語解説\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#POSIX|}が分かりやすいかもしれない。
+POSIX標準grepで使える正規表現メタ文字セットは、\verb|-E|オプション無しの場合にはBRE（基本正規表現）だけ。\verb|-E|オプション付きの場合にはERE（拡張正規表現）で規定されているものだけだ。詳しくは、本章第二部（正規表現）を参照のこと。
 
 \section{headコマンド}
 
@@ -610,10 +952,10 @@ POSIX標準grepで使える正規表現は、\verb|-E|オプション無しの�
 
 さて、それでは\verb|-c|オプションが使えない環境で何とかして同等のことができないものか……。大丈夫、ddコマンドでできる。
 
-試に``12345''という5バイト（改行コードを加えれば6バイト）の文字列から先頭の3バイトを切り出してみよう。bs（ブロックサイズ）を1バイトとして、それを3つ（count）と指定すればよい。
+試に``12345''という5バイト（改行コードを加えれば6バイト）の文字列から先頭の3バイトを切り出してみよう。bs（ブロックサイズ）を3バイトとして、それを1つ（count）と指定すればよい。
 
 \begin{screen}
-	\verb!$ echo 12345 | dd bs=1 count=3 2>/dev/null! \return \\
+	\verb!$ echo 12345 | dd bs=3 count=1 2>/dev/null! \return \\
 	\verb|123$ |
 \end{screen}
 
@@ -621,7 +963,7 @@ POSIX標準grepで使える正規表現は、\verb|-E|オプション無しの�
 
 \begin{screen}
 	\verb|echo 12345 > /tmp/hoge.txt| \return \\
-	\verb|$ dd if=/tmp/hoge.txt bs=1 count=3 2>/dev/null| \return \\
+	\verb|$ dd if=/tmp/hoge.txt bs=3 count=1 2>/dev/null| \return \\
 	\verb|123$ |
 \end{screen}
 
@@ -629,7 +971,7 @@ POSIX標準grepで使える正規表現は、\verb|-E|オプション無しの�
 
 \section{ifconfigコマンド}
 
-これもPOSIXで規定されていないコマンドだし、最近ではLinuxなど使わない傾向にあるコマンドであるが、全ての環境で動くことを目指すならまだまだ外せないコマンドである。
+これもPOSIXで規定されていないコマンドだし、最近のLinuxでは使われない傾向にあるコマンドであるが、全ての環境で動くことを目指すならまだまだ外せないコマンドである。
 
 さて、実行中のホストに振られているIPアドレスを調べたい時にこのコマンドを使いたいことがあるが、各環境での互換性を確保するには2つのことに注意しなければならない。
 
@@ -670,7 +1012,7 @@ killコマンドで送信シグナルを指定する際は、名称でも番号�
 
 「え、たったこれだけ!?」と思うだろうか。もちろんシグナルの種類がこれだけしかないわけではない。ただ、\textbf{その他のシグナルは名称と番号が環境によってまちまち}なのだ。例えば``SIGBUS''は、FreeBSDでは10だが、Linuxでは7、といった具合である。
 
-従って、上記以外のシグナルを指定したい場合は名称（"SIG"の接頭辞を略した文字列）で行うこと。使える名称自体は、POSIXでも規定されているとおり\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html|}、豊富にある。
+従って、上記以外のシグナルを指定したい場合は名称（"SIG"の接頭辞を略した文字列）で行うこと。使える名称自体は、POSIXのsignal.hに関する項\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/signal.h.html|}にも記されているとおり、豊富にある。
 
 \subsection*{\verb|-l|オプションは避ける}
 
@@ -681,21 +1023,23 @@ killコマンドで\verb|-l|オプションを指定すれば、使えるシグ�
 
 mktempコマンドもやはりPOSIXで規定されたものではない。よって、実際に使えない環境がある。
 
-しかしシェルスクリプトを本気で使いこなすにはテンポラリーファイルが欠かせず、そんな時に便利なコマンドがmktempなのだが……。どうすればいいだろうか。
+シェルスクリプトを本気で使いこなすにはテンポラリーファイルが欠かせず、そんな時に便利なコマンドがmktempなのだが……。どうすればいいだろうか。簡易的な対処と本格的な対処の2種類を用意した。
 
-\underline{一意性のみでセキュリティーは保証しない簡易的なもの}\footnote{もしセキュリティーを確保したい場合は良質な乱数源が必要となり、そうなると/dev/urandom等に頼らざるを得ない。→\ref{allenvs:random_number}（乱数）参照}なら、下記のようなコードを追加しておけば作れる。
+\subsection*{簡易的なmktemp}
+
+\underline{一意性のみでセキュリティーは保証しない簡易的なもの}\footnote{もしセキュリティーを確保したい場合は良質な乱数源が必要となる。→\ref{allenvs:random_number}（乱数）参照}なら、下記のようなコードを追加しておけば作れる。
 
 \paragraph{mktempコマンドが無い環境で、その「簡易版」を用意するコード} 　\\
 \begin{frameboxit}{160.0mm}
 \begin{verbatim}
-	which mktemp >/dev/null 2>&1 || {
+	type mktemp >/dev/null 2>&1 || {
 	  mktemp_fileno=0
 	  mktemp() {
 	    (
 	      filename="/tmp/${0##*/}.$$.$mktemp_fileno"
 	      touch "$filename"
-	      chmod "$filename"
-	      echo "$filename"
+	      chmod 600 "$filename"
+	      printf '%s\n' "$filename"
 	    )
 	    mktemp_fileno=$((mktemp_fileno+1))
 	  }
@@ -707,13 +1051,19 @@ mktempコマンドもやはりPOSIXで規定されたものではない。よっ
 
 ただし引数は無視され、必ず/tmpディレクトリーに生成されるので、それでは都合が悪い場合は適宜書き換えておくこと。それから、``\verb|mktemp_fileno|''という変数をグローバルで利用しているので書き換えないようにも注意すること。
 
+\subsection*{本格的なmktemp}
+
+POSIX版mktempコマンド\footnote{\verb|https://github.com/ShellShoccar-jpn/misc-tools/blob/master/mktemp|}を作ってしまったので、これをダウンロードして使えばよい。
+
+書式はCoreutils版\footnote{\verb|https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html#mktemp-invocation|}に似せてある。ただし動作パフォーマンス確保のため、/binや/usr/binの中に元々のmktempが存在すればそちらを使う（execする）ようにしてあるので、\textbf{あまり一般的でないオプションは使わない方がよい。}
+
 \section{nlコマンド}
 
 POSIXでも規定されている\verb|-w|オプションであるが、環境によって挙動が異なるので注意。
-（尚、\verb|-w|オプションはPOSIXでデフォルト値が設定されているため、\textbf{このオプションを記述しなくても同様の問題が起こるので注意！}\footnote{一方、catコマンドの\verb|-n|オプションではこの問題は起こらないようだ。}）
+（尚、\verb|-w|オプションはPOSIXでデフォルト値が設定されているため、\textbf{このオプションを記述しなくても同様の問題が起こるので注意！}\footnote{POSIXの範囲ではないのだが、catコマンドの\verb|-n|オプションではこの問題は起こらないようだ。}）
 
 \verb|-w|オプションとは行番号に割り当てる桁数を指定するものであるが、問題は指定した桁数よりも桁があふれてしまった時である。
-溢れた場合の規定は定義されていないので、実装によって解釈が異ってしまったようだ。
+あふれた場合の動作はPOSIXでは定義されていないので、実装によって解釈が異ってしまったようだ。
 
 2つの実装を例にとるが、まずBSD版のnlコマンドでは、溢れた分の上位桁は消されてしまう。
 
@@ -756,12 +1106,45 @@ POSIXでも規定されている\verb|-w|オプションであるが、環境に
 行番号数字の直後につくのはデフォルトではタブ（``\verb|\t|''）なので、GNU版では桁数が増えるとやがてズレることになる。
 BSD版はズレることはない代わりに上位桁が見えないので、何行目なのかが正確にはわからない。
 
+\subsection*{対応方法}
+
+AWKコマンドの組み込み変数である\verb|NR|を使うとよい。さらに、次のようにしてprintf関数を併用すれば、GNU版nlコマンドと同等の動作をする。
+
+\paragraph{GNU版nlコマンドのデフォルトと同じ動作をする} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	awk '{printf("%6d\t%s\n",NR,$0);}'
+\end{verbatim}
+\end{frameboxit}
+
 \section{printfコマンド}
 \label{allenvs:printf}
+
+\subsection*{キャラクターコードによる即値指定}
 
 互換性を重視するなら、\verb|\xHH|（``\verb|HH|''は任意の16進数）という16進数表記によるキャラクターコード指定をしてはいけない。これは一部のprintfの独自拡張だからだ。代わりに\verb|\OOO|（``\verb|OOO|''は任意の8進数）という3桁の8進数表記を用いること。
 
 これは、AWKコマンドのprintf関数、sprintf関数についても同様である。
+
+\subsection*{負の16進数}
+
+負の値を16進数に変換すると環境によって結果が異なる。例えば-1を16進数に変換すると次のとおりだ。
+
+\paragraph{32ビット実装の場合} 　\\
+\begin{screen}
+	\verb!$ printf '%X\n' -1! \return \\
+	\verb|FFFFFFFF|                   \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{64ビット実装の場合} 　\\
+\begin{screen}
+	\verb!$ printf '%X\n' -1! \return \\
+	\verb|FFFFFFFFFFFFFFFF|           \\
+	\verb|$ |
+\end{screen}
+
+従って負の値を16進数に変換するのはあまり勧められないが、どうしてもしたいなら下8桁のみを取り出すべきだろう。もちろんその場合、-2147483648より小さい値は扱えない。
 
 \section{psコマンド}
 
@@ -769,9 +1152,9 @@ BSD版はズレることはない代わりに上位桁が見えないので、�
 
 \subsection*{\verb|-x|オプションは避ける}
 
-「制御端末を持たないプロセスを含める」という働きであるが、このオプションは使わない方がいい。そもそもPOSIXにおけるpsコマンドのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/ps.html|}にはないし、少なくともGNU版とBSD版では解釈が異なるようだ。
+\verb|-x|オプションは「制御端末を持たないプロセスを含める」という働きを持つが、このオプションは使わない方がいい。そもそもPOSIXにおけるpsコマンドのmanページ\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/ps.html|}には記載されていないし、少なくともGNU版とBSD版では解釈が異なるようだ。
 
-例えばCGI(httpd)によって起動されたプロセス上で、\verb|-a|オプションも\verb|-x|オプションも付けずに自分に関するプロセスのみを表示しようとした場合、前者では表示されるものが後者では\verb|-x|を付けた場合に初めて表示されるなどの違いがある。
+例えばCGI(httpd)によって起動されたプロセス上で、何のオプションも付けずに自分のプロセスのみを表示した場合にあるGNU版で表示されたプロセスが、BSD版では\verb|-x|を付けた場合に初めて表示されるなどの違いがある。
 
 結局のところ、互換性を重視するなら、大文字である\verb|-A|オプションを用いてとにかく全てを表示（\verb|-ax|に相当）させる方がよいだろう。
 
@@ -795,7 +1178,14 @@ BSD版はズレることはない代わりに上位桁が見えないので、�
 
 \subsection*{補足.親プロセスID(PPID)}
 
-Linuxでは、親プロセスIDが0になるのはPIDが1の``init''だけだ。しかし、FreeBSD等では他の様々なシステムプロセスの場合はそれ以外のプロセスの親も0になる場合がある。これは、psコマンドの違いというよりカーネルの違いであるが、互換性のあるプログラムを書くときには注意すべきところだ。
+Linuxでは、親プロセスIDが0になるのはPIDが1のinitだけだ。しかし、FreeBSD等ではinit以外のシステムプロセスの親プロセスIDも0になる場合がある。これは、psコマンドの違いというよりカーネルの違いであるが、互換性のあるプログラムを書くときには注意すべきところだ。
+
+\section{readlinkコマンド}
+\label{allenvs:readlink}
+
+このコマンドは、与えられた引数がシンボリックリンクだった場合にその実体のパスを教えてくれるという便利なコマンドだ。しかし、残念ながらPOSIXのコマンド群には存在しない。
+
+直接的な答えではないが、シンボリックリンクの実体を求めるシェルスクリプトのコードを\ref{recipe:fileoverwriting}（一時ファイルを作らずファイルを更新する）で紹介しているので参考にしてもらいたい。
 
 \section{sedコマンド}
 
@@ -828,11 +1218,11 @@ sedにもまたAWK同様に、複数の注意すべき点がある。
 
 これも、GNU版は独自拡張されているので注意。
 
-sedの中で使えるコマンドに関して迷ったら、POSIXのsedコマンド\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/sed.html|}を見る。また、sedで使用可能な正規表現については、正規表現メモさんの記述\footnote{\verb|http://www.kt.rim.or.jp/~kbk/regex/regex.html#SED|}が便利だろう。
+sedの中で使えるコマンドに関して迷ったら、POSIXのsedコマンドマニュアル\footnote{\verb|http://pubs.opengroup.org/onlinepubs/9699919799/utilities/sed.html|}を見る。また、sedが対応している正規表現メタ文字セットはBRE（基本正規表現）であり、本章第二部（正規表現）にその一覧を記してあるので参照してもらいたい。
 
 \subsection*{標準入力指定の``\verb|-|''}
 
-多くのコマンドではファイル名として``\verb|-|''を指定すると標準入力を意味するのだが、sedではこれを使ってはならない。BSD版のsedは、標準入力ではなく真面目に``\verb|-|''というファイルを開こうとしてエラーになるからだ。
+一般的に、ファイル名として``\verb|-|''を指定すると標準入力の意味と解釈されるが、本コマンドに対しては使わない方がよい。POSIXにはsedコマンドでも、``\verb|-|''は標準入力だと解釈されると確かに書いてあるのだが、BSDの実装では真面目に``\verb|-|''というファイルを開こうとしてエラーになってしまう。
 
 \subsection*{ロケール}
 
@@ -864,12 +1254,12 @@ sedの中で使えるコマンドに関して迷ったら、POSIXのsedコマン
 
 	cat foo.txt         |
 	awk '{print NR,$0}' | # ←行頭に行番号をつける
-	sort -k1nr,1        | # ←行番号で降順にソート
+	sort -k 1nr,1       | # ←行番号で降順にソート
 	sed 's/^[0-9]* //'    # ←行番号を除去
 \end{verbatim}
 \end{frameboxit}
 
-また、ソート対象のテキストデータが標準入力ではなくファイルであることがわかっているのであれば、exコマンドを使うという芸当もある。\footnote{bsdhack氏のブログ記事\verb|http://blog.bsdhack.org/index.cgi/Computer/20100513.html|より引用}
+また、ソート対象のテキストデータが標準入力ではなくファイルであることがわかっているのであれば、exコマンドを使うという芸当もある。\footnote{bsdhack氏のブログ記事\verb|http://blog.bsdhack.org/index.cgi/Computer/20100513.html|より}
 
 \paragraph{逆順出力するサンプルコード \#2} 　\\
 \begin{frameboxit}{160.0mm}
@@ -931,7 +1321,7 @@ testコマンドを用いて、全ての環境で安全に文字列の一致、�
 \section{trコマンド}
 \label{allenvs:tr}
 
-このコマンドは各環境の方言が強く残るコマンドの一種で、無難に作るならなるべく使用を避けたいコマンドだ。
+このコマンドは各UNIXの系譜基づく方言が強く残るコマンドの一種で、どこでも動くプログラムを無難に作るならなるべく使用を避けたいコマンドだ。
 
 例えばアルファベットの全ての大文字を小文字に変換したい場合、
 \begin{quote}
@@ -940,13 +1330,13 @@ testコマンドを用いて、全ての環境で安全に文字列の一致、�
 \end{quote}
 という2つの書式がある。範囲指定の際にブラケット\verb|[|、\verb|]|が要るかどうかだ。
 BSD系の場合、ブラケットは通常文字として解釈されるので、これを用いると置換対象文字として扱われてしまう。
-しかしながら前者のブラケットは置換前も置換後も全く同一の文字なので幸いにしてどこでも動く。
+しかしながらSystem V系の書式にあるブラケットは置換前も置換後も全く同一の文字なので幸いにしてどこでも動く。
 従って、このようなケースでは前者の記述をとるべきだろう。
 
-しかし、-dオプションで文字を消したい場合はそうはいかない。
+しかし、\verb|-d|オプションで文字を消したい場合はそうはいかない。
 \begin{quote}
 	\verb|tr -d '[a-z]'| ← System V系での書式（これはBSD系、POSIX準拠実装ではNG）\\
-	\verb|tr 'a-z'      | ← BSD系、POSIXでの書式
+	\verb|tr -d 'a-z'  | ← BSD系、POSIXでの書式
 \end{quote}
 
 POSIXに準拠してないSystem V実装が悪いと言ってしまえばそれまでなのだが、
@@ -957,8 +1347,191 @@ POSIXに準拠してないSystem V実装が悪いと言ってしまえばそれ�
 	\verb|sed 's/[a-z]//g'|
 \end{quote}
 
+しかしながら、改行コードで終わっていないテキストデータを与えると改行を付け足してしまうsed実装があるので、そういう可能性のあるデータを扱いたい場合は更に対策が必要だ。→\ref{recipe:nonLFterminated}（改行無し終端テキストを扱う）を参照
+
+そこまでやるくらいだったら、範囲指定ではなく全部書いてしまえばいいと思うかもしれないが、もちろんそれでもいい。
+\begin{quote}
+	\verb|tr -d 'abcdefghijklmnopqrstuvwxyz'|
+\end{quote}
+
 
 \section{trapコマンド}
+\label{allenvs:trap}
 
 \noindent
 →\ref{allenvs:kill}（killコマンド）参照
+
+
+\section{whichコマンド}
+\label{allenvs:which}
+
+コマンドが存在すれば（パスが通っていれば）そのパスを返してくれるため、コマンドが無ければ無いなりにどの環境でも動くようなシェルスクリプトを書きた時などに重宝するコマンドだ。ところが、このwhichコマンドがPOSIX標準ではないというオチが待っている。
+
+しかし諦めることはない。POSIXのコマンドで似た働きをするtypeというものがある。ただこれは人間向けの文章で出力されるので、それを解析してパスを取り出す必要がある。次のコードをシェルスクリプトの冒頭に追記しておけば、whichコマンドが存在しない場合のみ、typeコマンドに基づいたシェル関数版whichが登録される。
+
+\paragraph{whichコマンドが無ければ同等品を追加するコード} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	which which >/dev/null 2>&1 || {
+	  which () {
+	    (
+	      ans=$(LANG=C LC_ALL=C type "$1" 2>/dev/null) || exit $?
+	      case "$1"   in */*) printf '%s\n' "$1"        ; exit;; esac
+	      case "$ans" in */*) printf '%s\n' "/${ans#*/}"; exit;; esac
+	      printf '%s\n' "$1"
+	    )
+	  }
+	}
+\end{verbatim}
+\end{frameboxit}
+
+
+\section{xargsコマンド}
+\label{allenvs:xargs}
+
+\subsection*{改行なし終端データの扱い}
+
+次の例を見てもらいたい。
+
+\begin{screen}
+	\verb!$ printf 'one two threee' | xargs echo! \return \\
+	\verb|one two|                                        \\
+	\verb|$ |
+\end{screen}
+
+単語が3つあるのだから、xargsはechoの後ろに``one''と``two''はもちろん、``three''も付けて実行してくれることを期待するが、最後の``three''が無視されてしまっている。じつはこのxargs実装、最後の単語の後にも改行やスペース等の列区切り文字を必要とするのである。
+
+こういうxargs実装であっても確実に動作させるようにするには、例えばxargsの直前に\verb|grep ^|などを挿んでデータの終端に確実に改行が付くようにしてやることだ。
+
+\begin{screen}
+	\verb!$ printf 'one two threee' | grep ^ | xargs echo! \return \\
+	\verb|one two three|                                           \\
+	\verb|$ |
+\end{screen}
+
+\subsection*{空ループの有無}
+
+標準入力から入ってきた文字列を引数にしてコマンドに渡すためのコマンドであるが、標準入力から空白以外が含まれた行が1行も渡ってこなかった場合、引数無しでコマンドを実行するxargs実装もあれば、コマンドを実行しないxargs実装もある。
+
+\paragraph{BSD版の場合} 　\\
+\begin{screen}
+	\verb!$ printf '  \n\n' | xargs echo 'foo'! \return \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{GNU版(多くのLinux)の場合} 　\\
+\begin{screen}
+	\verb!$ printf '  \n\n' | xargs echo 'foo'! \return \\
+	\verb|foo|                                          \\
+	\verb|$ |
+\end{screen}
+
+xargsで呼び出される側のコマンドは引数0個で呼ばれるなど想定していない（Usageを表示したり戻り値0以外にしたりする）ものが多いので、前者の挙動の方が好ましいとは思うのだが、あるものはしょうがない。
+
+一応、前者の動作に揃える\verb|-r|オプションというものがある（最近のFreeBSD版もこれを認識する）のだが、そんなオプションはPOSIXでは規定されていないがゆえ、それを付けて互換性を向上させようとすると逆に全ての環境で動く保証がなくなってしまうのが皮肉なところ。
+
+\subsubsection*{対応方法}
+
+さてどうするか……、これは対症療法しかない。すなわち、
+\begin{enumerate}
+  \item 引数0個で実行されてもエラー扱いしないようなコマンドにする。
+  \item コマンドがエラー動作することを想定するような後続の処理にする。
+  \item 標準入力に必ず有効かつ無害な行が入るようにする。
+  \item 呼び出されるコマンドに無害な引数を付けておく。
+\end{enumerate}
+などを行う。
+
+1番目の対処は、例えば呼び出すコマンドがrmなら\verb|-f|オプションを付けてエラー扱いを抑止するという方法だ。
+
+\paragraph{対処方法1の例「rmコマンドをいちいちエラーで騒がせないようにする」} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	find . -name '*.tmp' | xargs rm -f
+\end{verbatim}
+\end{frameboxit}
+
+2番目の対処は、例えば戻り値が0以外でも即エラー扱いしないとか、標準エラーに流れてくるエラーメッセージやUsageを/dev/nullに捨てるというものだ。
+
+\paragraph{対処方法2の例「rmコマンドがエラーで騒いでも無視する」} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	(find . -name '*.tmp' | xargs rm) 2>/dev/null
+\end{verbatim}
+\end{frameboxit}
+
+3番目の対処は、例えば呼び出すコマンドがgrepなどのファイルを読み込むだけのものであれば使える方法だ。例えば/dev/nullを読み出しファイルとして、標準入力の最初（最後に付加すると改行なし終端テキストだった場合に不具合が起こる）に付加すればよい。
+
+\paragraph{対処方法3の例「grepに無害なファイル/dev/nullを読み込ませる」} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	# grepの場合は後述の4番目の対処方法をお勧めする
+	find . -name '*.txt' | awk 'BEGIN{print "/dev/null"} 1' | xargs grep '検索キーワード'
+\end{verbatim}
+\end{frameboxit}
+
+4番目の対処は、手段が若干異なるだけで目的は3番目と同じだ。先程のgrepの例ならこう書き直す。短く書けるし、先程紹介した対処方法よりもお勧めだ。
+
+\paragraph{対処方法4の例「grepに無害なファイル/dev/nullを読み込ませる（推奨）」} 　\\
+\begin{frameboxit}{160.0mm}
+\begin{verbatim}
+	find . -name '*.txt' | xargs grep '検索キーワード' /dev/null
+\end{verbatim}
+\end{frameboxit}
+
+grepコマンドの場合は特にこちらを勧める。理由は、grepコマンドは、検索対象のファイルが1個だけ指定された場合と複数指定された場合で挙動を変えるからだ。具体的には、検索キーワードが見つかった時、1個だけだった場合はファイル名を表示しないのに対し、複数個だった場合には行頭にファイル名を併記する。
+
+上記のように記述しておけば、grepコマンドは常に複数個指定されたと見なすので、findコマンドで見つかったファイルの数が1個であっても2個以上であっても、必ず行頭にファイル名を併記するようになり、動作が統一される。
+
+\subsection*{引数文字列の扱い}
+
+xargsに\verb|\\\'|という文字列を与えると、例えばFreeBSDのxargsとLinuxのxargsで異なった結果を返す。
+
+\paragraph{FreeBSDの場合} 　\\
+\begin{screen}
+	\verb!$ printf '\\\\\\'"' " | xargs printf! \return \\
+	\verb|'|                                            \\
+	\verb|$ |
+\end{screen}
+
+\paragraph{GNU版(多くのLinux)の場合} 　\\
+\begin{screen}
+	\verb!$ printf '\\\\\\'"' " | xargs printf! \return \\
+	\verb|\'|                                           \\
+	\verb|$ |
+\end{screen}
+
+実はFreeBSDのxargsコマンドは、引数文字列を\verb|$@|（ダブルクォーテーションなし）のように渡してシェルのエスケープ処理を受けるのに対し、Linuxの（GNU版の）xargsコマンドは\verb|"$@"|（ダブルクォーテーションあり）のように渡すので、シェルのエスケープ処理を受けない。だから結果として、Linux上ではバックスラッシュが1個残るのだ。
+
+ではどうするか。確実な方法は、エスケープ処理される文字を使わないことだ。バックスラッシュはいたしかたないとして、例えばシングルクォーテーションは\verb|\047|などと表現した文字列がprintfに渡るようにすればよい。ただしバックスラッシュも、引数としてシェルに解釈される時やprintfに解釈される時などにエスケープ処理を受けるので十分注意すること。
+
+\section{zcatコマンド}
+\label{allenvs:xargs}
+
+zcatは、\verb!gunzip | cat!相当だと思っている人も多いかもしれないが違う！それはGNU拡張であり、\textbf{本来のzcatは\verb!uncompress | cat!相当}である。
+
+従って、次のようにしてgzip圧縮されたデータを与えるとエラーを返すzcatコマンド実装がある。
+\begin{screen}
+	\verb!$ echo hoge | gzip | zcat! \return \\
+	\verb|stdin: not in compressed format|   \\
+	\verb|$ |
+\end{screen}
+
+全ての環境のzcatコマンドを想定するなら、compressコマンドで圧縮したデータを与えること。
+\begin{screen}
+	\verb!$ echo hoge | compress | zcat! \return \\
+	\verb|hoge|                                  \\
+	\verb|$ |
+\end{screen}
+
+\subsection*{ファイルを経由する場合の注意点}
+
+compressコマンドは元データがファイルの場合、圧縮してもサイズが小さくならないと判明すると圧縮をしないという性質がある。そのため、普通に使うと次のような事故が起きる恐れがある。
+\begin{screen}
+	\verb!$ echo 1 >  hoge.txt! \return          \\
+	\verb!$ compress hoge.txt! \return           \\
+	\verb! -- file unchanged! ← サイズが小さくならないので圧縮ファイルは作られなかった \\
+	\verb!$ zcat hoge.txt.Z! \return             \\
+	\verb!hoge.txt.Z: No such file or directory! \\
+	\verb!$ !
+\end{screen}
+これを防ぐためには、\verb|-f|オプションを付ければよい（\verb|compress -f|とする）。

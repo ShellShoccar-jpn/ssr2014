@@ -1,0 +1,64 @@
+\section{Base64エンコード・デコードする}
+\label{recipe:Base64}
+
+\subsection*{問題}
+\noindent
+$\!\!\!\!\!$
+\begin{grshfboxit}{160.0mm}
+	メールを扱うシェルスクリプトを書きたい。
+	しかしメールでは、Base64エンコードやデコードをしなければならない場面が多数ある。どうやればいいか?
+\end{grshfboxit}
+
+\subsection*{回答}
+
+Linuxあたりだとbase64というコマンドが標準でインストールされていたりするので
+それを使う手もあるが、残念ながらPOSIX準拠コマンドではない。
+とはいえBase64の変換アルゴリズムはさほど複雑ではなく、
+公開されている仕様（RFC 3548）や既存のbase64コマンドに準拠するものをPOSIXの範囲で実装したものがあるのでそれを使う。
+
+\subsection*{Base64コマンドの使い方}
+
+どのようにして実装したのかは解説の項で説明するとして、まずは使ってみよう。
+
+Base64コマンドをPOSIXの範囲で書き直し、GitHubに公開したので、手元の環境になければ下記のページからそれをダウンロードする。
+
+\begin{verbatim}
+	https://github.com/ShellShoccar-jpn/misc-tools/blob/master/base64
+\end{verbatim}
+
+ダウンロードして実行権限を与えたら、使ってみる。標準入出力経由でデータを渡すとBase64に変換される。
+\begin{screen}
+	\verb!$ echo 'ShellShoccar' | ./base64! \return    \\
+	\verb|U2hlbGxTaG9jY2FyCg==|                        \\
+	\verb|$ |
+\end{screen}
+
+\verb|-d|オプションを付ければデコードになるので、先程Base64変換した文字列を渡せば元の文字列が出てくる。
+\begin{screen}
+	\verb!$ echo 'U2hlbGxTaG9jY2FyCg==' | ./base64 -d! \return \\
+	\verb|ShellShoccar|                                        \\
+	\verb|$ |
+\end{screen}
+
+エンコードとデコードは互いに逆変換なので、それらを連続して通せば元の文字列が出力される。
+\begin{screen}
+	\verb!$ echo 'ShellShoccar' | ./base64 | ./base64 -d! \return \\
+	\verb|ShellShoccar|                                           \\
+	\verb|$ |
+\end{screen}
+
+\subsection*{解説}
+
+Base64の仕様は複雑ではないので素直に実装すればよい、とはいえ、
+シェルスクリプトにとっては大きな問題がある。
+
+それはBase64が対象としているデータはテキストデータのみならず
+バイナリーデータもあるのだが、シェルスクリプトではNULL文字$<\mathrm{0x00}>$を扱うのが大変なのである。
+しかしこの問題は、\ref{recipe:binary}（バイナリーデータを扱う）で克服した。
+先に紹介したPOSIX版base64コマンドは、そのレシピで示したコードにBase64の仕様を追加して作られている。
+
+\subsection*{参照}
+
+\noindent
+→\ref{recipe:binary}（バイナリーデータを扱う） \\
+→\ref{recipe:sendjpmail}（シェルスクリプトでメール送信）
